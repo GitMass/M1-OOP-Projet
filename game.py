@@ -29,11 +29,11 @@ class Game:
             La surface de la fenêtre du jeu.
         """
         self.screen = screen
-        self.player_units = [Unit(0, 0, 10, 2, 'player'),
-                             Unit(1, 0, 10, 2, 'player')]
+        self.player_units = [Unit(0, 0, 10, 2, 3, 'player'),
+                             Unit(1, 0, 10, 2, 3, 'player')]
 
-        self.enemy_units = [Unit(6, 6, 8, 1, 'enemy'),
-                            Unit(7, 6, 8, 1, 'enemy')]
+        self.enemy_units = [Unit(6, 6, 8, 1, 2, 'enemy'),
+                            Unit(7, 6, 8, 1, 2, 'enemy')]
 
     def handle_player_turn(self):
         """Tour du joueur"""
@@ -42,6 +42,7 @@ class Game:
             # Tant que l'unité n'a pas terminé son tour
             has_acted = False
             selected_unit.is_selected = True
+            endurence = selected_unit.endurence_max
             self.flip_display()
             while not has_acted:
 
@@ -59,13 +60,21 @@ class Game:
                         # Déplacement (touches fléchées)
                         dx, dy = 0, 0
                         if event.key == pygame.K_LEFT:
-                            dx = -1
+                            if endurence > 0:
+                                dx = -1
+                                endurence = endurence - 1
                         elif event.key == pygame.K_RIGHT:
-                            dx = 1
+                            if endurence > 0:
+                                dx = 1
+                                endurence = endurence - 1
                         elif event.key == pygame.K_UP:
-                            dy = -1
+                            if endurence > 0:
+                                dy = -1
+                                endurence = endurence - 1
                         elif event.key == pygame.K_DOWN:
-                            dy = 1
+                            if endurence > 0:
+                                dy = 1
+                                endurence = endurence - 1
 
                         selected_unit.move(dx, dy)
                         self.flip_display()
