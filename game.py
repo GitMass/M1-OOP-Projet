@@ -29,11 +29,30 @@ class Game:
             La surface de la fenêtre du jeu.
         """
         self.screen = screen
-        self.player_units = [Unit(0, 0, 10, 2, 3, 'player'),
-                             Unit(1, 0, 10, 2, 3, 'player')]
+        self.player_units = []
 
         self.enemy_units = [Unit(6, 6, 8, 1, 2, 'enemy'),
                             Unit(7, 6, 8, 1, 2, 'enemy')]
+    
+
+    def Characters_choice(self):
+        # Definition des personnages :
+        personnages = Definir_personnages()
+
+        def custom_unit(team,i):
+            unit_type = int(input(f"{team} : Choisissez vos personnages : 1 pour Yennefer, 2 pour Sekiro : \n"))
+            if unit_type == 1:
+                return Sorceress(i, 0, 'player', 'data/yennefer.png')
+            elif unit_type == 2:
+                return Swordsman(i, 0, 'player', 'data/sekiro.png')
+            else:
+                print(f"Invalid unit type: {unit_type}. Try again.")
+                return custom_unit(team)
+            
+        # choix des personnages de player :
+        for i in range(3):
+            self.player_units.append(custom_unit('player',i))
+
 
     def handle_player_turn(self):
         """Tour du joueur"""
@@ -133,13 +152,9 @@ def main():
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("Mon jeu de stratégie")
 
-    # Definition des personnages :
-    personnages = Definir_personnages()
-
     # Instanciation du jeu
     game = Game(screen)
-    game.player_units.append(personnages[0])
-    game.player_units.append(personnages[1])
+    game.Characters_choice()
 
 
 
