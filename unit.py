@@ -1,6 +1,5 @@
 import pygame
 import random
-import os
 
 # Constantes
 GRID_SIZE = 8
@@ -88,83 +87,4 @@ class Unit:
             pygame.draw.rect(screen, GREEN, (self.x * CELL_SIZE,
                              self.y * CELL_SIZE, CELL_SIZE, CELL_SIZE))
         pygame.draw.circle(screen, color, (self.x * CELL_SIZE + CELL_SIZE //
-                           2, self.y * CELL_SIZE + CELL_SIZE // 2), CELL_SIZE // 3)  
-                                         
-
-
-# Definitions Des Types d'unités :
-class Sorceress(Unit):
-    def __init__(self, x, y, team, texture_path=None):
-        super().__init__(x, y, health=18, attack_power=4, endurence_max=2, team=team)
-
-        # Ajouter la texture
-        self.texture = None
-        if texture_path:
-            if os.path.exists(texture_path):
-                self.texture = pygame.image.load(texture_path)
-                self.texture = pygame.transform.scale(self.texture, (CELL_SIZE, CELL_SIZE))  # Redimensionner l'image
-            else:
-                print(f"{texture_path} not found")
-
-    # affiche la texture si elle existe
-    def draw(self, screen):
-        if self.texture:
-            screen.blit(self.texture, (self.x * CELL_SIZE, self.y * CELL_SIZE))
-        else:
-            # Si il n ya pas de texture on utilise draw() de Unit
-            super().draw(screen)
-
-
-class Swordsman(Unit):
-    def __init__(self, x, y, team, texture_path=None):
-        super().__init__(x, y, health=22, attack_power=3, endurence_max=6, team=team)
-
-        # Ajouter la texture
-        self.texture = None
-        if texture_path:
-
-            self.texture = pygame.image.load(texture_path)
-            self.texture = pygame.transform.scale(self.texture, (CELL_SIZE, CELL_SIZE))  # Redimensionner l'image
-
-    # affiche la texture si elle existe
-    def draw(self, screen):
-        if self.texture:
-            screen.blit(self.texture, (self.x * CELL_SIZE, self.y * CELL_SIZE))
-        else:
-            # Si il n ya pas de texture on utilise draw() de Unit
-            super().draw(screen)
-
-
-class Monster(Unit):
-    def __init__(self, x, y, team, texture_path=None):
-        super().__init__(x, y, health=28, attack_power=2, endurence_max=4, team=team)
-
-        # Ajouter la texture
-        self.texture = None
-        if texture_path:
-            self.texture = pygame.image.load(texture_path)
-            self.texture = pygame.transform.scale(self.texture, (CELL_SIZE, CELL_SIZE))  # Redimensionner l'image
-
-    # affiche la texture si elle existe
-    def draw(self, screen):
-        if self.texture:
-            screen.blit(self.texture, (self.x * CELL_SIZE, self.y * CELL_SIZE))
-        else:
-            # Si il n ya pas de texture on utilise draw() de Unit
-            super().draw(screen)
-
-
-def Definir_personnages():
-    personnages = []
-
-    Yennefer = Sorceress(2, 0, 'player', 'data/yennefer.png')
-    personnages.append(Yennefer)
-
-    Sekiro = Swordsman(3, 0, 'player', 'data/sekiro.png')
-    personnages.append(Sekiro)
-
-    return personnages
-
-
-
-
+                           2, self.y * CELL_SIZE + CELL_SIZE // 2), CELL_SIZE // 3)
