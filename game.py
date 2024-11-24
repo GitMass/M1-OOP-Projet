@@ -133,8 +133,15 @@ def main():
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("Mon jeu de stratégie")
 
+    # Definition des personnages :
+    personnages = Definir_personnages()
+
     # Instanciation du jeu
     game = Game(screen)
+    game.player_units.append(personnages[0])
+    game.player_units.append(personnages[1])
+
+
 
     # Boucle principale du jeu
     while True:
