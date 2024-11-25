@@ -1,5 +1,6 @@
 import pygame
 import random
+import copy
 
 from unit import *
 
@@ -29,29 +30,42 @@ class Game:
             La surface de la fenêtre du jeu.
         """
         self.screen = screen
+
         self.player_units = []
-
-        self.enemy_units = [Unit(6, 6, 8, 1, 2, 'enemy'),
-                            Unit(7, 6, 8, 1, 2, 'enemy')]
+        self.enemy_units = [Unit(6, 6, 8, 1, 2, 'enemy', None, 5, 5),
+                            Unit(7, 6, 8, 1, 2, 'enemy', None, 7, 5)]
     
+    def Characters_choice(self,player):
 
-    def Characters_choice(self):
-        # Definition des personnages :
-        personnages = Definir_personnages()
+        selected_units = self.player_units
+        while len(selected_units) < CHARACTER_PER_TEAM:
+            self.screen.fill(BLACK)
 
-        def custom_unit(team,i):
-            unit_type = int(input(f"{team} : Choisissez vos personnages : 1 pour Yennefer, 2 pour Sekiro : \n"))
-            if unit_type == 1:
-                return Sorceress(i, 0, 'player', 'data/yennefer.png')
-            elif unit_type == 2:
-                return Swordsman(i, 0, 'player', 'data/sekiro.png')
-            else:
-                print(f"Invalid unit type: {unit_type}. Try again.")
-                return custom_unit(team)
+            # Afficher l'instruction de choix :
+            font = pygame.font.Font(None, 36)
+            text = font.render(f"{player}: Choose your characters ({len(selected_units) + 1}/{CHARACTER_PER_TEAM})", True, WHITE)
+            self.screen.blit(text, (int(WIDTH/5), 50))
+
+            # Affiche les personnages disponibles :
+            for key in Personnages:
+                Personnages[key].choiceButton_draw(self.screen)
             
-        # choix des personnages de player :
-        for i in range(3):
-            self.player_units.append(custom_unit('player',i))
+            # update screen :
+            pygame.display.flip()
+
+            # Gestion des evennements :
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    exit()
+                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    mouse_pos = event.pos
+                    for key in Personnages:
+                        if Personnages[key].button.collidepoint(mouse_pos):
+                            selected_units.append(copy.copy(Personnages[key]))
+                            selected_units[-1].x = len(selected_units)-1
+                            selected_units[-1].y = 0
+        return selected_units
 
 
     def handle_player_turn(self):
@@ -154,7 +168,7 @@ def main():
 
     # Instanciation du jeu
     game = Game(screen)
-    game.Characters_choice()
+    game.player_units = game.Characters_choice("player")
 
 
 
