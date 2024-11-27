@@ -151,7 +151,7 @@ class Game:
             for y in range(0, HEIGHT, CELL_SIZE):
                 self.screen.blit(GRASS, (x, y))
 
-
+        # Affiche la grille de fond avec "ROCK"
         for wall in self.walls:
         # Calculer la position où afficher l'image
             x = wall[0] * CELL_SIZE
@@ -160,6 +160,7 @@ class Game:
         # Afficher l'image de mur à cette position
             self.screen.blit(ROCK, (x, y))
 
+        # Affiche la grille de fond avec "MAGMA"
         for magma in self.magmas:
         # Calculer la position où afficher l'image
             x = magma[0] * CELL_SIZE
@@ -168,6 +169,7 @@ class Game:
         # Afficher l'image de magma à cette position
             self.screen.blit(MAGMA, (x, y))
 
+        # Affiche la grille de fond avec "LILYPAD"
         for lilypad in self.lilypads:
         # Calculer la position où afficher l'image
             x = lilypad[0] * CELL_SIZE
@@ -176,6 +178,7 @@ class Game:
         # Afficher l'image de lilypad à cette position
             self.screen.blit(LILYPAD, (x, y))
 
+        # Affiche la grille de fond avec "MUD"
         for mud in self.muds:
         # Calculer la position où afficher l'image
             x = mud[0] * CELL_SIZE
