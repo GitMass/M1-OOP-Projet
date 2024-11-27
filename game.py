@@ -1,4 +1,4 @@
-import pygame
+import pygame,csv,os 
 import random
 
 from unit import *
@@ -32,16 +32,45 @@ class Game:
                              Unit(1, 0, 10, 2, 'player')]
 
         self.enemy_units = [Unit(6, 6, 8, 1, 'enemy'),
-                            Unit(7, 6, 8, 1, 'enemy')]
+                            Unit(6, 7, 8, 1, 'enemy')]
         
-         # Liste des murs (coordonnées)
-        self.walls = [(1, 1), (2, 2), (3, 3)]
+        # Charger la carte des murs
+        self.walls = []
+        self.magmas = []
+        self.lilypads = []
+        self.muds = []
+        map_data = self.read_csv('data/interface_graphique/map1.csv')
+        for y, row in enumerate(map_data):
+            for x, cell in enumerate(row):
+                if cell == '1':  # Si la valeur est '1', c'est un mur
+                    self.walls.append((x, y))
+                if cell == '2':  # Si la valeur est '1', c'est un mur
+                    self.magmas.append((x, y))
+                if cell == '3':  # Si la valeur est '1', c'est un mur
+                    self.lilypads.append((x, y))
+                if cell == '4':  # Si la valeur est '1', c'est un mur
+                    self.muds.append((x, y))
+
+    # 0 : grass
+    # 1 : murs
+    # 2 : magma 
+    # 3 : lilypad 
+    # 4 : mud 
+
+    def read_csv(self, filename):
+        map = []
+        with open(os.path.join(filename), mode='r') as data:
+            data = csv.reader(data, delimiter=',')
+            for row in data:
+                map.append(list(row))
+        return map
 
     def is_wall(self, x, y):
         """
         Vérifie si une cellule est un mur.
         """
         return (x, y) in self.walls
+    
 
     def handle_player_turn(self):
         """Tour du joueur"""
@@ -110,10 +139,13 @@ class Game:
     def flip_display(self):
         """Affiche le jeu."""
 
-        GRASS=pygame.image.load('data/interface_graphique/Tiles/Tiles/seamless-64px-rpg-tiles-1.1.0/highland.png').convert_alpha()
+        GRASS=pygame.image.load('data/interface_graphique/Tiles/Tiles/seamless-64px-rpg-tiles-1.1.0/monsoongrass.png').convert_alpha()
         ROCK= pygame.image.load('data/interface_graphique/Tiles/Tiles/wall2.png').convert_alpha()
-        
+        MAGMA=pygame.image.load('data/interface_graphique/Tiles/Tiles/seamless-64px-rpg-tiles-1.1.0/cave magma.png').convert_alpha()
+        LILYPAD=pygame.image.load('data/interface_graphique/Tiles/Tiles/seamless-64px-rpg-tiles-1.1.0/lilypad.png').convert_alpha()
+        MUD=pygame.image.load('data/interface_graphique/Tiles/Tiles/seamless-64px-rpg-tiles-1.1.0/mud.png').convert_alpha()
         # Affiche la grille
+
         # Affiche la grille de fond avec "GRASS"
         for x in range(0, WIDTH, CELL_SIZE):
             for y in range(0, HEIGHT, CELL_SIZE):
@@ -128,11 +160,35 @@ class Game:
         # Afficher l'image de mur à cette position
             self.screen.blit(ROCK, (x, y))
 
+        for magma in self.magmas:
+        # Calculer la position où afficher l'image
+            x = magma[0] * CELL_SIZE
+            y = magma[1] * CELL_SIZE
+
+        # Afficher l'image de magma à cette position
+            self.screen.blit(MAGMA, (x, y))
+
+        for lilypad in self.lilypads:
+        # Calculer la position où afficher l'image
+            x = lilypad[0] * CELL_SIZE
+            y = lilypad[1] * CELL_SIZE
+
+        # Afficher l'image de lilypad à cette position
+            self.screen.blit(LILYPAD, (x, y))
+
+        for mud in self.muds:
+        # Calculer la position où afficher l'image
+            x = mud[0] * CELL_SIZE
+            y = mud[1] * CELL_SIZE
+
+        # Afficher l'image de lilypad à cette position
+            self.screen.blit(MUD, (x, y))
+
         # Affiche les contours de la grille (optionnel si vous voulez une bordure blanche)
         for x in range(0, WIDTH, CELL_SIZE):
             for y in range(0, HEIGHT, CELL_SIZE):
                 rect = pygame.Rect(x, y, CELL_SIZE, CELL_SIZE)
-                pygame.draw.rect(self.screen, WHITE, rect, 1)
+                pygame.draw.rect(self.screen, BLACK, rect, 1)
 
         # Affiche les unités
         for unit in self.player_units + self.enemy_units:
