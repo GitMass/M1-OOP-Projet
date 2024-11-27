@@ -194,12 +194,6 @@ class Game:
         for unit in self.player_units + self.enemy_units:
             unit.draw(self.screen)
 
-        # Affiche les murs
-        #for wall in self.walls:
-        #    wall_rect = pygame.Rect(wall[0] * CELL_SIZE, wall[1] * CELL_SIZE, CELL_SIZE, CELL_SIZE)
-        #    pygame.draw.rect(self.screen, ROCK , wall_rect)
-
-        # Rafraîchit l'écran
         pygame.display.flip()
 
 def main():
