@@ -34,6 +34,15 @@ class Game:
 
         self.enemy_units = [Unit(6, 6, 8, 1, 'enemy'),
                             Unit(7, 6, 8, 1, 'enemy')]
+        
+         # Liste des murs (coordonnées)
+        self.walls = [(1, 1), (2, 2), (3, 3)]
+
+    def is_wall(self, x, y):
+        """
+        Vérifie si une cellule est un mur.
+        """
+        return (x, y) in self.walls
 
     def handle_player_turn(self):
         """Tour du joueur"""
@@ -67,7 +76,7 @@ class Game:
                         elif event.key == pygame.K_DOWN:
                             dy = 1
 
-                        selected_unit.move(dx, dy)
+                        selected_unit.move(dx, dy,self)
                         self.flip_display()
 
                         # Attaque (touche espace) met fin au tour
@@ -96,12 +105,31 @@ class Game:
                 enemy.attack(target)
                 if target.health <= 0:
                     self.player_units.remove(target)
+    
+
 
     def flip_display(self):
         """Affiche le jeu."""
 
+        GRASS=pygame.image.load('C:/Users/minha/OneDrive/Desktop/TP/M1/Python/projet/interface_graphique/Tiles/Tiles/seamless-64px-rpg-tiles-1.1.0/highland.png').convert_alpha()
+        ROCK= pygame.image.load('C:/Users/minha/OneDrive/Desktop/TP/M1/Python/projet/interface_graphique/Tiles/Tiles/wall2.png').convert_alpha()
+        
         # Affiche la grille
-        self.screen.fill(BLACK)
+        # Affiche la grille de fond avec "GRASS"
+        for x in range(0, WIDTH, CELL_SIZE):
+            for y in range(0, HEIGHT, CELL_SIZE):
+                self.screen.blit(GRASS, (x, y))
+
+
+        for wall in self.walls:
+        # Calculer la position où afficher l'image
+            x = wall[0] * CELL_SIZE
+            y = wall[1] * CELL_SIZE
+
+        # Afficher l'image de mur à cette position
+            self.screen.blit(ROCK, (x, y))
+
+        # Affiche les contours de la grille (optionnel si vous voulez une bordure blanche)
         for x in range(0, WIDTH, CELL_SIZE):
             for y in range(0, HEIGHT, CELL_SIZE):
                 rect = pygame.Rect(x, y, CELL_SIZE, CELL_SIZE)
@@ -111,9 +139,13 @@ class Game:
         for unit in self.player_units + self.enemy_units:
             unit.draw(self.screen)
 
+        # Affiche les murs
+        #for wall in self.walls:
+        #    wall_rect = pygame.Rect(wall[0] * CELL_SIZE, wall[1] * CELL_SIZE, CELL_SIZE, CELL_SIZE)
+        #    pygame.draw.rect(self.screen, ROCK , wall_rect)
+
         # Rafraîchit l'écran
         pygame.display.flip()
-
 
 def main():
 

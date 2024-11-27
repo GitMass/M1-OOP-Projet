@@ -68,11 +68,19 @@ class Unit:
         self.team = team  # 'player' ou 'enemy'
         self.is_selected = False
 
-    def move(self, dx, dy):
-        """Déplace l'unité de dx, dy."""
-        if 0 <= self.x + dx < GRID_SIZE and 0 <= self.y + dy < GRID_SIZE:
-            self.x += dx
-            self.y += dy
+    def move(self, dx, dy,game):
+        #"""Déplace l'unité de dx, dy."""
+        #if 0 <= self.x + dx < GRID_SIZE and 0 <= self.y + dy < GRID_SIZE:
+        #    self.x += dx
+        #    self.y += dy
+        """
+        Déplace l'unité de dx, dy si la nouvelle cellule n'est pas un mur.
+        """
+        new_x = self.x + dx
+        new_y = self.y + dy
+        if 0 <= new_x < GRID_SIZE and 0 <= new_y < GRID_SIZE and not game.is_wall(new_x, new_y):
+            self.x = new_x
+            self.y = new_y
 
     def attack(self, target):
         """Attaque une unité cible."""
