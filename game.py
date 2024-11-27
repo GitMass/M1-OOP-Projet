@@ -3,7 +3,6 @@ import random
 
 from unit import *
 
-
 class Game:
     """
     Classe pour représenter le jeu.
@@ -111,8 +110,8 @@ class Game:
     def flip_display(self):
         """Affiche le jeu."""
 
-        GRASS=pygame.image.load('C:/Users/minha/OneDrive/Desktop/TP/M1/Python/projet/interface_graphique/Tiles/Tiles/seamless-64px-rpg-tiles-1.1.0/highland.png').convert_alpha()
-        ROCK= pygame.image.load('C:/Users/minha/OneDrive/Desktop/TP/M1/Python/projet/interface_graphique/Tiles/Tiles/wall2.png').convert_alpha()
+        GRASS=pygame.image.load('data/interface_graphique/Tiles/Tiles/seamless-64px-rpg-tiles-1.1.0/highland.png').convert_alpha()
+        ROCK= pygame.image.load('data/interface_graphique/Tiles/Tiles/wall2.png').convert_alpha()
         
         # Affiche la grille
         # Affiche la grille de fond avec "GRASS"
