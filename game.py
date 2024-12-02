@@ -28,11 +28,17 @@ class Game:
             La surface de la fenêtre du jeu.
         """
         self.screen = screen
-        self.player_units = [Unit(0, 0, 10, 2, 'player'),
-                             Unit(1, 0, 10, 2, 'player')]
+        self.player_units = [
+            Unit(0, 0, 10, 2, 'player',skills=[
+                {'name': 'Fireball', 'damage': 5, 'range': 3},
+                {'name': 'Heal', 'heal': 4, 'cost': 2}]),
+            Unit(1, 0, 10, 2, 'player',skills=[{'name': 'Arrow Shot', 'damage': 3, 'range': 2}])]
 
-        self.enemy_units = [Unit(6, 6, 8, 1, 'enemy'),
-                            Unit(6, 7, 8, 1, 'enemy')]
+        self.enemy_units = [
+            Unit(6, 6, 8, 1, 'enemy',skills=[
+                {'name': 'Poison Attack', 'damage': 2, 'range': 1}]),
+            Unit(6, 7, 8, 1, 'enemy',skills=[
+                {'name': 'Berserk Slash', 'damage': 4, 'range': 1}])]
         
         # Charger la carte des murs
         self.walls = []
@@ -106,6 +112,16 @@ class Game:
 
                         selected_unit.move(dx, dy,self)
                         self.flip_display()
+
+                        # Utiliser une compétence (par exemple, touche 'S' pour sélectionner une compétence)
+                        if event.key==pygame.K_s:
+                            # Exemple : utilisation de "Fireball" sur un ennemi proche
+                            for enemy in self.enemy_units:
+                                if abs(selected_unit.x-enemy.x)<=3 and abs(selected_unit.y-enemy.y)<=3:
+                                    selected_unit.use_skills('Fireball',enemy)
+                                    has_acted=True
+                                    selected_unit.is_selected=False
+                                    break 
 
                         # Attaque (touche espace) met fin au tour
                         if event.key == pygame.K_SPACE:

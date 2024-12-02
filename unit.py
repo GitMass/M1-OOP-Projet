@@ -12,6 +12,9 @@ BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 BLUE = (0, 0, 255)
 GREEN = (0, 255, 0)
+DARK_GREEN=(51,102,0)
+GREY= (128,128,128)
+ORANGE=(255,178,102)
 
 
 class Unit:
@@ -44,7 +47,7 @@ class Unit:
         Dessine l'unité sur la grille.
     """
 
-    def __init__(self, x, y, health, attack_power, team):
+    def __init__(self, x, y, health, attack_power, team,skills=None):
         """
         Construit une unité avec une position, une santé, une puissance d'attaque et une équipe.
 
@@ -63,10 +66,43 @@ class Unit:
         """
         self.x = x
         self.y = y
-        self.health = health
+        self.health = health # Points de vie actuels
+        self.max_health= health # Santé maximale
         self.attack_power = attack_power
         self.team = team  # 'player' ou 'enemy'
         self.is_selected = False
+        self.skills=skills if skills else []
+
+
+    """
+    skills : list[dict]
+        Une liste de compétences de l'unité. Par exemple :
+        [{'name': 'Fireball', 'damage': 5, 'range': 3}, {'name': 'Heal', 'heal': 4, 'cost': 2}]
+    """
+
+    def use_skills(self,skill_name,target):
+        """
+        Utilise une compétence sur une cible.
+
+        Paramètres
+        ----------
+        skill_name : str
+            Le nom de la compétence à utiliser.
+        target : Unit
+            L'unité cible de la compétence.
+        """
+        for skill in self.skills :
+            if skill['name']==skill_name:
+                if 'damage' in skill:
+                    if abs(self.x-target.x)<=skill.get('range',1) and abs(self.y-target.y)<=skill.get('range',1):
+                        target.health -= skill['damage']
+                        if target.health<0:
+                            target.health=0 # Éviter les points de vie négatifs 
+                        print(f"{self.team} utilse {skill_name} sur {target.team}. Dégât : {skill['damage']}")
+                if 'heal' in skill:
+                    target.health +=skill['heal']
+                    print(f"{self.team} utilse {skill_name} sur {target.team}. Soin : {skill['heal']}")
+                break 
 
     def move(self, dx, dy,game):
         #"""Déplace l'unité de dx, dy."""
@@ -91,7 +127,28 @@ class Unit:
         """Affiche l'unité sur l'écran."""
         color = BLUE if self.team == 'player' else RED
         if self.is_selected:
-            pygame.draw.rect(screen, GREEN, (self.x * CELL_SIZE,
+            pygame.draw.rect(screen, DARK_GREEN, (self.x * CELL_SIZE,
                              self.y * CELL_SIZE, CELL_SIZE, CELL_SIZE))
         pygame.draw.circle(screen, color, (self.x * CELL_SIZE + CELL_SIZE //
                            2, self.y * CELL_SIZE + CELL_SIZE // 2), CELL_SIZE // 3)
+        
+        # Calcul de la position de la barre de point de vie 
+        bar_width=9  # Largeur de la barre de vie
+        bar_height=CELL_SIZE-2         # Hauteur de la barre de vie
+        bar_x=self.x*CELL_SIZE+54 # Position x de la barre 
+        bar_y=self.y*CELL_SIZE # Position y
+
+        # Calculer la largeur de la barre de vie en fonction des points de vie restant
+        health_ratio=max(self.health/self.max_health,0) # Ratio de santé (entre 0 et 1)
+        current_health_height=int(bar_height*health_ratio)
+
+        # Dessiner le fond de la barre (gris)
+        pygame.draw.rect(screen,GREY,(bar_x,bar_y,bar_width,bar_height))
+        # Dessiner la barre de santé (verte si >50%, orange si 20<v<=50%, sinon rouge)
+        if health_ratio>0.5:
+            health_color=GREEN
+        elif health_ratio<=0.5 and health_ratio>0.2 :
+            health_color=ORANGE
+        else:
+            health_color=RED 
+        pygame.draw.rect(screen,health_color,(bar_x,bar_y+ (bar_height - current_health_height), bar_width, current_health_height))
