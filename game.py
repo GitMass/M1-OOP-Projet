@@ -4,7 +4,6 @@ import copy
 
 from unit import *
 
-# tests
 
 
 class Game:
@@ -34,8 +33,9 @@ class Game:
         self.screen = screen
 
         self.player_units = []
-        self.enemy_units = [Unit(6, 6, 8, 1, 2, 'enemy', None, 5, 5),
-                            Unit(7, 6, 8, 1, 2, 'enemy', None, 7, 5)]
+        self.enemy_units =[]
+
+        
     
     def Characters_choice(self,player):
 
@@ -68,9 +68,49 @@ class Game:
                             selected_units[-1].x = len(selected_units)-1
                             selected_units[-1].y = 0
         return selected_units
+    
+    def Characters_choice_enemy(self,enemy):
+        selected_units=self.enemy_units
 
 
+        while len(selected_units) < CHARACTER_PER_TEAM:
+            self.screen.fill(BLACK)
+
+            # Afficher l'instruction de choix :
+            font = pygame.font.Font(None, 36)
+            text = font.render(f"{enemy}: Choose your characters ({len(selected_units) + 1}/{CHARACTER_PER_TEAM})", True, WHITE)
+            self.screen.blit(text, (int(WIDTH/5), 50))
+
+            # Affiche les personnages disponibles :
+            for key in Enemy:
+                Enemy[key].choiceButton_draw(self.screen)
+            
+            # update screen :
+            pygame.display.flip()
+
+            # Gestion des evennements :
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    exit()
+                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    mouse_pos = event.pos
+                    for key in Enemy:
+                        if Enemy [key].button.collidepoint(mouse_pos):
+                            selected_units.append(copy.copy(Enemy[key]))
+                            selected_units[-1].x = len(selected_units)-1
+                            selected_units[-1].y = 6
+        return selected_units
+ 
+    """def Characters_choice_enemy(self):
+        for i in range(CHARACTER_PER_TEAM):
+           enemy_type=random.choice(list(Enemy.values())) 
+           self.enemy_units.append(enemy_type)"""
+
+ 
     def handle_player_turn(self):
+       
+        
         """Tour du joueur"""
         for selected_unit in self.player_units:
 
@@ -78,9 +118,10 @@ class Game:
             has_acted = False
             selected_unit.is_selected = True
             endurence = selected_unit.endurence_max
+           
             self.flip_display()
             while not has_acted:
-
+         
                 # Important: cette boucle permet de gérer les événements Pygame
                 for event in pygame.event.get():
 
@@ -125,7 +166,12 @@ class Game:
                             has_acted = True
                             selected_unit.is_selected = False
 
+
     def handle_enemy_turn(self):
+        #for enemy_unit in self.enemy_units:
+          # enemy_unit.is_selected = True
+          # self.flip_display()
+        
         """IA très simple pour les ennemis."""
         for enemy in self.enemy_units:
 
@@ -140,6 +186,11 @@ class Game:
                 enemy.attack(target)
                 if target.health <= 0:
                     self.player_units.remove(target)
+         
+
+        # Fin du tour de l'unité ennemie
+           # enemy_unit.is_selected = False
+            self.flip_display()
 
     def flip_display(self):
         """Affiche le jeu."""
@@ -151,10 +202,13 @@ class Game:
                 rect = pygame.Rect(x, y, CELL_SIZE, CELL_SIZE)
                 pygame.draw.rect(self.screen, WHITE, rect, 1)
 
+
+       
         # Affiche les unités
         for unit in self.player_units + self.enemy_units:
             unit.draw(self.screen)
-
+        
+        
         # Rafraîchit l'écran
         pygame.display.flip()
 
@@ -171,6 +225,10 @@ def main():
     # Instanciation du jeu
     game = Game(screen)
     game.player_units = game.Characters_choice("player")
+    game.enemy_units=game.Characters_choice_enemy("enemy")
+   
+
+    
 
 
 
