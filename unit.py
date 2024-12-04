@@ -115,8 +115,32 @@ class Unit:
         new_x = self.x + dx
         new_y = self.y + dy
         if 0 <= new_x < GRID_SIZE and 0 <= new_y < GRID_SIZE and not game.is_wall(new_x, new_y):
+            if hasattr(game, 'current_sound') and game.current_sound:  # Vérifie l'existence de current_sound
+                game.current_sound.stop()
+                
+            # Met à jour la position     
             self.x = new_x
             self.y = new_y
+
+        # Détection du type de terrain
+        if (self.x, self.y) in game.magmas:
+            game.current_sound=game.sounds['magma']
+            game.current_sound.play()
+        elif (self.x, self.y) in game.muds:
+            game.current_sound=game.sounds['mud']
+            game.current_sound.play()
+        elif (self.x, self.y) in game.lilypads:
+            game.current_sound=game.sounds['lilypad']
+            game.current_sound.play()
+        elif (self.x, self.y) in game.healing:
+            game.current_sound=game.sounds['healing']
+            game.current_sound.play()
+        elif (self.x, self.y) in game.grass:
+            game.current_sound=game.sounds['footstep']
+            game.current_sound.play()
+        else:
+            game.current_sound=None # Aucun son à jouer 
+
 
     def attack(self, target):
         """Attaque une unité cible."""

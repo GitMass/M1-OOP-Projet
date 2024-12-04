@@ -19,6 +19,20 @@ class Game:
     """
 
     def __init__(self, screen):
+
+        self.current_sound = None  # Référence au son actuellement joué
+        # Initialiser le mixer Pygame
+        pygame.mixer.init()
+        
+        # Charger les sons pour chaque type de terrain
+        self.sounds = {
+            'magma': pygame.mixer.Sound('data/interface_graphique/Sound effect/fire.wav'),
+            'mud': pygame.mixer.Sound('data/interface_graphique/Sound effect/mud.wav'),
+            'lilypad': pygame.mixer.Sound('data/interface_graphique/Sound effect/water-splash.wav'),
+            'healing': pygame.mixer.Sound('data/interface_graphique/Sound effect/heal-up.wav'),
+            'footstep': pygame.mixer.Sound('data/interface_graphique/Sound effect/footstep.wav'),
+        }
+
         """
         Construit le jeu avec la surface de la fenêtre.
 
@@ -41,13 +55,17 @@ class Game:
                 {'name': 'Berserk Slash', 'damage': 4, 'range': 1}])]
         
         # Charger la carte des murs
+        self.grass=[]
         self.walls = []
         self.magmas = []
         self.lilypads = []
         self.muds = []
+        self.healing=[]
         map_data = self.read_csv('data/interface_graphique/map1.csv')
         for y, row in enumerate(map_data):
             for x, cell in enumerate(row):
+                if cell == '0':  # Si la valeur est '1', c'est un mur
+                    self.grass.append((x, y))
                 if cell == '1':  # Si la valeur est '1', c'est un mur
                     self.walls.append((x, y))
                 if cell == '2':  # Si la valeur est '1', c'est un mur
@@ -56,12 +74,15 @@ class Game:
                     self.lilypads.append((x, y))
                 if cell == '4':  # Si la valeur est '1', c'est un mur
                     self.muds.append((x, y))
+                if cell == '5':  # Si la valeur est '1', c'est un mur
+                    self.healing.append((x, y))
 
     # 0 : grass
     # 1 : murs
     # 2 : magma 
     # 3 : lilypad 
     # 4 : mud 
+    # 5 : healing 
 
     def read_csv(self, filename):
         map = []
@@ -155,17 +176,23 @@ class Game:
     def flip_display(self):
         """Affiche le jeu."""
 
-        GRASS=pygame.image.load('data/interface_graphique/Tiles/Tiles/seamless-64px-rpg-tiles-1.1.0/monsoongrass.png').convert_alpha()
+        GRASS=pygame.image.load('data/interface_graphique/Tiles/Tiles/seamless-64px-rpg-tiles-1.1.0/path2.png').convert_alpha()
         ROCK= pygame.image.load('data/interface_graphique/Tiles/Tiles/wall2.png').convert_alpha()
         MAGMA=pygame.image.load('data/interface_graphique/Tiles/Tiles/seamless-64px-rpg-tiles-1.1.0/cave magma.png').convert_alpha()
         LILYPAD=pygame.image.load('data/interface_graphique/Tiles/Tiles/seamless-64px-rpg-tiles-1.1.0/lilypad.png').convert_alpha()
         MUD=pygame.image.load('data/interface_graphique/Tiles/Tiles/seamless-64px-rpg-tiles-1.1.0/mud.png').convert_alpha()
+        HEALING=pygame.image.load('data/interface_graphique/Tiles/Tiles/healing.png').convert_alpha()
+
         # Affiche la grille
 
         # Affiche la grille de fond avec "GRASS"
-        for x in range(0, WIDTH, CELL_SIZE):
-            for y in range(0, HEIGHT, CELL_SIZE):
-                self.screen.blit(GRASS, (x, y))
+        for grass in self.grass:
+        # Calculer la position où afficher l'image
+            x = grass[0] * CELL_SIZE
+            y = grass[1] * CELL_SIZE
+
+        # Afficher l'image de mur à cette position
+            self.screen.blit(GRASS, (x, y))
 
         # Affiche la grille de fond avec "ROCK"
         for wall in self.walls:
@@ -202,6 +229,15 @@ class Game:
 
         # Afficher l'image de lilypad à cette position
             self.screen.blit(MUD, (x, y))
+
+        # Affiche la grille de fond avec "MUD"
+        for healing in self.healing:
+        # Calculer la position où afficher l'image
+            x = healing[0] * CELL_SIZE
+            y = healing[1] * CELL_SIZE
+
+        # Afficher l'image de lilypad à cette position
+            self.screen.blit(HEALING, (x, y))
 
         # Affiche les contours de la grille (optionnel si vous voulez une bordure blanche)
         for x in range(0, WIDTH, CELL_SIZE):
