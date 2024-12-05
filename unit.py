@@ -146,7 +146,7 @@ class Monster(Unit):
 
 class Archer(Unit):
     def __init__(self, x, y, team, texture_path, x_choiceButton, y_choiceButton):
-        super().__init__(x, y, health=44, attack_power=5, endurence_max=3, team=team, texture_path=texture_path, x_choiceButton=x_choiceButton, y_choiceButton=y_choiceButton)
+        super().__init__(x, y, health=9, attack_power=2, endurence_max=3, team=team, texture_path=texture_path, x_choiceButton=x_choiceButton, y_choiceButton=y_choiceButton)
 class Guerrier (Unit):
     def __init__(self, x, y, team, texture_path, x_choiceButton, y_choiceButton):
         super().__init__(x, y, health=44, attack_power=5, endurence_max=3, team=team, texture_path=texture_path, x_choiceButton=x_choiceButton, y_choiceButton=y_choiceButton)
@@ -160,8 +160,8 @@ Personnages = {
         
 }
 Enemy={
-       "Archer":  Archer(8,6,'enemy', 'data/Archer.png',4,2),
-       "Guerriere": Guerrier(9,6,'enemy','data/guerriere.jpg',1,2),
+       "Archer":  Archer(8,6,'enemy', 'data/Archer.png',3,3),
+       "Guerriere": Guerrier(9,6,'enemy','data/guerriere.jpg',6,3),
 
 
 }
