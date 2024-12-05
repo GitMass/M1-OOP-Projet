@@ -3,7 +3,13 @@ import random
 import copy
 
 from unit import *
-
+ 
+class Gamestate:
+    CHARACTER_SELECTION = "character_selection"
+    PLAYER_TURN = "player_turn"
+    ENEMY_TURN = "enemy_turn"
+    GAME_OVER = "game_over"
+    
 
 
 class Game:
@@ -34,6 +40,8 @@ class Game:
 
         self.player_units = []
         self.enemy_units =[]
+        self.state=Gamestate.CHARACTER_SELECTION
+        self.winner=None
 
         
     
@@ -171,7 +179,12 @@ class Game:
         #for enemy_unit in self.enemy_units:
           # enemy_unit.is_selected = True
           # self.flip_display()
-        
+
+        if not self.player_units:
+            self.state = Gamestate.GAME_OVER
+            self.winner = "Enemy"
+            return  # Arrête le tour si aucun joueur rest 
+    
         """IA très simple pour les ennemis."""
         for enemy in self.enemy_units:
 
@@ -190,7 +203,7 @@ class Game:
 
         # Fin du tour de l'unité ennemie
            # enemy_unit.is_selected = False
-            self.flip_display()
+        self.flip_display()
 
     def flip_display(self):
         """Affiche le jeu."""
@@ -203,7 +216,8 @@ class Game:
                 pygame.draw.rect(self.screen, WHITE, rect, 1)
 
 
-       
+    
+
         # Affiche les unités
         for unit in self.player_units + self.enemy_units:
             unit.draw(self.screen)
@@ -212,6 +226,74 @@ class Game:
         # Rafraîchit l'écran
         pygame.display.flip()
 
+
+
+    #Gestion de fin de jeu
+    def game_over(self):
+        
+        surface=pygame.Surface((300, 200))
+        surface.fill(WHITE )
+        font=pygame.font.Font(None, 60)
+        message=f"{self.winner} Wins!"
+        text=font.render(message, True, (WHITE))
+         
+
+
+        text_rect = text.get_rect(center=(WIDTH // 2, HEIGHT // 4))
+        self.screen.blit(text, text_rect)
+       
+        pygame.display.flip()
+        
+        while True:
+            for event in pygame.event.get():
+             if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+             #elif event.type == pygame.KEYDOWN:
+             #   if event.key == pygame.K_q:
+              #     pygame.quit()
+               #    exit()
+               # elif event.key == pygame.K_r:
+               #     return "restart"  # Renvoie "restart" pour relancer le jeu""""""""
+    
+    
+    def restart_game(self):
+        
+        self.state = Gamestate.CHARACTER_SELECTION
+        self.player_units = []
+        self.enemy_units = []
+        self.winner = None
+
+
+    def handle_gamestate(self):
+        if self.state == Gamestate.CHARACTER_SELECTION:
+            # Gérer la sélection des personnages
+            self.player_units = self.Characters_choice("Player")
+            self.enemy_units = self.Characters_choice_enemy("Enemy")
+            self.state = Gamestate.PLAYER_TURN
+
+        elif self.state == Gamestate.PLAYER_TURN:
+           self.handle_player_turn()
+           if len(self.enemy_units)==0:
+            self.winner="Player"
+            self.state=Gamestate.GAME_OVER
+           else:
+            self.state = Gamestate.ENEMY_TURN
+
+        elif self.state == Gamestate.ENEMY_TURN:
+            self.handle_enemy_turn()
+            if len( self.player_units)==0:
+                self.winner = "Enemy"
+                self.state = Gamestate.GAME_OVER
+            else:
+                self.state = Gamestate.PLAYER_TURN
+               
+
+       
+        elif self.state == Gamestate.GAME_OVER:
+           if self.game_over() == "restart":
+              self.restart_game()
+ 
 
 def main():
 
@@ -228,6 +310,7 @@ def main():
     game.enemy_units=game.Characters_choice_enemy("enemy")
    
 
+
     
 
 
@@ -236,6 +319,7 @@ def main():
     while True:
         game.handle_player_turn()
         game.handle_enemy_turn()
+        game.handle_gamestate()
 
 
 if __name__ == "__main__":
