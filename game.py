@@ -43,16 +43,30 @@ class Game:
         """
         self.screen = screen
         self.player_units = [
-            Unit(0, 0, 10, 2, 'player',skills=[
-                {'name': 'Fireball', 'damage': 5, 'range': 3},
-                {'name': 'Heal', 'heal': 4, 'cost': 2}]),
-            Unit(1, 0, 10, 2, 'player',skills=[{'name': 'Arrow Shot', 'damage': 3, 'range': 2}])]
+            Unit(0, 0, 10, 2, 'player', skills=[
+                {'name': 'Fireball', 'damage': 2, 'range': 2},
+                {'name': 'Dragon Blast', 'damage': 3, 'cost': 3},
+                {'name': 'Inferno', 'damage': 4, 'range': 4}  # Nouvelle compétence
+            ]),
+            Unit(1, 0, 10, 2, 'player', skills=[
+                {'name': 'Arrow Shot', 'damage': 1, 'range': 3},
+                {'name': 'Stun Arrow', 'damage': 2, 'range': 4, 'effect': 'stun'},
+                {'name': 'Double Shot', 'damage': 3, 'range': 5}
+            ])
+        ]
 
         self.enemy_units = [
-            Unit(6, 6, 8, 1, 'enemy',skills=[
-                {'name': 'Poison Attack', 'damage': 2, 'range': 1}]),
-            Unit(6, 7, 8, 1, 'enemy',skills=[
-                {'name': 'Berserk Slash', 'damage': 4, 'range': 1}])]
+            Unit(6, 6, 10, 2, 'enemy', skills=[
+                {'name': 'Poison Attack', 'damage': 2, 'range': 1},
+                {'name': 'Venom Spray', 'damage': 3, 'range': 2},
+                {'name': 'Bite', 'damage': 5, 'range': 1}
+            ]),
+            Unit(6, 7, 10, 2, 'enemy', skills=[
+                {'name': 'Roar', 'damage': 1, 'range': 3, 'effect': 'fear'},
+                {'name': 'Crush', 'damage': 3, 'range': 1},
+                {'name': 'Berserk Slash', 'damage': 4, 'range': 2}
+            ])
+        ]
         
         # Charger la carte des murs
         self.grass=[]
@@ -61,20 +75,20 @@ class Game:
         self.lilypads = []
         self.muds = []
         self.healing=[]
-        map_data = self.read_csv('data/interface_graphique/map1.csv')
+        map_data = self.read_csv('data/interface_graphique/map1.csv') # def read_csv(self,filename)
         for y, row in enumerate(map_data):
             for x, cell in enumerate(row):
-                if cell == '0':  # Si la valeur est '1', c'est un mur
+                if cell == '0':  # Si la valeur est '0', c'est un type de terrain
                     self.grass.append((x, y))
                 if cell == '1':  # Si la valeur est '1', c'est un mur
                     self.walls.append((x, y))
-                if cell == '2':  # Si la valeur est '1', c'est un mur
+                if cell == '2':  # Si la valeur est '2', c'est un magma
                     self.magmas.append((x, y))
-                if cell == '3':  # Si la valeur est '1', c'est un mur
+                if cell == '3':  # Si la valeur est '3', c'est un lilypad
                     self.lilypads.append((x, y))
-                if cell == '4':  # Si la valeur est '1', c'est un mur
+                if cell == '4':  # Si la valeur est '4', c'est un mud
                     self.muds.append((x, y))
-                if cell == '5':  # Si la valeur est '1', c'est un mur
+                if cell == '5':  # Si la valeur est '5', c'est une case healing
                     self.healing.append((x, y))
 
     # 0 : grass
@@ -86,8 +100,8 @@ class Game:
 
     def read_csv(self, filename):
         map = []
-        with open(os.path.join(filename), mode='r') as data:
-            data = csv.reader(data, delimiter=',')
+        with open(os.path.join(filename), mode='r') as data: # mode = 'r' :read 
+            data = csv.reader(data, delimiter=',') # une autre variable s'appelle 'data' qui prend data comme sa fonction / csv.reader : est utilisée pour lire des fichiers au format CSV (Comma-Separated Values, ou valeurs séparées par des virgules) et convertir leurs contenus en lignes faciles à manipuler.
             for row in data:
                 map.append(list(row))
         return map
@@ -105,15 +119,18 @@ class Game:
 
             # Tant que l'unité n'a pas terminé son tour
             has_acted = False
-            selected_unit.is_selected = True
-            self.flip_display()
-            while not has_acted:
+            selected_unit.is_selected = True # dans 'unit' on a initialisé self.is_selected = Non mais ici on met True pour dire que à chaque unité à laquelle on rentre, elle est sélectonnée automatiquement 
+            selected_skill=None
+            selected_target=None 
+            self.flip_display() # Appel de la méthode display
+            
+            while not has_acted: # Quand has_acted=True 
 
                 # Important: cette boucle permet de gérer les événements Pygame
                 for event in pygame.event.get():
 
                     # Gestion de la fermeture de la fenêtre
-                    if event.type == pygame.QUIT:
+                    if event.type == pygame.QUIT: # utilisé pour détecter lorsque l'utilisateur ferme la fenêtre du jeu (en cliquant sur le bouton "X" en haut de la fenêtre).
                         pygame.quit()
                         exit()
 
@@ -131,29 +148,76 @@ class Game:
                         elif event.key == pygame.K_DOWN:
                             dy = 1
 
-                        selected_unit.move(dx, dy,self)
+                        selected_unit.move(dx, dy,self) # appelle la méthode  def move(self, dx, dy,game) dans 'unit' de l'objet selected_unit. Cette méthode permet de déplacer une unité (selected_unit) dans une direction spécifique sur la grille du jeu.
                         self.flip_display()
 
-                        # Utiliser une compétence (par exemple, touche 'S' pour sélectionner une compétence)
-                        if event.key==pygame.K_s:
-                            # Exemple : utilisation de "Fireball" sur un ennemi proche
-                            for enemy in self.enemy_units:
-                                if abs(selected_unit.x-enemy.x)<=3 and abs(selected_unit.y-enemy.y)<=3:
-                                    selected_unit.use_skills('Fireball',enemy)
+                        # Sélection d'une compétence
+
+                        if selected_skill is None: # si on a pas encore sélectionné une compétence
+                            if event.key==pygame.K_1: # Touche 1 pour la première compétence 
+                                selected_skill=selected_unit.skills[0] # appeller la première case de l'élément de 'skills' de l'objet seleted_unit 
+                                self.highlight_skill_range(selected_unit,selected_skill) # Appeler la méthode 'highlight_skill_range'
+                            elif event.key==pygame.K_2: # Touche 1 pour la deuxière compétence
+                                if len(selected_skill)>1: # Vérifier si l'unité sélectionnée possède plus d'une compétence 
+                                    selected_skill=selected_unit.skills[1]
+                                    self.highlight_skill_range(selected_unit,selected_skill) # def highlight_skill_range(self,unit,skill):
+                            elif event.key == pygame.K_3:  # Touche 3 pour la troisième compétence
+                                if len(selected_unit.skills) > 2:
+                                    selected_skill = selected_unit.skills[2]
+                                    self.highlight_skill_range(selected_unit, selected_skill) 
+                        
+                        elif selected_skill:
+                            # Valider une compétence avec Entrée
+                            if event.key==pygame.K_RETURN:
+                                if selected_target: # si selected_target != None
+                                    selected_unit.use_skills(selected_skill['name'], selected_target) # appeller la méthode use_skills dans 'unit'  : use_skills(self,skill_name,target)
+                                    if selected_target.health<=0:
+                                        self.enemy_units.remove(selected_target)
                                     has_acted=True
-                                    selected_unit.is_selected=False
                                     break 
+                            #Annuler la sélection avec Backspace
+                            elif event.key==pygame.K_SPACE :
+                                selected_skill=None
+                                selected_target=None 
+                                self.flip_display()
+                            
+                        #Gestion de la sélection avec un clic de souris
+                    if event.type==pygame.MOUSEBUTTONDOWN and selected_skill:
+                        mouse_x,mouse_y=pygame.mouse.get_pos()
+                        target_x,target_y=mouse_x // CELL_SIZE ,mouse_y // CELL_SIZE
+                        for enemy in self.enemy_units:
+                            if enemy.x==target_x and enemy.y==target_y :
+                                if abs(selected_unit.x-enemy.x)<=selected_skill['range'] and abs(selected_unit.y-enemy.y)<=selected_skill['range']:
+                                    selected_target=enemy
+                                    print(f"Ennemi sélectionné : {enemy.team} à ({enemy.x},{enemy.y})")
+                                    self.highlight_selected_enemy(selected_target)  # Afficher l'indicateur visuel
+                                    break
 
-                        # Attaque (touche espace) met fin au tour
-                        if event.key == pygame.K_SPACE:
-                            for enemy in self.enemy_units:
-                                if abs(selected_unit.x - enemy.x) <= 1 and abs(selected_unit.y - enemy.y) <= 1:
-                                    selected_unit.attack(enemy)
-                                    if enemy.health <= 0:
-                                        self.enemy_units.remove(enemy)
 
-                            has_acted = True
-                            selected_unit.is_selected = False
+            selected_unit.is_selected=False # is_selected from unit 
+            self.check_end_game()
+    
+    def highlight_selected_enemy(self, enemy):
+        """Met en surbrillance l'ennemi sélectionné."""
+        rect = pygame.Rect(enemy.x * CELL_SIZE, enemy.y * CELL_SIZE, CELL_SIZE, CELL_SIZE) # Les 2 dermiers CELL_SIZE c'est la largeur et le longeur d'une unité
+        pygame.draw.rect(self.screen, (255, 0, 0), rect, 3)  # Dessiner un rectangle rouge : pygame.draw.rect(surface, color, rect, width=0)
+        pygame.display.flip()
+
+    def highlight_skill_range(self,unit,skill):
+        for dx in range (-skill['range'],skill['range']+1): # L'instruction skill['range'] fait référence à une valeur spécifique dans un dictionnaire nommé skill, où range est une clé.
+            for dy in range (-skill['range'],skill['range']+1):
+                target_x = unit.x + dx
+                target_y = unit.y + dy
+                if 0 <= target_x < GRID_SIZE and 0 <= target_y < GRID_SIZE:
+                    rect = pygame.Rect(target_x * CELL_SIZE, target_y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
+                    pygame.draw.rect(self.screen, (255, 255, 0, 128), rect, 3) # dessiner une grille de couleur jaune semi-transparent 
+        pygame.display.flip()
+
+    def check_end_game(self):
+        if not self.enemy_units:
+            print("Victoire ! Tous les ennemis ont été vaincus.")
+            pygame.quit()
+            exit()
 
     def handle_enemy_turn(self):
         """IA très simple pour les ennemis."""
