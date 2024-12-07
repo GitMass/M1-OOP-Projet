@@ -5,6 +5,8 @@ import copy
 from unit import *
 
 
+
+
 class Game:
     """
     Classe pour représenter le jeu.
@@ -32,18 +34,25 @@ class Game:
         self.screen = screen
 
         self.player_units = []
+        self.player2_units = []
         self.enemy_units = [Unit(6, 6, 8, 1, 2, 'enemy', None, 5, 5),
                             Unit(7, 6, 8, 1, 2, 'enemy', None, 7, 5)]
     
-    def Characters_choice(self,player):
+    def Characters_choice(self, player, NumberOfCharacters):
+        """
+        input :
+            - player : string : "player 1" or "player 2" or "computer"
+        output : 
+            append chosen list 
+        """
 
-        selected_units = self.player_units
-        while len(selected_units) < CHARACTER_PER_TEAM:
+        selected_units = []
+        while len(selected_units) < NumberOfCharacters:
             self.screen.fill(BLACK)
 
             # Afficher l'instruction de choix :
             font = pygame.font.Font(None, 36)
-            text = font.render(f"{player}: Choose your characters ({len(selected_units) + 1}/{CHARACTER_PER_TEAM})", True, WHITE)
+            text = font.render(f"{player}: Choose your characters ({len(selected_units) + 1}/{NumberOfCharacters})", True, WHITE)
             self.screen.blit(text, (int(WIDTH/5), 50))
 
             # Affiche les personnages disponibles :
@@ -63,8 +72,27 @@ class Game:
                     for key in Personnages:
                         if Personnages[key].button.collidepoint(mouse_pos):
                             selected_units.append(copy.copy(Personnages[key]))
-                            selected_units[-1].x = len(selected_units)-1
-                            selected_units[-1].y = 0
+
+        if player == "player 1":
+            self.player_units = selected_units
+            # position initiale des personnages :
+            for i in range(len(self.player_units)):
+                self.player_units[i].x = 0
+                self.player_units[i].y = 2 + i
+
+        elif player == "player 2":
+            self.player2_units = selected_units
+            # position initiale des personnages :
+            for i in range(len(self.player2_units)):
+                self.player2_units[i].x = GRID_SIZE_WIDTH - 1
+                self.player2_units[i].y = GRID_SIZE_HEIGHT - 3 - i
+        else :
+            self.enemy_units = selected_units
+            # position initiale des personnages :
+            for i in range(len(self.enemy_units)):
+                self.enemy_units[i].x = GRID_SIZE_WIDTH - 1
+                self.enemy_units[i].y = GRID_SIZE_HEIGHT - 3 - i
+        
         return selected_units
 
 
@@ -157,6 +185,63 @@ class Game:
         pygame.display.flip()
 
 
+    def Main_menu(self, GameName):
+        """
+        Affiche le menu principale
+        Output : 
+            - str : "1vC" pour jouer contre l'ordinateur, "1v1" pour jouer contre un autre utilisateur
+        """
+
+        # Charger l'image de fond
+        splash_menu_image = pygame.image.load("data\Screen_MainMenu.png")
+        splash_menu_image = pygame.transform.scale(splash_menu_image, (WIDTH,HEIGHT))
+
+        # Charger la musique de fond
+        pygame.mixer.music.load("data\Ost_MainMenu.mp3")
+        pygame.mixer.music.play(-1) # joue en boucle
+
+        # Texte du titre
+        title_font = pygame.font.Font(None, 72)
+        title_text = title_font.render(GameName, True, WHITE)
+
+        # Buttons 
+        button_font = pygame.font.Font(None, 36)
+        buttons = {
+            "Solo Deathmatch" : {"rect" : pygame.Rect(WIDTH//3, HEIGHT//2, WIDTH//3, 50), "mode": "1vC"},
+            "Multiplayer Deathmatch" : {"rect" : pygame.Rect(WIDTH//3, HEIGHT//2+70, WIDTH//3, 50), "mode" : "1v1"}
+        }
+
+        while True :
+            # affiche l'image de fond
+            self.screen.blit(splash_menu_image, (0,0))
+
+            # affiche le titre
+            self.screen.blit(title_text, (WIDTH//2 - title_text.get_width()//2, HEIGHT//4))
+
+            # affiche les bouttons
+            for text, info in buttons.items():
+                pygame.draw.rect(self.screen, WHITE, info["rect"], border_radius=5)
+                button_text = button_font.render(text, True, BLACK)
+                self.screen.blit(button_text, (info["rect"].x + (info["rect"].width-button_text.get_width())//2,
+                                               info["rect"].y + (info["rect"].height-button_text.get_height())//2))
+                
+            # rafraichir l'écran
+            pygame.display.flip()
+
+            # si la souris a été cliqué
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    exit()
+                elif (event.type == pygame.MOUSEBUTTONDOWN) and (event.button == 1) : # clic gauche
+                    mouse_pos = event.pos
+                    for info in buttons.values():
+                        if info["rect"].collidepoint(mouse_pos):
+                            pygame.mixer.music.stop() # Arréte la musique de fond
+                            return info["mode"]
+                    
+
+
 def main():
 
     # Initialisation de Pygame
@@ -164,18 +249,30 @@ def main():
 
     # Instanciation de la fenêtre
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
-    pygame.display.set_caption("Mon jeu de stratégie")
+    pygame.display.set_caption(GAME_TITLE)
 
     # Instanciation du jeu
     game = Game(screen)
-    game.player_units = game.Characters_choice("player")
 
+    # Menu principale
+    MenuChoice = game.Main_menu(GAME_TITLE)
 
+    # Choix des caractères
+    if MenuChoice == "1vC" :
+        game.Characters_choice("player 1", CHARACTER_PER_TEAM)
+        game.Characters_choice("computer", CHARACTER_PER_TEAM)
+    elif MenuChoice == "1v1" :
+        game.Characters_choice("player 1", CHARACTER_PER_TEAM)
+        game.Characters_choice("player 2", CHARACTER_PER_TEAM)
 
     # Boucle principale du jeu
-    while True:
-        game.handle_player_turn()
-        game.handle_enemy_turn()
+    if MenuChoice == "1vC" :
+        while True:
+            game.handle_player_turn()
+            game.handle_enemy_turn()
+    elif MenuChoice == "1v1" :
+        while True:
+            game.handle_player_turn()
 
 
 if __name__ == "__main__":

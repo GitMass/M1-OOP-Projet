@@ -3,10 +3,12 @@ import random
 import os
 
 # Constantes
-GRID_SIZE = 18
-CELL_SIZE = 40
-WIDTH = GRID_SIZE * CELL_SIZE
-HEIGHT = GRID_SIZE * CELL_SIZE
+GAME_TITLE = "Forest Gate"
+CELL_SIZE = 30
+GRID_SIZE_WIDTH = (1080//CELL_SIZE)-2
+GRID_SIZE_HEIGHT = int(GRID_SIZE_WIDTH*(9/16))
+WIDTH = GRID_SIZE_WIDTH * CELL_SIZE
+HEIGHT = GRID_SIZE_HEIGHT * CELL_SIZE
 FPS = 30
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
@@ -85,7 +87,7 @@ class Unit:
 
     def move(self, dx, dy):
         """Déplace l'unité de dx, dy."""
-        if 0 <= self.x + dx < GRID_SIZE and 0 <= self.y + dy < GRID_SIZE:
+        if 0 <= self.x + dx < GRID_SIZE_WIDTH and 0 <= self.y + dy < GRID_SIZE_HEIGHT:
             self.x += dx
             self.y += dy
 
