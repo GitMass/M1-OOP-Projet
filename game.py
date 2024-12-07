@@ -51,6 +51,17 @@ class Game:
         self.lilypads = []
         self.muds = []
         self.healing=[]
+
+        # Sound effects
+        pygame.mixer.init()
+        self.current_sound = None
+        self.sounds = {
+            'magma': pygame.mixer.Sound('data/map_sound_effects/fire.wav'),
+            'mud': pygame.mixer.Sound('data/map_sound_effects/mud.wav'),
+            'lilypad': pygame.mixer.Sound('data/map_sound_effects/water-splash.wav'),
+            'healing': pygame.mixer.Sound('data/map_sound_effects/heal-up.wav'),
+            'footstep': pygame.mixer.Sound('data/map_sound_effects/footstep.wav'),
+        }
     
 
 
@@ -340,7 +351,7 @@ class Game:
                                 dy = 1
                                 endurence = endurence - 1
 
-                        selected_unit.move(dx, dy)
+                        selected_unit.move(dx, dy, self)
                         self.draw_map_units()
 
                         # Attaque (touche espace) met fin au tour
@@ -362,7 +373,7 @@ class Game:
             target = random.choice(self.player_units)
             dx = 1 if enemy.x < target.x else -1 if enemy.x > target.x else 0
             dy = 1 if enemy.y < target.y else -1 if enemy.y > target.y else 0
-            enemy.move(dx, dy)
+            enemy.move(dx, dy, self)
 
             # Attaque si possible
             if abs(enemy.x - target.x) <= 1 and abs(enemy.y - target.y) <= 1:
