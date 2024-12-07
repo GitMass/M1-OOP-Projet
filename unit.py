@@ -4,9 +4,9 @@ import os
 
 # Constantes
 GAME_TITLE = "Forest Gate"
-CELL_SIZE = 30
-GRID_SIZE_WIDTH = (1080//CELL_SIZE)-2
-GRID_SIZE_HEIGHT = int(GRID_SIZE_WIDTH*(9/16))
+CELL_SIZE = 40
+GRID_SIZE_WIDTH = 30 # (1400//CELL_SIZE) - 1
+GRID_SIZE_HEIGHT = 16 # int(GRID_SIZE_WIDTH*(9/16))
 WIDTH = GRID_SIZE_WIDTH * CELL_SIZE
 HEIGHT = GRID_SIZE_HEIGHT * CELL_SIZE
 FPS = 30
@@ -15,7 +15,7 @@ BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 BLUE = (0, 0, 255)
 GREEN = (0, 255, 0)
-CHARACTER_PER_TEAM = 5
+CHARACTER_PER_TEAM = 2
 
 
 class Unit:
@@ -70,7 +70,7 @@ class Unit:
         self.health = health
         self.attack_power = attack_power
         self.endurence_max = endurence_max
-        self.team = team  # 'player1' , 'player2' ou 'enemy'
+        self.team = team  # 'player 1' , 'player 2' ou 'enemy'
         self.is_selected = False
         self.x_choiceButton = x_choiceButton
         self.y_choiceButton = y_choiceButton
