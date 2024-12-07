@@ -139,8 +139,8 @@ class Monster(Unit):
 
 # Création des personnages :
 Personnages = {
-        "Yennefer": Sorceress(2, 0, 'player', 'data/yennefer.png', 3, 3),
-        "Sekiro": Swordsman(3, 0, 'player', 'data/sekiro.png', 6, 3),
+        "Yennefer": Sorceress(2, 0, 'player', 'data/characters/yennefer.png', 3, 3),
+        "Sekiro": Swordsman(3, 0, 'player', 'data/characters/samurai.png', 6, 3),
     }
 
 

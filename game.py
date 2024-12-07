@@ -103,23 +103,23 @@ class Game:
         self.screen.fill(BLACK)
 
         # charger les textures de la map
-        GRASS=pygame.image.load('data/interface_graphique/Tiles/Tiles/seamless-64px-rpg-tiles-1.1.0/path2.png').convert_alpha()
-        WALL= pygame.image.load('data/interface_graphique/Tiles/Tiles/wall2.png').convert_alpha()
-        MAGMA=pygame.image.load('data/interface_graphique/Tiles/Tiles/seamless-64px-rpg-tiles-1.1.0/cave magma.png').convert_alpha()
-        LILYPAD=pygame.image.load('data/interface_graphique/Tiles/Tiles/seamless-64px-rpg-tiles-1.1.0/lilypad.png').convert_alpha()
-        MUD=pygame.image.load('data/interface_graphique/Tiles/Tiles/seamless-64px-rpg-tiles-1.1.0/mud.png').convert_alpha()
-        HEALING=pygame.image.load('data/interface_graphique/Tiles/Tiles/healing.png').convert_alpha()
+        GRASS=pygame.image.load('data/tiles/grass.png').convert_alpha()
+        WALL= pygame.image.load('data/tiles/wall.png').convert_alpha()
+        MAGMA=pygame.image.load('data/tiles/magma.png').convert_alpha()
+        WATER=pygame.image.load('data/tiles/water.png').convert_alpha()
+        MUD=pygame.image.load('data/tiles/mud.png').convert_alpha()
+        APPLE_TREE=pygame.image.load('data/tiles/apple_tree.png').convert_alpha()
 
         # Redimensionner les textures
         GRASS = pygame.transform.scale(GRASS, (CELL_SIZE, CELL_SIZE))
         WALL = pygame.transform.scale(WALL, (CELL_SIZE, CELL_SIZE))
         MAGMA = pygame.transform.scale(MAGMA, (CELL_SIZE, CELL_SIZE))
-        LILYPAD = pygame.transform.scale(LILYPAD, (CELL_SIZE, CELL_SIZE))
+        WATER = pygame.transform.scale(WATER, (CELL_SIZE, CELL_SIZE))
         MUD = pygame.transform.scale(MUD, (CELL_SIZE, CELL_SIZE))
-        HEALING = pygame.transform.scale(HEALING, (CELL_SIZE, CELL_SIZE))
+        APPLE_TREE = pygame.transform.scale(APPLE_TREE, (CELL_SIZE, CELL_SIZE))
 
         # charger la map du csv
-        self.read_map_from_csv('data/interface_graphique/map2.csv')
+        self.read_map_from_csv('data/maps/map2.csv')
 
         # Affiche les blocs : "GRASS"
         for grass in self.grass:    
@@ -143,7 +143,7 @@ class Game:
         for lilypad in self.lilypads:
             x = lilypad[0] * CELL_SIZE
             y = lilypad[1] * CELL_SIZE
-            self.screen.blit(LILYPAD, (x, y))
+            self.screen.blit(WATER, (x, y))
 
         # Affiche les blocs : "MUD"
         for mud in self.muds:
@@ -155,7 +155,7 @@ class Game:
         for healing in self.healing:
             x = healing[0] * CELL_SIZE
             y = healing[1] * CELL_SIZE
-            self.screen.blit(HEALING, (x, y))        
+            self.screen.blit(APPLE_TREE, (x, y))        
 
         if ShowGrille == True :
             # Affiche les contours de la grille (optionnel si vous voulez une bordure blanche)
@@ -183,11 +183,11 @@ class Game:
         """
 
         # Charger l'image de fond
-        splash_menu_image = pygame.image.load("data\Screen_MainMenu.png")
+        splash_menu_image = pygame.image.load("data\splash_images\menu_image.png")
         splash_menu_image = pygame.transform.scale(splash_menu_image, (WIDTH,HEIGHT))
 
         # Charger la musique de fond
-        pygame.mixer.music.load("data\Ost_MainMenu.mp3")
+        pygame.mixer.music.load("data\musics\Ost_MainMenu.mp3")
         pygame.mixer.music.play(-1) # joue en boucle
 
         # Texte du titre
