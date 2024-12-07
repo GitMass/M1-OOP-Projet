@@ -1,3 +1,4 @@
+
 import pygame
 import random
 import copy
@@ -42,6 +43,7 @@ class Game:
         self.enemy_units =[]
         self.state=Gamestate.CHARACTER_SELECTION
         self.winner=None
+        
 
         
     
@@ -230,17 +232,28 @@ class Game:
 
     #Gestion de fin de jeu
     def game_over(self):
+        #Afficher l'image de game over 
+        game_over_image=pygame.image.load('data/game_over.jpg')
+        resized_width = 300  # Largeur 
+        resized_height = 200  # Hauteur 
+        game_over_image = pygame.transform.scale(game_over_image, (resized_width, resized_height))
+        game_over_sound = pygame.mixer.Sound("data/game_over_sound.wav")
+        game_over_sound.play()
         
-        surface=pygame.Surface((300, 200))
-        surface.fill(WHITE )
-        font=pygame.font.Font(None, 60)
-        message=f"{self.winner} Wins!"
-        text=font.render(message, True, (WHITE))
-         
+        # Calculer la position pour centrer l'image
+        image_x = (WIDTH - resized_width) // 2
+        image_y = (HEIGHT - resized_height) // 2
+    
+         # Afficher l'image centrée
+        self.screen.blit(game_over_image, (image_x, image_y))
+        # Affichage de message au dessous de l'image 
+        font = pygame.font.Font(None, 74)
+        winner_text = font.render(f"{self.winner} Wins!", True, WHITE)
+        text_x = (WIDTH - winner_text.get_width()) // 2
+        text_y = image_y + resized_height + 20  # Affiche le texte juste en dessous de l'image
+        self. screen.blit(winner_text, (text_x, text_y))
 
-
-        text_rect = text.get_rect(center=(WIDTH // 2, HEIGHT // 4))
-        self.screen.blit(text, text_rect)
+        
        
         pygame.display.flip()
         
@@ -249,12 +262,6 @@ class Game:
              if event.type == pygame.QUIT:
                 pygame.quit()
                 exit()
-             #elif event.type == pygame.KEYDOWN:
-             #   if event.key == pygame.K_q:
-              #     pygame.quit()
-               #    exit()
-               # elif event.key == pygame.K_r:
-               #     return "restart"  # Renvoie "restart" pour relancer le jeu""""""""
     
     
     def restart_game(self):
@@ -293,7 +300,7 @@ class Game:
         elif self.state == Gamestate.GAME_OVER:
            if self.game_over() == "restart":
               self.restart_game()
- 
+
 
 def main():
 
@@ -317,8 +324,8 @@ def main():
 
     # Boucle principale du jeu
     while True:
-        game.handle_player_turn()
-        game.handle_enemy_turn()
+        #game.handle_player_turn()
+        #game.handle_enemy_turn()
         game.handle_gamestate()
 
 
