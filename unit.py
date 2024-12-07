@@ -86,6 +86,8 @@ class Unit:
                 print(f"{texture_path} not found")
                 self.texture = None
 
+       
+
     
     
     def move(self, dx, dy):
@@ -112,21 +114,25 @@ class Unit:
             pygame.draw.rect(screen, GREEN, (self.x * CELL_SIZE,
             self.y * CELL_SIZE, CELL_SIZE, CELL_SIZE),width=3)
    
-
+    
 
     def choiceButton_draw(self, screen):
         if self.texture:
-            # Affiche la texture a l'interieur du rectangle :
+            #Affiche la texture a l'interieur du rectangle :
             self.button = pygame.Rect(self.x_choiceButton*CELL_SIZE, self.y_choiceButton*CELL_SIZE, CELL_SIZE, CELL_SIZE)
             screen.blit(self.texture, (self.button.x,self.button.y))
             pygame.draw.rect(screen, WHITE, self.button, 2)
-
-            # Affiche le nom du personnage :
-            font = pygame.font.Font(None, 16)
-            text = font.render(f"{str(self)} : {str(self.__class__.__name__)}", True, WHITE)
-            #screen.blit(text, (self.button.x, self.button.y+int(CELL_SIZE*1.5)))
-
-                                         
+           
+            # Affiche le nom et les caractéristiques du personnage
+            font = pygame.font.Font(None, 20)  # Police de taille 20
+            name_text = font.render(f"{self.__class__.__name__}", True, WHITE)  # Nom du personnage
+            health_text = font.render(f"HP: {self.health}", True, WHITE)  # Santé
+            attack_text = font.render(f"AP: {self.attack_power}", True, WHITE)  # Attaque
+            endurence_max_text = font.render(f"EN_MAX: {self.endurence_max }", True, WHITE)
+            screen.blit(name_text, (self.button.x, self.button.y + CELL_SIZE + 5))
+            screen.blit(health_text, (self.button.x, self.button.y + CELL_SIZE + 20))
+            screen.blit(attack_text, (self.button.x , self.button.y + CELL_SIZE + 35))  
+            screen.blit(endurence_max_text, (self.button.x , self.button.y + CELL_SIZE + 50))              
               
   
 
