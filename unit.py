@@ -17,6 +17,7 @@ BLUE = (0, 0, 255)
 GREEN = (0, 255, 0)
 GREY= (128,128,128)
 ORANGE=(255,178,102)
+YELLOW = (255, 255, 0)
 CHARACTER_PER_TEAM = 2
 
 
@@ -94,6 +95,11 @@ class Unit:
         new_x = self.x + dx
         new_y = self.y + dy
         if 0 <= new_x < GRID_SIZE_WIDTH and 0 <= new_y < GRID_SIZE_HEIGHT and not game.is_wall(new_x, new_y):
+            # Verifie si il ya pas d'autre unité dans la cellule
+            for unit in game.player_units + game.player2_units + game.enemy_units:
+                if unit.x == new_x and unit.y == new_y:
+                    return  
+
             if hasattr(game, 'current_sound') and game.current_sound:  # Vérifie l'existence de current_sound
                 game.current_sound.stop()
                 
@@ -101,24 +107,24 @@ class Unit:
             self.x = new_x
             self.y = new_y
 
-        # Détection du type de terrain
-        if (self.x, self.y) in game.magmas:
-            game.current_sound=game.sounds['magma']
-            game.current_sound.play()
-        elif (self.x, self.y) in game.muds:
-            game.current_sound=game.sounds['mud']
-            game.current_sound.play()
-        elif (self.x, self.y) in game.lilypads:
-            game.current_sound=game.sounds['lilypad']
-            game.current_sound.play()
-        elif (self.x, self.y) in game.healing:
-            game.current_sound=game.sounds['healing']
-            game.current_sound.play()
-        elif (self.x, self.y) in game.grass:
-            game.current_sound=game.sounds['footstep']
-            game.current_sound.play()
-        else:
-            game.current_sound=None # Aucun son à jouer 
+            # Détection du type de terrain
+            if (self.x, self.y) in game.magmas:
+                game.current_sound=game.sounds['magma']
+                game.current_sound.play()
+            elif (self.x, self.y) in game.muds:
+                game.current_sound=game.sounds['mud']
+                game.current_sound.play()
+            elif (self.x, self.y) in game.lilypads:
+                game.current_sound=game.sounds['lilypad']
+                game.current_sound.play()
+            elif (self.x, self.y) in game.healing:
+                game.current_sound=game.sounds['healing']
+                game.current_sound.play()
+            elif (self.x, self.y) in game.grass:
+                game.current_sound=game.sounds['footstep']
+                game.current_sound.play()
+            else:
+                game.current_sound=None # Aucun son à jouer 
 
     def attack(self, target):
         """Attaque une unité cible."""
@@ -138,6 +144,17 @@ class Unit:
                                 self.y * CELL_SIZE, CELL_SIZE, CELL_SIZE))
             pygame.draw.circle(screen, color, (self.x * CELL_SIZE + CELL_SIZE //
                             2, self.y * CELL_SIZE + CELL_SIZE // 2), CELL_SIZE // 3)  
+            
+        # Affiche les contours pour designer l'equipe
+        border_color = (0, 0, 255) if self.team == "player 1" else (0, 255, 0) if self.team == "player 2" else (255, 0, 0)
+        pygame.draw.rect(screen, border_color, (self.x * CELL_SIZE, self.y * CELL_SIZE, CELL_SIZE, CELL_SIZE), 2)
+
+        # If selected, draw a small yellow dot in the bottom-right corner of the cell
+        if self.is_selected:
+            dot_radius = 4  # Adjust radius as needed
+            dot_x = self.x * CELL_SIZE + CELL_SIZE - dot_radius - 2
+            dot_y = self.y * CELL_SIZE + CELL_SIZE - dot_radius - 2
+            pygame.draw.circle(screen, YELLOW, (dot_x, dot_y), dot_radius)
 
         # Affiche la barre de vie
         bar_width = CELL_SIZE - 4

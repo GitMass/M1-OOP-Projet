@@ -314,6 +314,9 @@ class Game:
     # Handle turns
     def handle_player_turn(self):
         """Tour du joueur"""
+        if len(self.player_units) == 0 :
+            self.game_end("player 1")
+
         for selected_unit in self.player_units:
 
             # Tant que l'unité n'a pas terminé son tour
@@ -321,9 +324,9 @@ class Game:
             selected_unit.is_selected = True
             endurence = selected_unit.endurence_max
             self.draw_map_units()
+
             while not has_acted:
                 
-
                 # Important: cette boucle permet de gérer les événements Pygame
                 for event in pygame.event.get():
 
@@ -370,6 +373,10 @@ class Game:
 
     def handle_enemy_turn(self):
         """IA très simple pour les ennemis."""
+
+        if len(self.enemy_units) == 0 :
+            self.game_end("enemy")
+
         for enemy in self.enemy_units:
 
             # Déplacement aléatoire
@@ -383,6 +390,105 @@ class Game:
                 enemy.attack(target)
                 if target.health <= 0:
                     self.player_units.remove(target)
+
+
+
+    
+    # ecran de fin de jeu
+    def game_end(self, loser):
+        """
+        Displays the end game screen with the loser's message.
+
+        Parameters:
+        loser (str): The team that survived or was decimated.
+        """
+        # Stop background music
+        pygame.mixer.music.stop()
+
+        # Set the end game message
+        if loser == "player 1":
+            title = "GAME OVER"
+            message = "Player 1 was Decimated..."
+        elif loser == "player 2":
+            title = "GAME OVER"
+            message = "Player 1 Defeated player 2 !"
+        elif loser == "enemy":
+            title = "GAME WIN"
+            message = "Player 1 Survived !"
+
+        # Font settings
+        title_font = pygame.font.Font(None, 72)
+        message_font = pygame.font.Font(None, 36)
+
+        # Button settings
+        button_font = pygame.font.Font(None, 36)
+        button_text = "Go to Title Screen"
+        button_rect = pygame.Rect(WIDTH // 3, HEIGHT // 2 + 100, WIDTH // 3, 50)
+
+        while True:
+            # Fill the screen with a background color
+            self.screen.fill(BLACK)
+
+            # Render the end game message
+            title_text = title_font.render(title, True, WHITE)
+            message_text = message_font.render(message, True, WHITE)
+
+            self.screen.blit(title_text, (WIDTH // 2 - title_text.get_width() // 2, HEIGHT // 4))
+            self.screen.blit(message_text, (WIDTH // 2 - message_text.get_width() // 2, HEIGHT // 2 - 50))
+
+            # Draw the "Go to Title Screen" button
+            pygame.draw.rect(self.screen, WHITE, button_rect, border_radius=5)
+            button_text_render = button_font.render(button_text, True, BLACK)
+            self.screen.blit(button_text_render, (
+                button_rect.x + (button_rect.width - button_text_render.get_width()) // 2,
+                button_rect.y + (button_rect.height - button_text_render.get_height()) // 2
+            ))
+
+            # Update the display
+            pygame.display.flip()
+
+            # Handle events
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    exit()
+                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:  # Left mouse button
+                    if button_rect.collidepoint(event.pos):
+                        self.lunch_game()  # Go to title screen
+                        return
+                    
+
+
+
+    # Pipeline complete du jeu
+    def lunch_game(self):
+        """
+        Restarts the game by returning to the title screen.
+        """
+        # Clear the current game state
+        self.player_units = []
+        self.player2_units = []
+        self.enemy_units = []
+
+        # Return to the main menu
+        MenuChoice = self.Main_menu(GAME_TITLE)
+
+        # Reinitialize the game based on the menu choice
+        if MenuChoice == "PvE":
+            self.Characters_choice("player 1", CHARACTER_PER_TEAM)
+            self.Characters_choice("enemy", CHARACTER_PER_TEAM)
+        elif MenuChoice == "PvP":
+            self.Characters_choice("player 1", CHARACTER_PER_TEAM)
+            self.Characters_choice("player 2", CHARACTER_PER_TEAM)
+
+        # Start the game loop again
+        if MenuChoice == "PvE":
+            while True:
+                self.handle_player_turn()
+                self.handle_enemy_turn()
+        elif MenuChoice == "PvP":
+            while True:
+                self.handle_player_turn()
                     
 
 
@@ -404,25 +510,8 @@ def main():
     # Instanciation du jeu
     game = Game(screen)
 
-    # Menu principale
-    MenuChoice = game.Main_menu(GAME_TITLE)
-
-    # Choix des caractères
-    if MenuChoice == "PvE" :
-        game.Characters_choice("player 1", CHARACTER_PER_TEAM)
-        game.Characters_choice("enemy", CHARACTER_PER_TEAM)
-    elif MenuChoice == "PvP" :
-        game.Characters_choice("player 1", CHARACTER_PER_TEAM)
-        game.Characters_choice("player 2", CHARACTER_PER_TEAM)
-
-    # Boucle principale du jeu
-    if MenuChoice == "PvE" :
-        while True:
-            game.handle_player_turn()
-            game.handle_enemy_turn()
-    elif MenuChoice == "PvP" :
-        while True:
-            game.handle_player_turn()
+    # Lancer le jeu
+    game.lunch_game()
 
 
 if __name__ == "__main__":
