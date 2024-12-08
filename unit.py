@@ -1,6 +1,8 @@
 import pygame
 import random
 import os
+import copy
+import csv
 
 # Constantes
 GAME_TITLE = "Forest Gate"
@@ -78,6 +80,7 @@ class Unit:
         self.is_selected = False
         self.x_choiceButton = x_choiceButton
         self.y_choiceButton = y_choiceButton
+        self.skills = []
 
         # Ajouter la texture
         self.texture = None
@@ -189,6 +192,11 @@ class Unit:
             font = pygame.font.Font(None, 16)
             text = font.render(f"{str(self)} : {str(self.__class__.__name__)}", True, WHITE)
             # screen.blit(text, (self.button.x, self.button.y+int(CELL_SIZE*1.5)))
+
+    
+    def Unit_target_button(self):
+        return pygame.Rect(self.x*CELL_SIZE, self.y*CELL_SIZE, CELL_SIZE, CELL_SIZE)
+
                                          
 
 
@@ -200,16 +208,86 @@ class Sorceress(Unit):
 class Swordsman(Unit):
     def __init__(self, x, y, team, texture_path, x_choiceButton, y_choiceButton):
         super().__init__(x, y, health=22, attack_power=3, endurence_max=6, team=team, texture_path=texture_path, x_choiceButton=x_choiceButton, y_choiceButton=y_choiceButton)
+        self.skills.append(Ichimonji_Skill())
 
 class Monster(Unit):
     def __init__(self, x, y, team, texture_path, x_choiceButton, y_choiceButton):
         super().__init__(x, y, health=28, attack_power=2, endurence_max=4, team=team, texture_path=texture_path, x_choiceButton=x_choiceButton, y_choiceButton=y_choiceButton)
 
 
+# Definition des compétances :
+class Ichimonji_Skill:
+    def __init__(self):
+        self.name = "Ichimonji"
+        self.damage = 10
+        self.range = 1
+        self.sound_effect = "data/skills/ichimonji.mp3"
+        self.animation_frames = ["data/skills/ichimonji.png"]
+
+    def use_skill(self, owner_unit, game):
+        target = None  # Initialize the target
+        self.used = False
+
+        # Allow up to 3 attempts to select a valid target
+        while self.used == False :
+            for event in pygame.event.get():
+
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    exit()
+                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:  # Left click
+                    mouse_pos = event.pos
+
+                    # Check all potential targets
+                    for potential_target in game.player_units + game.player2_units + game.enemy_units:
+                        if (potential_target.Unit_target_button().collidepoint(mouse_pos) and
+                                owner_unit.team != potential_target.team and
+                                (abs(owner_unit.x - potential_target.x) <= self.range and abs(owner_unit.y - potential_target.y) <= self.range)):
+                            # validate target
+                            target = potential_target
+
+                            # Apply skill effects to the target
+                            target.health -= self.damage
+
+                            # Play the sound effect
+                            if self.sound_effect:
+                                sound = pygame.mixer.Sound(self.sound_effect)
+                                sound.play()
+
+                            # Play the animation
+                            for frame in self.animation_frames:
+                                animation_image = pygame.image.load(frame).convert_alpha()
+                                animation_image = pygame.transform.scale(animation_image, (CELL_SIZE, CELL_SIZE))
+                                game.screen.blit(animation_image, (target.x * CELL_SIZE, target.y * CELL_SIZE))
+                                pygame.display.flip()
+                                pygame.time.delay(100)  # Delay between frames
+
+                            if target.team == "player 1" and target.health<=0 :
+                                        game.player_units.remove(target)
+                            elif target.team == "player 2" and target.health<=0 :
+                                        game.player2_units.remove(target)
+                            elif target.team == "enemy" and target.health<=0 :
+                                        game.enemy_units.remove(target)
+
+                            self.used = True
+                            break
+                
+                # Gestion des touches du clavier
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_SPACE :
+                        print("No valid target selected. Skill canceled.")
+                        self.used = True
+
+        
+
+
+        
+
+
 # Création des personnages :
 Personnages = {
         "Yennefer": Sorceress(2, 0, 'player', 'data/characters/yennefer.png', 3, 3),
-        "Sekiro": Swordsman(3, 0, 'player', 'data/characters/samurai.png', 6, 3),
+        "Samurai": Swordsman(3, 0, 'player', 'data/characters/samurai.png', 6, 3),
     }
 
 

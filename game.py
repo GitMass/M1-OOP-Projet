@@ -1,8 +1,3 @@
-import pygame
-import random
-import copy
-import csv
-
 from unit import *
 
 
@@ -43,6 +38,9 @@ class Game:
         self.player_units = []
         self.player2_units = []
         self.enemy_units = []
+
+        # game mode
+        self.GameMode = ""
 
         # map
         self.grass=[]
@@ -242,6 +240,7 @@ class Game:
                     for info in buttons.values():
                         if info["rect"].collidepoint(mouse_pos):
                             pygame.mixer.music.stop() # Arréte la musique de fond
+                            self.GameMode = info["mode"]
                             return info["mode"]
 
 
@@ -314,8 +313,6 @@ class Game:
     # Handle turns
     def handle_player_turn(self):
         """Tour du joueur"""
-        if len(self.player_units) == 0 :
-            self.game_end("player 1")
 
         for selected_unit in self.player_units:
 
@@ -360,6 +357,17 @@ class Game:
                         selected_unit.move(dx, dy, self)
                         self.draw_map_units()
 
+                        # Use skill 1 (key 1)
+                        if event.key == pygame.K_1:
+                            if len(selected_unit.skills) > 0:
+                                skill = selected_unit.skills[0]
+                                skill.use_skill(selected_unit, self)
+                                has_acted = True
+                                selected_unit.is_selected = False
+                                self.draw_map_units()
+                            else:
+                                print(f"{selected_unit.__class__.__name__} has no skill 1.")
+
                         # Attaque (touche espace) met fin au tour
                         if event.key == pygame.K_SPACE:
                             for enemy in self.enemy_units:
@@ -370,12 +378,16 @@ class Game:
 
                             has_acted = True
                             selected_unit.is_selected = False
+            
+        if self.GameMode == "PvE" :
+            if len(self.enemy_units) == 0 :
+                self.game_end("enemy")
+        elif self.GameMode == "PvP" :
+            if len(self.player2_units) == 0 :
+                self.game_end("player 2")
 
     def handle_enemy_turn(self):
         """IA très simple pour les ennemis."""
-
-        if len(self.enemy_units) == 0 :
-            self.game_end("enemy")
 
         for enemy in self.enemy_units:
 
@@ -390,6 +402,9 @@ class Game:
                 enemy.attack(target)
                 if target.health <= 0:
                     self.player_units.remove(target)
+
+        if len(self.player_units) == 0 :
+            self.game_end("player 1")
 
 
 
