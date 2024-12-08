@@ -11,6 +11,27 @@ class Gamestate:
     ENEMY_TURN = "enemy_turn"
     GAME_OVER = "game_over"
     
+class GameObject:
+    def __init__(self, x, y, obj_type):
+        self.x = x
+        self.y = y
+        self.type = obj_type
+
+        self.images= {
+            "potion": pygame.image.load("data/potion.jpg"),  
+            "poison": pygame.image.load("data/poison.png"),    
+            "bonus": pygame.image.load("data/energy.png")    
+        }
+        self.images={key: pygame.transform.scale(img, (CELL_SIZE, CELL_SIZE)) 
+                       for key, img in self.images.items()}
+        
+    
+
+    def draw(self, screen):
+       image = self.images.get(self.type)
+       if image:
+            screen.blit(image, (self.x * CELL_SIZE, self.y * CELL_SIZE))
+    
 
 
 class Game:
@@ -43,6 +64,8 @@ class Game:
         self.enemy_units =[]
         self.state=Gamestate.CHARACTER_SELECTION
         self.winner=None
+        self.objects = [] 
+        self.spawn_objects()
         
 
         
@@ -108,8 +131,8 @@ class Game:
                     for key in Enemy:
                         if Enemy [key].button.collidepoint(mouse_pos):
                             selected_units.append(copy.copy(Enemy[key]))
-                            selected_units[-1].x = len(selected_units)-1
-                            selected_units[-1].y = 6
+                            selected_units[-1].x = len(selected_units)-1 
+                            selected_units[-1].y = 17
         return selected_units
  
     """def Characters_choice_enemy(self):
@@ -163,7 +186,9 @@ class Game:
                                 endurence = endurence - 1
 
                         selected_unit.move(dx, dy)
+                        self.handle_object_collection(selected_unit)  # Vérifie la collecte
                         self.flip_display()
+                        
 
                         # Attaque (touche espace) met fin au tour
                         if event.key == pygame.K_SPACE:
@@ -175,7 +200,7 @@ class Game:
 
                             has_acted = True
                             selected_unit.is_selected = False
-
+            
 
     def handle_enemy_turn(self):
         #for enemy_unit in self.enemy_units:
@@ -196,6 +221,8 @@ class Game:
             dy = 1 if enemy.y < target.y else -1 if enemy.y > target.y else 0
             enemy.move(dx, dy)
 
+            self.handle_object_collection(enemy)  # Vérifie la collecte
+            self.flip_display()
             # Attaque si possible
             if abs(enemy.x - target.x) <= 1 and abs(enemy.y - target.y) <= 1:
                 enemy.attack(target)
@@ -205,7 +232,36 @@ class Game:
 
         # Fin du tour de l'unité ennemie
            # enemy_unit.is_selected = False
-        self.flip_display()
+        self.flip_display() 
+
+                   
+    def spawn_objects(self):
+        """Place des objets aléatoires sur la carte."""
+      
+        for _ in range(5):  # Nombre d'objets à placer
+           x = random.randint(0, WIDTH // CELL_SIZE - 1)  # Position aléatoire en X
+           y = random.randint(0, HEIGHT // CELL_SIZE - 1)  # Position aléatoire en Y
+           obj_type = random.choice(["potion", "poison", "bonus"])  # Type aléatoire
+           self.objects.append(GameObject(x, y, obj_type))
+
+
+    def handle_object_collection(self, unit):
+        for obj in self.objects:
+            if unit.x == obj.x and unit.y == obj.y:
+                if obj.type == "potion":
+                    unit.health = unit.health + 20
+                    sound=pygame.mixer.Sound("data/potion-drink.wav")
+                    sound.play()
+                elif obj.type == "poison":
+                    unit.health -= 10
+                    sound=pygame.mixer.Sound("data/poison-effect.wav")
+                    sound.play()
+                elif obj.type == "bonus":
+                    unit.attack_power += 5
+                    sound= pygame.mixer.Sound("data/energy.wav")
+                    sound.play()
+                self.objects.remove(obj)
+
 
     def flip_display(self):
         """Affiche le jeu."""
@@ -218,7 +274,8 @@ class Game:
                 pygame.draw.rect(self.screen, WHITE, rect, 1)
 
 
-    
+        for obj in self.objects:
+            obj.draw(self.screen)
 
         # Affiche les unités
         for unit in self.player_units + self.enemy_units:
@@ -269,6 +326,8 @@ class Game:
         self.state = Gamestate.CHARACTER_SELECTION
         self.player_units = []
         self.enemy_units = []
+        self.objects = []
+        self.spawn_objects()
         self.winner = None
 
 
@@ -277,6 +336,7 @@ class Game:
             # Gérer la sélection des personnages
             self.player_units = self.Characters_choice("Player")
             self.enemy_units = self.Characters_choice_enemy("Enemy")
+           
             self.state = Gamestate.PLAYER_TURN
 
         elif self.state == Gamestate.PLAYER_TURN:
@@ -298,15 +358,14 @@ class Game:
 
        
         elif self.state == Gamestate.GAME_OVER:
-           if self.game_over() == "restart":
-              self.restart_game()
-
+             self.game_over() 
+           
 
 def main():
 
     # Initialisation de Pygame
     pygame.init()
-
+    pygame.mixer.init()
     # Instanciation de la fenêtre
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("Mon jeu de stratégie")
