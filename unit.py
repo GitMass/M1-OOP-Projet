@@ -15,6 +15,8 @@ BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 BLUE = (0, 0, 255)
 GREEN = (0, 255, 0)
+GREY= (128,128,128)
+ORANGE=(255,178,102)
 CHARACTER_PER_TEAM = 2
 
 
@@ -68,6 +70,7 @@ class Unit:
         self.x = x
         self.y = y
         self.health = health
+        self.max_health = health
         self.attack_power = attack_power
         self.endurence_max = endurence_max
         self.team = team  # 'player 1' , 'player 2' ou 'enemy'
@@ -123,6 +126,8 @@ class Unit:
             target.health -= self.attack_power
 
     def draw(self, screen):
+
+        # Affiche l'unité 
         if self.texture :   # affiche la texture si elle existe
             screen.blit(self.texture, (self.x * CELL_SIZE, self.y * CELL_SIZE))
         else:
@@ -133,6 +138,27 @@ class Unit:
                                 self.y * CELL_SIZE, CELL_SIZE, CELL_SIZE))
             pygame.draw.circle(screen, color, (self.x * CELL_SIZE + CELL_SIZE //
                             2, self.y * CELL_SIZE + CELL_SIZE // 2), CELL_SIZE // 3)  
+
+        # Affiche la barre de vie
+        bar_width = CELL_SIZE - 4
+        bar_height = 4
+        bar_x = self.x*CELL_SIZE + 2
+        bar_y = self.y*CELL_SIZE + 2
+
+        health_ratio = max(self.health/self.max_health, 0)
+        current_bar_width = int(bar_width*health_ratio)
+
+        pygame.draw.rect(screen, GREY, (bar_x, bar_y, bar_width, bar_height))
+        if health_ratio>0.5:
+            health_color=GREEN
+        elif health_ratio<=0.5 and health_ratio>0.2 :
+            health_color=ORANGE
+        else:
+            health_color=RED 
+        pygame.draw.rect(screen, health_color, (bar_x, bar_y, current_bar_width, bar_height))
+
+
+
             
     # affichage libre
     def choiceButton_draw(self, screen):

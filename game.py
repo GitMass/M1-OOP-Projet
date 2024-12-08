@@ -62,6 +62,23 @@ class Game:
             'healing': pygame.mixer.Sound('data/map_sound_effects/heal-up.wav'),
             'footstep': pygame.mixer.Sound('data/map_sound_effects/footstep.wav'),
         }
+
+        # Map textures
+        # charger les textures de la map
+        self.GRASS=pygame.image.load('data/tiles/grassfloor.png').convert_alpha()
+        self.WALL= pygame.image.load('data/tiles/wall.png').convert_alpha()
+        self.MAGMA=pygame.image.load('data/tiles/magma.png').convert_alpha()
+        self.WATER=pygame.image.load('data/tiles/lilypad.png').convert_alpha()
+        self.MUD=pygame.image.load('data/tiles/mud.png').convert_alpha()
+        self.APPLE_TREE=pygame.image.load('data/tiles/apple_tree.png').convert_alpha()
+
+        # Redimensionner les textures
+        self.GRASS = pygame.transform.scale(self.GRASS, (CELL_SIZE, CELL_SIZE))
+        self.WALL = pygame.transform.scale(self.WALL, (CELL_SIZE, CELL_SIZE))
+        self.MAGMA = pygame.transform.scale(self.MAGMA, (CELL_SIZE, CELL_SIZE))
+        self.WATER = pygame.transform.scale(self.WATER, (CELL_SIZE, CELL_SIZE))
+        self.MUD = pygame.transform.scale(self.MUD, (CELL_SIZE, CELL_SIZE))
+        self.APPLE_TREE = pygame.transform.scale(self.APPLE_TREE, (CELL_SIZE, CELL_SIZE))
     
 
 
@@ -80,6 +97,8 @@ class Game:
                     5 : healing 
         
         """
+
+        # Charger la map du csv
         map = []
         with open(os.path.join(filename), mode='r') as data: # mode = 'r' :read 
             data = csv.reader(data, delimiter=',') # une autre variable s'appelle 'data' qui prend data comme sa fonction / csv.reader : est utilisée pour lire des fichiers au format CSV (Comma-Separated Values, ou valeurs séparées par des virgules) et convertir leurs contenus en lignes faciles à manipuler.
@@ -113,22 +132,6 @@ class Game:
         # pour effacer l'ancienne image
         self.screen.fill(BLACK)
 
-        # charger les textures de la map
-        GRASS=pygame.image.load('data/tiles/grass.png').convert_alpha()
-        WALL= pygame.image.load('data/tiles/wall.png').convert_alpha()
-        MAGMA=pygame.image.load('data/tiles/magma.png').convert_alpha()
-        WATER=pygame.image.load('data/tiles/water.png').convert_alpha()
-        MUD=pygame.image.load('data/tiles/mud.png').convert_alpha()
-        APPLE_TREE=pygame.image.load('data/tiles/apple_tree.png').convert_alpha()
-
-        # Redimensionner les textures
-        GRASS = pygame.transform.scale(GRASS, (CELL_SIZE, CELL_SIZE))
-        WALL = pygame.transform.scale(WALL, (CELL_SIZE, CELL_SIZE))
-        MAGMA = pygame.transform.scale(MAGMA, (CELL_SIZE, CELL_SIZE))
-        WATER = pygame.transform.scale(WATER, (CELL_SIZE, CELL_SIZE))
-        MUD = pygame.transform.scale(MUD, (CELL_SIZE, CELL_SIZE))
-        APPLE_TREE = pygame.transform.scale(APPLE_TREE, (CELL_SIZE, CELL_SIZE))
-
         # charger la map du csv
         self.read_map_from_csv('data/maps/map2.csv')
 
@@ -136,37 +139,37 @@ class Game:
         for grass in self.grass:    
             x = grass[0] * CELL_SIZE
             y = grass[1] * CELL_SIZE
-            self.screen.blit(GRASS, (x, y))
+            self.screen.blit(self.GRASS, (x, y))
 
         # Affiche les blocs : "WALL"
         for wall in self.walls:
             x = wall[0] * CELL_SIZE
             y = wall[1] * CELL_SIZE
-            self.screen.blit(WALL, (x, y))
+            self.screen.blit(self.WALL, (x, y))
 
         # Affiche les blocs : "MAGMA"
         for magma in self.magmas:
             x = magma[0] * CELL_SIZE
             y = magma[1] * CELL_SIZE
-            self.screen.blit(MAGMA, (x, y))
+            self.screen.blit(self.MAGMA, (x, y))
 
         # Affiche les blocs : "LILYPAD"
         for lilypad in self.lilypads:
             x = lilypad[0] * CELL_SIZE
             y = lilypad[1] * CELL_SIZE
-            self.screen.blit(WATER, (x, y))
+            self.screen.blit(self.WATER, (x, y))
 
         # Affiche les blocs : "MUD"
         for mud in self.muds:
             x = mud[0] * CELL_SIZE
             y = mud[1] * CELL_SIZE
-            self.screen.blit(MUD, (x, y))
+            self.screen.blit(self.MUD, (x, y))
 
         # Affiche les blocs : "HEALING"
         for healing in self.healing:
             x = healing[0] * CELL_SIZE
             y = healing[1] * CELL_SIZE
-            self.screen.blit(APPLE_TREE, (x, y))        
+            self.screen.blit(self.APPLE_TREE, (x, y))        
 
         if ShowGrille == True :
             # Affiche les contours de la grille (optionnel si vous voulez une bordure blanche)
