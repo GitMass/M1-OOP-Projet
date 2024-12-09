@@ -51,16 +51,18 @@ class Game:
         self.muds = []
         self.healing=[]
 
-        # Sound effects
-        pygame.mixer.init()
-        self.current_sound = None
-        self.sounds = {
-            'magma': pygame.mixer.Sound('data/map_sound_effects/fire.wav'),
-            'mud': pygame.mixer.Sound('data/map_sound_effects/mud.wav'),
-            'lilypad': pygame.mixer.Sound('data/map_sound_effects/water-splash.wav'),
-            'healing': pygame.mixer.Sound('data/map_sound_effects/heal-up.wav'),
-            'footstep': pygame.mixer.Sound('data/map_sound_effects/footstep.wav'),
-        }
+        # Charger les textures et sons
+        def load_textures_sounds(self):
+            # Sound effects
+            pygame.mixer.init()
+            self.current_sound = None
+            self.sounds = {
+                'magma': pygame.mixer.Sound('data/map_sound_effects/fire.wav'),
+                'mud': pygame.mixer.Sound('data/map_sound_effects/mud.wav'),
+                'lilypad': pygame.mixer.Sound('data/map_sound_effects/water-splash.wav'),
+                'healing': pygame.mixer.Sound('data/map_sound_effects/heal-up.wav'),
+                'footstep': pygame.mixer.Sound('data/map_sound_effects/footstep.wav'),
+            }
 
         # Map textures
         # charger les textures de la map
