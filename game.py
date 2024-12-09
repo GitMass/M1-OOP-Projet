@@ -63,12 +63,12 @@ class Game:
 
         # Map textures
         # charger les textures de la map
-        self.GRASS=pygame.image.load('data/tiles/grassfloor.png').convert_alpha()
+        self.GRASS=pygame.image.load('data/tiles/simplegrass.png').convert_alpha()
         self.WALL= pygame.image.load('data/tiles/wall.png').convert_alpha()
         self.MAGMA=pygame.image.load('data/tiles/magma.png').convert_alpha()
         self.WATER=pygame.image.load('data/tiles/lilypad.png').convert_alpha()
         self.MUD=pygame.image.load('data/tiles/mud.png').convert_alpha()
-        self.APPLE_TREE=pygame.image.load('data/tiles/apple_tree.png').convert_alpha()
+        self.APPLE_TREE=pygame.image.load('data/tiles/appletree.png').convert_alpha()
 
         # Redimensionner les textures
         self.GRASS = pygame.transform.scale(self.GRASS, (CELL_SIZE, CELL_SIZE))
