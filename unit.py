@@ -206,7 +206,7 @@ class Unit:
 # Definitions Des Types d'unités :
 class Sorceress(Unit):
     def __init__(self, x, y, team, texture_path, x_choiceButton, y_choiceButton, name):
-        super().__init__(x, y, health=18, attack_power=4, endurence_max=2, team=team, texture_path=texture_path, x_choiceButton=x_choiceButton, y_choiceButton=y_choiceButton, name=name)
+        super().__init__(x, y, health=18, attack_power=4, endurence_max=4, team=team, texture_path=texture_path, x_choiceButton=x_choiceButton, y_choiceButton=y_choiceButton, name=name)
         self.skills.append(PurpleChaos_Skill())
         
 class Swordsman(Unit):
@@ -272,7 +272,7 @@ class PurpleChaos_Skill:
         self.name = "Purple Chaos"
         self.damage = 6
         self.range = 6
-        self.sound_effect = "data/skills/ichimonji.mp3"
+        self.sound_effect = "data/skills/magicblast.mp3"
         self.animation_frames = ["data/skills/purple.png"]
 
     def use_skill(self, owner_unit, game):
@@ -332,6 +332,15 @@ class PurpleChaos_Skill:
                         
 
         # Explosion phase
+        game.draw_map_units()
+        pygame.display.flip()
+
+        # Play sound effect
+        if self.sound_effect:
+            sound = pygame.mixer.Sound(self.sound_effect)
+            sound.play()
+
+        # play animations and apply damage
         for dx in range(-1, 2):  # -1, 0, 1 for 3x3 area
             for dy in range(-1, 2):
                 cell_x = target_x + dx
@@ -363,10 +372,7 @@ class PurpleChaos_Skill:
                     pygame.display.flip()
                     pygame.time.delay(50)  # Delay between frames
 
-        # Play sound effect
-        if self.sound_effect:
-            sound = pygame.mixer.Sound(self.sound_effect)
-            sound.play()
+        
 
 
         

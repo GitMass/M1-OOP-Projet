@@ -391,6 +391,9 @@ class Game:
 
     def handle_enemy_turn(self):
         """IA très simple pour les ennemis."""
+        
+        if len(self.player_units) == 0 :
+            self.game_end("player 1")
 
         for enemy in self.enemy_units:
 
