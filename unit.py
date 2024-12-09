@@ -226,57 +226,42 @@ class Ichimonji_Skill:
 
     def use_skill(self, owner_unit, game):
         target = None  # Initialize the target
-        self.used = False
+        # Check all potential targets
+        for potential_target in game.player_units + game.player2_units + game.enemy_units:
+            if (owner_unit.team != potential_target.team and
+                    (abs(owner_unit.x - potential_target.x) <= self.range and abs(owner_unit.y - potential_target.y) <= self.range)):
+                # validate target
+                target = potential_target
 
-        # Allow up to 3 attempts to select a valid target
-        while self.used == False :
-            for event in pygame.event.get():
+                # Apply skill effects to the target
+                target.health -= self.damage
 
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    exit()
-                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:  # Left click
-                    mouse_pos = event.pos
+                # Play the sound effect
+                if self.sound_effect:
+                    sound = pygame.mixer.Sound(self.sound_effect)
+                    sound.play()
 
-                    # Check all potential targets
-                    for potential_target in game.player_units + game.player2_units + game.enemy_units:
-                        if (potential_target.Unit_target_button().collidepoint(mouse_pos) and
-                                owner_unit.team != potential_target.team and
-                                (abs(owner_unit.x - potential_target.x) <= self.range and abs(owner_unit.y - potential_target.y) <= self.range)):
-                            # validate target
-                            target = potential_target
+                # Play the animation
+                for frame in self.animation_frames:
+                    animation_image = pygame.image.load(frame).convert_alpha()
+                    animation_image = pygame.transform.scale(animation_image, (CELL_SIZE, CELL_SIZE))
+                    game.screen.blit(animation_image, (target.x * CELL_SIZE, target.y * CELL_SIZE))
+                    pygame.display.flip()
+                    pygame.time.delay(100)  # Delay between frames
 
-                            # Apply skill effects to the target
-                            target.health -= self.damage
+                if target.team == "player 1" and target.health<=0 :
+                            game.player_units.remove(target)
+                elif target.team == "player 2" and target.health<=0 :
+                            game.player2_units.remove(target)
+                elif target.team == "enemy" and target.health<=0 :
+                            game.enemy_units.remove(target)
 
-                            # Play the sound effect
-                            if self.sound_effect:
-                                sound = pygame.mixer.Sound(self.sound_effect)
-                                sound.play()
+                self.used = True
+                break
 
-                            # Play the animation
-                            for frame in self.animation_frames:
-                                animation_image = pygame.image.load(frame).convert_alpha()
-                                animation_image = pygame.transform.scale(animation_image, (CELL_SIZE, CELL_SIZE))
-                                game.screen.blit(animation_image, (target.x * CELL_SIZE, target.y * CELL_SIZE))
-                                pygame.display.flip()
-                                pygame.time.delay(100)  # Delay between frames
-
-                            if target.team == "player 1" and target.health<=0 :
-                                        game.player_units.remove(target)
-                            elif target.team == "player 2" and target.health<=0 :
-                                        game.player2_units.remove(target)
-                            elif target.team == "enemy" and target.health<=0 :
-                                        game.enemy_units.remove(target)
-
-                            self.used = True
-                            break
-                
-                # Gestion des touches du clavier
-                elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_SPACE :
-                        print("No valid target selected. Skill canceled.")
-                        self.used = True
+        if target == None :
+            print("No valid target in range, Skill canceled.")
+            self.used = True
 
         
 
