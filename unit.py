@@ -53,7 +53,7 @@ class Unit:
         Dessine l'unité sur la grille.
     """
 
-    def __init__(self, x, y, health, attack_power, endurence_max, team, texture_path, x_choiceButton, y_choiceButton):
+    def __init__(self, x, y, health, attack_power, endurence_max, team, texture_path, x_choiceButton, y_choiceButton, name):
         """
         Construit une unité avec une position, une santé, une puissance d'attaque et une équipe.
 
@@ -81,16 +81,19 @@ class Unit:
         self.x_choiceButton = x_choiceButton
         self.y_choiceButton = y_choiceButton
         self.skills = []
+        self.name = name
 
         # Ajouter la texture
         self.texture = None
         if texture_path:
             if os.path.exists(texture_path):
-                self.texture = pygame.image.load(texture_path)
-                self.texture = pygame.transform.scale(self.texture, (CELL_SIZE, CELL_SIZE))  # Redimensionner l'image
+                raw_texture = pygame.image.load(texture_path)
+                self.texture = pygame.transform.scale(raw_texture, (CELL_SIZE, CELL_SIZE))  # Redimensionner l'image
+                self.choice_texture = pygame.transform.scale(raw_texture, (CELL_SIZE*2, CELL_SIZE*2))
             else:
                 print(f"{texture_path} not found")
                 self.texture = None
+                self.choice_texture = None
 
     def move(self, dx, dy, game):
         """Déplace l'unité de dx, dy."""
@@ -176,16 +179,16 @@ class Unit:
         else:
             health_color=RED 
         pygame.draw.rect(screen, health_color, (bar_x, bar_y, current_bar_width, bar_height))
-
-
-
-            
+     
     # affichage libre
     def choiceButton_draw(self, screen):
         if self.texture:
+            # Agrandir la texture 
+            
+
             # Affiche la texture a l'interieur du rectangle :
-            self.button = pygame.Rect(self.x_choiceButton*CELL_SIZE, self.y_choiceButton*CELL_SIZE, CELL_SIZE, CELL_SIZE)
-            screen.blit(self.texture, (self.button.x,self.button.y))
+            self.button = pygame.Rect(self.x_choiceButton*CELL_SIZE, self.y_choiceButton*CELL_SIZE, CELL_SIZE*2, CELL_SIZE*2)
+            screen.blit(self.choice_texture, (self.button.x,self.button.y))
             pygame.draw.rect(screen, WHITE, self.button, 2)
 
             # Affiche le nom du personnage :
@@ -202,17 +205,18 @@ class Unit:
 
 # Definitions Des Types d'unités :
 class Sorceress(Unit):
-    def __init__(self, x, y, team, texture_path, x_choiceButton, y_choiceButton):
-        super().__init__(x, y, health=18, attack_power=4, endurence_max=2, team=team, texture_path=texture_path, x_choiceButton=x_choiceButton, y_choiceButton=y_choiceButton)
-
+    def __init__(self, x, y, team, texture_path, x_choiceButton, y_choiceButton, name):
+        super().__init__(x, y, health=18, attack_power=4, endurence_max=2, team=team, texture_path=texture_path, x_choiceButton=x_choiceButton, y_choiceButton=y_choiceButton, name=name)
+        self.skills.append(PurpleChaos_Skill())
+        
 class Swordsman(Unit):
-    def __init__(self, x, y, team, texture_path, x_choiceButton, y_choiceButton):
-        super().__init__(x, y, health=22, attack_power=3, endurence_max=6, team=team, texture_path=texture_path, x_choiceButton=x_choiceButton, y_choiceButton=y_choiceButton)
+    def __init__(self, x, y, team, texture_path, x_choiceButton, y_choiceButton, name):
+        super().__init__(x, y, health=22, attack_power=3, endurence_max=6, team=team, texture_path=texture_path, x_choiceButton=x_choiceButton, y_choiceButton=y_choiceButton, name=name)
         self.skills.append(Ichimonji_Skill())
 
 class Monster(Unit):
-    def __init__(self, x, y, team, texture_path, x_choiceButton, y_choiceButton):
-        super().__init__(x, y, health=28, attack_power=2, endurence_max=4, team=team, texture_path=texture_path, x_choiceButton=x_choiceButton, y_choiceButton=y_choiceButton)
+    def __init__(self, x, y, team, texture_path, x_choiceButton, y_choiceButton, name):
+        super().__init__(x, y, health=28, attack_power=2, endurence_max=4, team=team, texture_path=texture_path, x_choiceButton=x_choiceButton, y_choiceButton=y_choiceButton, name=name)
 
 
 # Definition des compétances :
@@ -263,6 +267,108 @@ class Ichimonji_Skill:
             print("No valid target in range, Skill canceled.")
             self.used = True
 
+class PurpleChaos_Skill:
+    def __init__(self):
+        self.name = "Purple Chaos"
+        self.damage = 6
+        self.range = 6
+        self.sound_effect = "data/skills/ichimonji.mp3"
+        self.animation_frames = ["data/skills/purple.png"]
+
+    def use_skill(self, owner_unit, game):
+        target_x, target_y = owner_unit.x, owner_unit.y  # Start with the owner's position
+        new_target_x, new_target_y = owner_unit.x, owner_unit.y
+
+        # Initial target zone draw
+        game.draw_map_units()
+        highlight_rect = pygame.Rect((target_x-1) * CELL_SIZE, (target_y-1) * CELL_SIZE, CELL_SIZE*3, CELL_SIZE*3)
+        pygame.draw.rect(game.screen, (128, 128, 128, 128), highlight_rect, 3)  # Gray border
+        pygame.display.flip()
+
+        # Target selection phase
+        selecting_target = True
+        while selecting_target:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    exit()
+
+                # Move the highlight with arrow keys
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_LEFT:
+                        new_target_x = max(0, target_x - 1)
+                        new_target_y = target_y
+                    elif event.key == pygame.K_RIGHT:
+                        new_target_x = min(GRID_SIZE_WIDTH - 1, target_x + 1)
+                        new_target_y = target_y
+                    elif event.key == pygame.K_UP:
+                        new_target_x = target_x
+                        new_target_y = max(0, target_y - 1)
+                    elif event.key == pygame.K_DOWN:
+                        new_target_x = target_x
+                        new_target_y = min(GRID_SIZE_HEIGHT - 1, target_y + 1)
+
+                    # validate the new target if whithin range 
+                    if abs(owner_unit.x - new_target_x) <= self.range and abs(owner_unit.y - new_target_y) <= self.range:
+                        target_x = new_target_x
+                        target_y = new_target_y
+                        
+                    # Redraw the map with the highlight
+                    game.draw_map_units()
+                    highlight_rect = pygame.Rect((target_x-1) * CELL_SIZE, (target_y-1) * CELL_SIZE, CELL_SIZE*3, CELL_SIZE*3)
+                    pygame.draw.rect(game.screen, (128, 128, 128, 128), highlight_rect, 3)  # Gray border
+                    pygame.display.flip()
+
+                    # Validate the target with the space key
+                    if event.key == pygame.K_SPACE:
+                        print("Launching Purple Chaos !")
+                        selecting_target = False  # Exit the selection phase
+                        break
+
+                    # annuler le skill
+                    elif event.key == pygame.K_1:
+                        print("Skill canceled.")
+                        return
+                        
+
+        # Explosion phase
+        for dx in range(-1, 2):  # -1, 0, 1 for 3x3 area
+            for dy in range(-1, 2):
+                cell_x = target_x + dx
+                cell_y = target_y + dy
+
+                # Skip cells out of bounds
+                if cell_x < 0 or cell_x >= GRID_SIZE_WIDTH or cell_y < 0 or cell_y >= GRID_SIZE_HEIGHT:
+                    continue
+
+                # Damage units in the 3x3 area
+                for potential_target in game.player_units + game.player2_units + game.enemy_units:
+                    if potential_target.x == cell_x and potential_target.y == cell_y:
+                        potential_target.health -= self.damage
+
+                        # Remove units with 0 or less health
+                        if potential_target.health <= 0:
+                            if potential_target.team == "player 1":
+                                game.player_units.remove(potential_target)
+                            elif potential_target.team == "player 2":
+                                game.player2_units.remove(potential_target)
+                            elif potential_target.team == "enemy":
+                                game.enemy_units.remove(potential_target)
+
+                # Play animation for the cell
+                for frame in self.animation_frames:
+                    animation_image = pygame.image.load(frame).convert_alpha()
+                    animation_image = pygame.transform.scale(animation_image, (CELL_SIZE, CELL_SIZE))
+                    game.screen.blit(animation_image, (cell_x * CELL_SIZE, cell_y * CELL_SIZE))
+                    pygame.display.flip()
+                    pygame.time.delay(50)  # Delay between frames
+
+        # Play sound effect
+        if self.sound_effect:
+            sound = pygame.mixer.Sound(self.sound_effect)
+            sound.play()
+
+
         
 
 
@@ -271,8 +377,8 @@ class Ichimonji_Skill:
 
 # Création des personnages :
 Personnages = {
-        "Yennefer": Sorceress(2, 0, 'player', 'data/characters/yennefer.png', 3, 3),
-        "Samurai": Swordsman(3, 0, 'player', 'data/characters/samurai.png', 6, 3),
+        "Yennefer": Sorceress(2, 0, 'player', 'data/characters/yennefer.png', 3, 3, "Yennefer"),
+        "Sekiro": Swordsman(3, 0, 'player', 'data/characters/samurai.png', 6, 3, "Sekiro"),
     }
 
 

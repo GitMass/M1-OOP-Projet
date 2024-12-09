@@ -50,6 +50,10 @@ class Game:
         self.muds = []
         self.healing=[]
 
+
+
+    # Charger les textures et sons
+    def load_textures_sounds(self):
         # Sound effects
         pygame.mixer.init()
         self.current_sound = None
@@ -69,7 +73,6 @@ class Game:
         self.WATER=pygame.image.load('data/tiles/lilypad.png').convert_alpha()
         self.MUD=pygame.image.load('data/tiles/mud.png').convert_alpha()
         self.APPLE_TREE=pygame.image.load('data/tiles/appletree.png').convert_alpha()
-
         # Redimensionner les textures
         self.GRASS = pygame.transform.scale(self.GRASS, (CELL_SIZE, CELL_SIZE))
         self.WALL = pygame.transform.scale(self.WALL, (CELL_SIZE, CELL_SIZE))
@@ -366,7 +369,7 @@ class Game:
                                 selected_unit.is_selected = False
                                 self.draw_map_units()
                             else:
-                                print(f"{selected_unit.__class__.__name__} has no skill 1.")
+                                print(f"{selected_unit.name} has no skill 1.")
 
                         # Attaque (touche espace) met fin au tour
                         if event.key == pygame.K_SPACE:
@@ -480,12 +483,15 @@ class Game:
         """
         Restarts the game by returning to the title screen.
         """
+        # charger les textures et sons
+        self.load_textures_sounds()
+
         # Clear the current game state
         self.player_units = []
         self.player2_units = []
         self.enemy_units = []
 
-        # Return to the main menu
+        # Afficher le menu principale
         MenuChoice = self.Main_menu(GAME_TITLE)
 
         # Reinitialize the game based on the menu choice
