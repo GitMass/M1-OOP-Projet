@@ -314,84 +314,202 @@ class Game:
 
 
     # Handle turns
-    def handle_player_turn(self):
-        """Tour du joueur"""
+    def handle_player_turn(self, team):
+        """
+            input : 
+                - team : "player 1" ou "player 2"
+        
+        """
+        if team == "player 1" :
+            for selected_unit in self.player_units:
 
-        for selected_unit in self.player_units:
+                # Tant que l'unité n'a pas terminé son tour
+                has_acted = False
+                selected_unit.is_selected = True
+                endurence = selected_unit.endurence_max
+                self.draw_map_units()
 
-            # Tant que l'unité n'a pas terminé son tour
-            has_acted = False
-            selected_unit.is_selected = True
-            endurence = selected_unit.endurence_max
-            self.draw_map_units()
+                while not has_acted:
+                    
+                    # Important: cette boucle permet de gérer les événements Pygame
+                    for event in pygame.event.get():
 
-            while not has_acted:
-                
-                # Important: cette boucle permet de gérer les événements Pygame
-                for event in pygame.event.get():
+                        # Gestion de la fermeture de la fenêtre
+                        if event.type == pygame.QUIT:
+                            pygame.quit()
+                            exit()
 
-                    # Gestion de la fermeture de la fenêtre
-                    if event.type == pygame.QUIT:
-                        pygame.quit()
-                        exit()
+                        # Gestion des touches du clavier
+                        if event.type == pygame.KEYDOWN:
 
-                    # Gestion des touches du clavier
-                    if event.type == pygame.KEYDOWN:
+                            # Déplacement (touches fléchées)
+                            dx, dy = 0, 0
+                            if event.key == pygame.K_LEFT:
+                                if endurence > 0:
+                                    dx = -1
+                                    endurence = endurence - 1
+                            elif event.key == pygame.K_RIGHT:
+                                if endurence > 0:
+                                    dx = 1
+                                    endurence = endurence - 1
+                            elif event.key == pygame.K_UP:
+                                if endurence > 0:
+                                    dy = -1
+                                    endurence = endurence - 1
+                            elif event.key == pygame.K_DOWN:
+                                if endurence > 0:
+                                    dy = 1
+                                    endurence = endurence - 1
 
-                        # Déplacement (touches fléchées)
-                        dx, dy = 0, 0
-                        if event.key == pygame.K_LEFT:
-                            if endurence > 0:
-                                dx = -1
-                                endurence = endurence - 1
-                        elif event.key == pygame.K_RIGHT:
-                            if endurence > 0:
-                                dx = 1
-                                endurence = endurence - 1
-                        elif event.key == pygame.K_UP:
-                            if endurence > 0:
-                                dy = -1
-                                endurence = endurence - 1
-                        elif event.key == pygame.K_DOWN:
-                            if endurence > 0:
-                                dy = 1
-                                endurence = endurence - 1
+                            selected_unit.move(dx, dy, self)
+                            self.draw_map_units()
 
-                        selected_unit.move(dx, dy, self)
-                        self.draw_map_units()
+                            # Use skills : skill 1, 2 or 3
+                            if event.key == pygame.K_1:
+                                if len(selected_unit.skills) > 0:
+                                    skill = selected_unit.skills[0]
+                                    skill.use_skill(selected_unit, self)
+                                    has_acted = True
+                                    selected_unit.is_selected = False
+                                    self.draw_map_units()
+                                else:
+                                    print(f"{selected_unit.name} has no skill 1.")
+                            elif event.key == pygame.K_2:
+                                if len(selected_unit.skills) > 1:
+                                    skill = selected_unit.skills[1]
+                                    skill.use_skill(selected_unit, self)
+                                    has_acted = True
+                                    selected_unit.is_selected = False
+                                    self.draw_map_units()
+                                else:
+                                    print(f"{selected_unit.name} has no skill 2.")
+                            elif event.key == pygame.K_3:
+                                if len(selected_unit.skills) > 2:
+                                    skill = selected_unit.skills[2]
+                                    skill.use_skill(selected_unit, self)
+                                    has_acted = True
+                                    selected_unit.is_selected = False
+                                    self.draw_map_units()
+                                else:
+                                    print(f"{selected_unit.name} has no skill 3.")
 
-                        # Use skill 1 (key 1)
-                        if event.key == pygame.K_1:
-                            if len(selected_unit.skills) > 0:
-                                skill = selected_unit.skills[0]
-                                skill.use_skill(selected_unit, self)
+                            # Attaque (touche espace) met fin au tour
+                            if event.key == pygame.K_SPACE:
+                                for enemy in self.enemy_units:
+                                    if abs(selected_unit.x - enemy.x) <= 1 and abs(selected_unit.y - enemy.y) <= 1:
+                                        selected_unit.attack(enemy)
+                                        if enemy.health <= 0:
+                                            self.enemy_units.remove(enemy)
+
                                 has_acted = True
                                 selected_unit.is_selected = False
-                                self.draw_map_units()
-                            else:
-                                print(f"{selected_unit.name} has no skill 1.")
+                
+            if self.GameMode == "PvE" :
+                if len(self.enemy_units) == 0 :
+                    self.game_end("enemy")
+            elif self.GameMode == "PvP" :
+                if len(self.player2_units) == 0 :
+                    self.game_end("player 2")
 
-                        # Attaque (touche espace) met fin au tour
-                        if event.key == pygame.K_SPACE:
-                            for enemy in self.enemy_units:
-                                if abs(selected_unit.x - enemy.x) <= 1 and abs(selected_unit.y - enemy.y) <= 1:
-                                    selected_unit.attack(enemy)
-                                    if enemy.health <= 0:
-                                        self.enemy_units.remove(enemy)
+        elif team == "player 2" :
+            for selected_unit in self.player2_units:
 
-                            has_acted = True
-                            selected_unit.is_selected = False
-            
-        if self.GameMode == "PvE" :
-            if len(self.enemy_units) == 0 :
-                self.game_end("enemy")
-        elif self.GameMode == "PvP" :
-            if len(self.player2_units) == 0 :
-                self.game_end("player 2")
+                # Tant que l'unité n'a pas terminé son tour
+                has_acted = False
+                selected_unit.is_selected = True
+                endurence = selected_unit.endurence_max
+                self.draw_map_units()
+
+                while not has_acted:
+                    
+                    # Important: cette boucle permet de gérer les événements Pygame
+                    for event in pygame.event.get():
+
+                        # Gestion de la fermeture de la fenêtre
+                        if event.type == pygame.QUIT:
+                            pygame.quit()
+                            exit()
+
+                        # Gestion des touches du clavier
+                        if event.type == pygame.KEYDOWN:
+
+                            # Déplacement (touches fléchées)
+                            dx, dy = 0, 0
+                            if event.key == pygame.K_LEFT:
+                                if endurence > 0:
+                                    dx = -1
+                                    endurence = endurence - 1
+                            elif event.key == pygame.K_RIGHT:
+                                if endurence > 0:
+                                    dx = 1
+                                    endurence = endurence - 1
+                            elif event.key == pygame.K_UP:
+                                if endurence > 0:
+                                    dy = -1
+                                    endurence = endurence - 1
+                            elif event.key == pygame.K_DOWN:
+                                if endurence > 0:
+                                    dy = 1
+                                    endurence = endurence - 1
+
+                            selected_unit.move(dx, dy, self)
+                            self.draw_map_units()
+
+                            # Use skills : skill 1, 2 or 3
+                            if event.key == pygame.K_1:
+                                if len(selected_unit.skills) > 0:
+                                    skill = selected_unit.skills[0]
+                                    skill.use_skill(selected_unit, self)
+                                    has_acted = True
+                                    selected_unit.is_selected = False
+                                    self.draw_map_units()
+                                else:
+                                    print(f"{selected_unit.name} has no skill 1.")
+                            elif event.key == pygame.K_2:
+                                if len(selected_unit.skills) > 1:
+                                    skill = selected_unit.skills[1]
+                                    skill.use_skill(selected_unit, self)
+                                    has_acted = True
+                                    selected_unit.is_selected = False
+                                    self.draw_map_units()
+                                else:
+                                    print(f"{selected_unit.name} has no skill 2.")
+                            elif event.key == pygame.K_3:
+                                if len(selected_unit.skills) > 2:
+                                    skill = selected_unit.skills[2]
+                                    skill.use_skill(selected_unit, self)
+                                    has_acted = True
+                                    selected_unit.is_selected = False
+                                    self.draw_map_units()
+                                else:
+                                    print(f"{selected_unit.name} has no skill 3.")
+
+                            # Attaque (touche espace) met fin au tour
+                            if event.key == pygame.K_SPACE:
+                                for enemy in self.enemy_units:
+                                    if abs(selected_unit.x - enemy.x) <= 1 and abs(selected_unit.y - enemy.y) <= 1:
+                                        selected_unit.attack(enemy)
+                                        if enemy.health <= 0:
+                                            self.enemy_units.remove(enemy)
+
+                                has_acted = True
+                                selected_unit.is_selected = False
+                
+            if self.GameMode == "PvE" :
+                if len(self.enemy_units) == 0 :
+                    self.game_end("enemy")
+            elif self.GameMode == "PvP" :
+                if len(self.player2_units) == 0 :
+                    self.game_end("player 2")
+        
+
+
+
+
 
     def handle_enemy_turn(self):
         """IA très simple pour les ennemis."""
-        
+
         if len(self.player_units) == 0 :
             self.game_end("player 1")
 
@@ -508,11 +626,12 @@ class Game:
         # Start the game loop again
         if MenuChoice == "PvE":
             while True:
-                self.handle_player_turn()
+                self.handle_player_turn("player 1")
                 self.handle_enemy_turn()
         elif MenuChoice == "PvP":
             while True:
-                self.handle_player_turn()
+                self.handle_player_turn("player 1")
+                self.handle_player_turn("player 2")
                     
 
 
