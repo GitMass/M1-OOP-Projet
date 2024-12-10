@@ -52,17 +52,17 @@ class Game:
         self.healing=[]
 
         # Charger les textures et sons
-        def load_textures_sounds(self):
+        #def load_textures_sounds(self):
             # Sound effects
-            pygame.mixer.init()
-            self.current_sound = None
-            self.sounds = {
+        pygame.mixer.init()
+        self.current_sound = None
+        self.sounds = {
                 'magma': pygame.mixer.Sound('data/map_sound_effects/fire.wav'),
                 'mud': pygame.mixer.Sound('data/map_sound_effects/mud.wav'),
                 'lilypad': pygame.mixer.Sound('data/map_sound_effects/water-splash.wav'),
                 'healing': pygame.mixer.Sound('data/map_sound_effects/heal-up.wav'),
                 'footstep': pygame.mixer.Sound('data/map_sound_effects/footstep.wav'),
-            }
+        }
 
         # Map textures
         # charger les textures de la map
@@ -257,13 +257,27 @@ class Game:
         output : 
             append chosen list 
         """
+        # Charger l'image de fond
+        splash_menu_image = pygame.image.load("data\splash_images\menu_image.png")
+        splash_menu_image = pygame.transform.scale(splash_menu_image, (WIDTH,HEIGHT))
+
+        # affiche l'image de fond
+        self.screen.blit(splash_menu_image, (0,0))
+
+        # Charger la musique de fond
+        pygame.mixer.music.load("data\musics\cinematic_music.mp3")
+        pygame.mixer.music.play(-1) # joue en boucle
+
+        # rafraichir l'écran
+        pygame.display.flip()
 
         selected_units = []
         while len(selected_units) < NumberOfCharacters:
-            self.screen.fill(BLACK)
+
+            #self.screen.fill(BLACK)
 
             # Afficher l'instruction de choix :
-            font = pygame.font.Font(None, 32)
+            font = pygame.font.Font(None, 40)
             text = font.render(f"{player} : Choose your characters ({len(selected_units) + 1}/{NumberOfCharacters})", True, WHITE)
             self.screen.blit(text, (WIDTH//2 - text.get_width()//2, HEIGHT//8))
 
@@ -322,8 +336,10 @@ class Game:
 
             # Tant que l'unité n'a pas terminé son tour
             has_acted = False
-            selected_unit.is_selected = True
+            selected_unit.is_selected = True #from unit 
             endurence = selected_unit.endurence_max
+            selected_skill=None
+            selected_target=None
             self.draw_map_units()
 
             while not has_acted:
@@ -333,7 +349,7 @@ class Game:
 
                     # Gestion de la fermeture de la fenêtre
                     if event.type == pygame.QUIT:
-                        pygame.quit()
+                        pygame.quit() # utilisé pour détecter lorsque l'utilisateur ferme la fenêtre du jeu (en cliquant sur le bouton "X" en haut de la fenêtre).
                         exit()
 
                     # Gestion des touches du clavier
@@ -361,16 +377,31 @@ class Game:
                         selected_unit.move(dx, dy, self)
                         self.draw_map_units()
 
-                        # Use skill 1 (key 1)
-                        if event.key == pygame.K_1:
-                            if len(selected_unit.skills) > 0:
-                                skill = selected_unit.skills[0]
-                                skill.use_skill(selected_unit, self)
-                                has_acted = True
-                                selected_unit.is_selected = False
+                        # Sélection d'une compétence
+                        if selected_skill is None:
+                            if event.key == pygame.K_1:  # Compétence 1
+                                selected_skill=selected_unit.skills[0] 
+                                self.highlight_skill_range(selected_unit,selected_skill)
+                        elif event.key == pygame.K_2:  # Compétence 2
+                            if len(selected_skill)>1: # Vérifier si l'unité sélectionnée possède plus d'une compétence 
+                                selected_skill=selected_unit.skills[1]
+                                self.highlight_skill_range(selected_unit,selected_skill)
+                        elif event.key == pygame.K_3:  # Compétence 3
+                            selected_skill=selected_unit.skills[2]
+                            self.highlight_skill_range(selected_unit,selected_skill)
+                        elif selected_skill:
+                            #Valider une compétence avec Entré
+                            if event.key == pygame.K_RETURN:
+                                if selected_target:
+                                    selected_unit.use_skill(selected_unit,selected_skill['name'],selected_target)
+                                    if selected_target.health<=0:
+                                        self.enemy_units.remove(selected_target)
+                                    has_acted=True
+                                    break
+                            elif event.key==pygame.K_x:
+                                selected_skill=None
+                                selected_target=None 
                                 self.draw_map_units()
-                            else:
-                                print(f"{selected_unit.__class__.__name__} has no skill 1.")
 
                         # Attaque (touche espace) met fin au tour
                         if event.key == pygame.K_SPACE:
@@ -382,13 +413,53 @@ class Game:
 
                             has_acted = True
                             selected_unit.is_selected = False
-            
+
+                    if event.type==pygame.MOUSEBUTTONDOWN and selected_skill:
+                        mouse_x,mouse_y=pygame.mouse.get_pos()
+                        target_x,target_y=mouse_x // CELL_SIZE ,mouse_y // CELL_SIZE
+                        for enemy in self.enemy_units:
+                            if enemy.x==target_x and enemy.y==target_y :
+                                if abs(selected_unit.x-enemy.x)<=selected_skill['range'] and abs(selected_unit.y-enemy.y)<=selected_skill['range']:
+                                    selected_target=enemy
+                                    print(f"Ennemi sélectionné : {enemy.team} à ({enemy.x},{enemy.y})")
+                                    self.highlight_selected_enemy(selected_target)  # Afficher l'indicateur visuel
+                                    break
+            selected_unit.is_selected=False # is_selected from unit 
+            self.check_end_game()
+    
         if self.GameMode == "PvE" :
             if len(self.enemy_units) == 0 :
                 self.game_end("enemy")
         elif self.GameMode == "PvP" :
             if len(self.player2_units) == 0 :
                 self.game_end("player 2")
+                
+
+    def highlight_selected_enemy(self, enemy):
+        """Met en surbrillance l'ennemi sélectionné."""
+        rect = pygame.Rect(enemy.x * CELL_SIZE, enemy.y * CELL_SIZE, CELL_SIZE, CELL_SIZE) # Les 2 dermiers CELL_SIZE c'est la largeur et le longeur d'une unité
+        pygame.draw.rect(self.screen, (153, 0, 153), rect, 3)  # Dessiner un rectangle violet : pygame.draw.rect(surface, color, rect, width=0)
+        pygame.display.flip()
+
+
+    def highlight_skill_range(self,unit,skill):
+        for dx in range (-skill['range'],skill['range']+1): # L'instruction skill['range'] fait référence à une valeur spécifique dans un dictionnaire nommé skill, où range est une clé.
+            for dy in range (-skill['range'],skill['range']+1):
+                target_x = unit.x + dx
+                target_y = unit.y + dy
+                if 0 <= target_x < WIDTH and 0 <= target_y < HEIGHT:
+
+                    rect = pygame.Rect(target_x * CELL_SIZE, target_y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
+                    pygame.draw.rect(self.screen, (255, 255, 0, 128), rect, 3) # dessiner une grille de couleur jaune semi-transparent 
+        pygame.display.flip()
+
+
+    def check_end_game(self):
+        if not self.enemy_units:
+            print("Victoire ! Tous les ennemis ont été vaincus.")
+            pygame.quit()
+            exit()
+
 
     def handle_enemy_turn(self):
         """IA très simple pour les ennemis."""

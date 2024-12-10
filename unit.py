@@ -80,7 +80,7 @@ class Unit:
         self.is_selected = False
         self.x_choiceButton = x_choiceButton
         self.y_choiceButton = y_choiceButton
-        self.skills = []
+      
 
         # Ajouter la texture
         self.texture = None
@@ -198,90 +198,75 @@ class Unit:
         return pygame.Rect(self.x*CELL_SIZE, self.y*CELL_SIZE, CELL_SIZE, CELL_SIZE)
 
                                          
+class Skill:
+    """Base class for skills."""
+    def __init__(self, name, damage, range_, sound_effect=None,skills=None):
+        self.name = name
+        self.damage = damage
+        self.range = range_
+        self.sound_effect = sound_effect
+        self.skills=skills if skills else []
+
+    def use_skill(self,owner_unit,skill_name, target):
+        """Apply skill effects to the target."""
+        if target and owner_unit.team != target.team:  # Only affect enemies
+            for skill in self.skills:
+                if skill['name']==skill_name:
+                    if abs(self.x-target.x)<=skill.get('range',1) and abs(self.y-target.y)<=skill.get('range',1):
+                        target.health -= skill['damage']
+                        if target.health<0:
+                            target.health=0 
+                        print(f"{self.team} utilse {skill_name} sur {target.team}. Dégât : {skill['damage']}")
+                    if 'heal' in skill:
+                        target.health +=skill['heal']
+                        print(f"{self.team} utilse {skill_name} sur {target.team}. Soin : {skill['heal']}")
+
+            if self.sound_effect:
+                sound = pygame.mixer.Sound(self.sound_effect)
+                sound.play()
+
+    def draw_effect_grid(self, owner_unit, game, screen):
+        """Draw the effect grid for the skill."""
+        for dx in range(-self.range, self.range + 1):
+            for dy in range(-self.range, self.range + 1):
+                x = owner_unit.x + dx
+                y = owner_unit.y + dy
+                # Check if the cell is within bounds and not restricted
+                if (0 <= x < GRID_SIZE_WIDTH and 0 <= y < GRID_SIZE_HEIGHT and
+                        (x, y) not in game.walls and
+                        (x, y) not in game.magmas and
+                        (x, y) not in game.lilypads and
+                        (x, y) not in game.muds):
+                    rect = pygame.Rect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
+                    pygame.draw.rect(screen, (255, 255, 0, 128), rect, 2)  # Yellow grid
 
 
-# Definitions Des Types d'unités :
+class FireballSkill(Skill):
+    def __init__(self):
+        super().__init__("Fireball", damage=8, range_=3, sound_effect="data/skills/fireball_whoosh.mp3")
+
+
+class HealingSkill(Skill):
+    def __init__(self):
+        super().__init__("Healing", damage=-5, range_=2,sound_effect="data/skills/heal-up.mp3")  # Negative damage = healing
+
+
+class SwordSlashSkill(Skill):
+    def __init__(self):
+        super().__init__("Sword Slash", damage=6, range_=1, sound_effect="data/skills/sword_slash.mp3")
+
+
+# Modification des personnages pour inclure 3 compétences
 class Sorceress(Unit):
     def __init__(self, x, y, team, texture_path, x_choiceButton, y_choiceButton):
-        super().__init__(x, y, health=18, attack_power=4, endurence_max=2, team=team, texture_path=texture_path, x_choiceButton=x_choiceButton, y_choiceButton=y_choiceButton)
+        super().__init__(x, y, health=18, attack_power=4, endurence_max=4, team=team, texture_path=texture_path, x_choiceButton=x_choiceButton, y_choiceButton=y_choiceButton)
+        self.skills = [FireballSkill(), HealingSkill(), SwordSlashSkill()]  # 3 compétences
+
 
 class Swordsman(Unit):
     def __init__(self, x, y, team, texture_path, x_choiceButton, y_choiceButton):
         super().__init__(x, y, health=22, attack_power=3, endurence_max=6, team=team, texture_path=texture_path, x_choiceButton=x_choiceButton, y_choiceButton=y_choiceButton)
-        self.skills.append(Ichimonji_Skill())
-
-class Monster(Unit):
-    def __init__(self, x, y, team, texture_path, x_choiceButton, y_choiceButton):
-        super().__init__(x, y, health=28, attack_power=2, endurence_max=4, team=team, texture_path=texture_path, x_choiceButton=x_choiceButton, y_choiceButton=y_choiceButton)
-
-
-# Definition des compétances :
-class Ichimonji_Skill:
-    def __init__(self):
-        self.name = "Ichimonji"
-        self.damage = 10
-        self.range = 1
-        self.sound_effect = "data/skills/ichimonji.mp3"
-        self.animation_frames = ["data/skills/ichimonji.png"]
-
-    def use_skill(self, owner_unit, game):
-        target = None  # Initialize the target
-        self.used = False
-
-        # Allow up to 3 attempts to select a valid target
-        while self.used == False :
-            for event in pygame.event.get():
-
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    exit()
-                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:  # Left click
-                    mouse_pos = event.pos
-
-                    # Check all potential targets
-                    for potential_target in game.player_units + game.player2_units + game.enemy_units:
-                        if (potential_target.Unit_target_button().collidepoint(mouse_pos) and
-                                owner_unit.team != potential_target.team and
-                                (abs(owner_unit.x - potential_target.x) <= self.range and abs(owner_unit.y - potential_target.y) <= self.range)):
-                            # validate target
-                            target = potential_target
-
-                            # Apply skill effects to the target
-                            target.health -= self.damage
-
-                            # Play the sound effect
-                            if self.sound_effect:
-                                sound = pygame.mixer.Sound(self.sound_effect)
-                                sound.play()
-
-                            # Play the animation
-                            for frame in self.animation_frames:
-                                animation_image = pygame.image.load(frame).convert_alpha()
-                                animation_image = pygame.transform.scale(animation_image, (CELL_SIZE, CELL_SIZE))
-                                game.screen.blit(animation_image, (target.x * CELL_SIZE, target.y * CELL_SIZE))
-                                pygame.display.flip()
-                                pygame.time.delay(100)  # Delay between frames
-
-                            if target.team == "player 1" and target.health<=0 :
-                                        game.player_units.remove(target)
-                            elif target.team == "player 2" and target.health<=0 :
-                                        game.player2_units.remove(target)
-                            elif target.team == "enemy" and target.health<=0 :
-                                        game.enemy_units.remove(target)
-
-                            self.used = True
-                            break
-                
-                # Gestion des touches du clavier
-                elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_SPACE :
-                        print("No valid target selected. Skill canceled.")
-                        self.used = True
-
-        
-
-
-        
+        self.skills = [SwordSlashSkill(), HealingSkill(), FireballSkill()]  # 3 compétences
 
 
 # Création des personnages :
