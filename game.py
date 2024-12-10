@@ -258,12 +258,25 @@ class Game:
             append chosen list 
         """
 
+        # Charger l'image de fond
+        splash_menu_image_1 = pygame.image.load("data\splash_images\pic_avatar.png") 
+        splash_menu_image_1 = pygame.transform.scale(splash_menu_image_1, (WIDTH,HEIGHT))
+
+        # affiche l'image de fond
+        self.screen.blit(splash_menu_image_1, (0,0))
+
+        # Charger la musique de fond
+        pygame.mixer.music.load("data\musics\cinematic_music.mp3")
+        pygame.mixer.music.play(loops=0) # joue en boucle
+
+        # rafraichir l'écran
+        pygame.display.flip()
+
         selected_units = []
         while len(selected_units) < NumberOfCharacters:
-            self.screen.fill(BLACK)
 
             # Afficher l'instruction de choix :
-            font = pygame.font.Font(None, 32)
+            font = pygame.font.Font(None, 50)
             text = font.render(f"{player} : Choose your characters ({len(selected_units) + 1}/{NumberOfCharacters})", True, WHITE)
             self.screen.blit(text, (WIDTH//2 - text.get_width()//2, HEIGHT//8))
 
@@ -284,7 +297,15 @@ class Game:
                     for key in Personnages:
                         if Personnages[key].button.collidepoint(mouse_pos):
                             selected_units.append(copy.copy(Personnages[key]))
+        pygame.mixer.music.stop() # Arréte la musique de fond
 
+        # Charger la musique de fond
+
+        pygame.mixer.music.load("data\musics\cinematic_trash_kick_loop.mp3")
+        pygame.mixer.music.play(loops=3) # joue en boucle
+
+        pygame.mixer.music.load("data\musics\cinematic_trash_kick_loop.mp3")
+        pygame.mixer.music.play(-1) # joue en boucle
         if player == "player 1":
             self.player_units = selected_units
             # position initiale des personnages :
@@ -552,21 +573,33 @@ class Game:
             title = "GAME OVER"
             message = "Player 1 Defeated player 2 !"
         elif loser == "enemy":
+            # Font settings
+            title_font = pygame.font.Font(None, 72)
+            message_font = pygame.font.Font(None, 36)
+
+            # Button settings
+            button_font = pygame.font.Font(None, 36)
+            button_text = "Go to Title Screen"
+            button_rect = pygame.Rect(WIDTH // 3, HEIGHT // 2 + 100, WIDTH // 3, 50)
+
+            # Charger l'image de fond
+            splash_menu_image_1 = pygame.image.load("data\splash_images\you_win.png") 
+            splash_menu_image_1 = pygame.transform.scale(splash_menu_image_1, (WIDTH,HEIGHT))
+
+            # affiche l'image de fond
+            self.screen.blit(splash_menu_image_1, (0,0))
+
+            # Charger la musique de fond
+            pygame.mixer.music.load("data\musics\end_victory.mp3")
+            pygame.mixer.music.play(loops=0) # joue en boucle
+
+            # rafraichir l'écran
+            pygame.display.flip()
             title = "GAME WIN"
             message = "Player 1 Survived !"
 
-        # Font settings
-        title_font = pygame.font.Font(None, 72)
-        message_font = pygame.font.Font(None, 36)
-
-        # Button settings
-        button_font = pygame.font.Font(None, 36)
-        button_text = "Go to Title Screen"
-        button_rect = pygame.Rect(WIDTH // 3, HEIGHT // 2 + 100, WIDTH // 3, 50)
 
         while True:
-            # Fill the screen with a background color
-            self.screen.fill(BLACK)
 
             # Render the end game message
             title_text = title_font.render(title, True, WHITE)
@@ -576,8 +609,8 @@ class Game:
             self.screen.blit(message_text, (WIDTH // 2 - message_text.get_width() // 2, HEIGHT // 2 - 50))
 
             # Draw the "Go to Title Screen" button
-            pygame.draw.rect(self.screen, WHITE, button_rect, border_radius=5)
-            button_text_render = button_font.render(button_text, True, BLACK)
+            pygame.draw.rect(self.screen, ANOTHER_BLUE, button_rect, border_radius=5)
+            button_text_render = button_font.render(button_text, True, WHITE)
             self.screen.blit(button_text_render, (
                 button_rect.x + (button_rect.width - button_text_render.get_width()) // 2,
                 button_rect.y + (button_rect.height - button_text_render.get_height()) // 2
