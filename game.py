@@ -599,6 +599,14 @@ class Game:
             message = "Player 1 Survived !"
 
 
+        # Font settings
+        title_font = pygame.font.Font(None, 72)
+        message_font = pygame.font.Font(None, 36)
+        # Button settings
+        button_font = pygame.font.Font(None, 36)
+        button_text = "Go to Title Screen"
+        button_rect = pygame.Rect(WIDTH // 3, HEIGHT // 2 + 100, WIDTH // 3, 50)
+
         while True:
 
             # Render the end game message
