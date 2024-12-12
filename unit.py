@@ -153,7 +153,7 @@ class Unit:
                             2, self.y * CELL_SIZE + CELL_SIZE // 2), CELL_SIZE // 3)  
             
         # Affiche les contours pour designer l'equipe
-        border_color = (0, 0, 255) if self.team == "player 1" else (0, 255, 0) if self.team == "player 2" else (255, 0, 0)
+        border_color = BLUE if self.team == "player 1" else GREEN if self.team == "player 2" else (255, 0, 0)
         pygame.draw.rect(screen, border_color, (self.x * CELL_SIZE, self.y * CELL_SIZE, CELL_SIZE, CELL_SIZE), 2)
 
         # If selected, draw a small yellow dot in the bottom-right corner of the cell
@@ -200,9 +200,7 @@ class Unit:
     
     def Unit_target_button(self):
         return pygame.Rect(self.x*CELL_SIZE, self.y*CELL_SIZE, CELL_SIZE, CELL_SIZE)
-
                                          
-
 
 # Definitions Des Types d'unités :
 class Sorceress(Unit):
@@ -214,6 +212,8 @@ class Swordsman(Unit):
     def __init__(self, x, y, team, texture_path, x_choiceButton, y_choiceButton, name):
         super().__init__(x, y, health=22, attack_power=3, endurence_max=6, team=team, texture_path=texture_path, x_choiceButton=x_choiceButton, y_choiceButton=y_choiceButton, name=name)
         self.skills.append(Ichimonji_Skill())
+        self.skills.append(Sky_Clear())
+        self.skills.append(Samurai_Grave())
 
 class Monster(Unit):
     def __init__(self, x, y, team, texture_path, x_choiceButton, y_choiceButton, name):
@@ -267,6 +267,133 @@ class Ichimonji_Skill:
         if target == None :
             print("No valid target in range, Skill canceled.")
             self.used = True
+
+
+class Sky_Clear:
+    def __init__(self):
+        self.name = "Sky Clear"
+        self.damage = 12 
+        self.range = 3 
+        self.sound_effect = "data/skills/ichimonji.mp3"
+        self.animation_frames = ["data/skills/ichimonji.png"]
+        self.animation_frames_2 = ["data/interface_graphique/cracked_ground.png"]
+
+    def use_skill(self, owner_unit, game):
+        target_x, target_y = owner_unit.x, owner_unit.y  # Start with the owner's position
+
+        # Initial target zone draw
+        game.draw_map_units()
+        highlight_rect = pygame.Rect((target_x) * CELL_SIZE, (target_y) * CELL_SIZE, CELL_SIZE, CELL_SIZE)
+        pygame.draw.rect(game.screen, (128, 128, 128, 128), highlight_rect, 3)  # Gray border
+        pygame.display.flip()
+
+        direction=None 
+
+        # Target selection phase
+        selecting_target = True
+        while selecting_target:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    exit()
+
+                # Move the highlight with arrow keys
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_LEFT:
+                        direction="left"
+                    elif event.key == pygame.K_RIGHT:
+                        direction="right"                      
+                    elif event.key == pygame.K_UP:                        
+                        direction="up"                        
+                    elif event.key == pygame.K_DOWN:                        
+                        direction="down"
+                        
+
+                    # Déterminer les 3 cases consécutives basées sur la direction
+                    target_positions=[]
+                    if direction=="up":
+                        target_positions=[(owner_unit.x,owner_unit.y-i) for i in range(1,4)]
+                    if direction=="down":
+                        target_positions=[(owner_unit.x,owner_unit.y+i) for i in range(1,4)]
+                    if direction=="left":
+                        target_positions=[(owner_unit.x-i,owner_unit.y) for i in range(1,4)]
+                    if direction=="right":
+                        target_positions=[(owner_unit.x+i,owner_unit.y) for i in range(1,4)]
+
+                    # Ensure the effect zone does not include the caster
+                    target_positions = [(x, y) for x, y in target_positions if (x, y) != (owner_unit.x, owner_unit.y)]
+
+                    # Redraw the map with the highlight
+                    game.draw_map_units()
+                    for new_target_x,new_target_y in target_positions:
+                        if 0 <= new_target_x < GRID_SIZE_WIDTH and 0 <= new_target_y < GRID_SIZE_HEIGHT:
+                            highlight_rect = pygame.Rect((new_target_x) * CELL_SIZE, (new_target_y) * CELL_SIZE, CELL_SIZE, CELL_SIZE)
+                            pygame.draw.rect(game.screen, (128, 128, 128, 128), highlight_rect, 3)  # Gray border
+                    pygame.display.flip()
+
+                    # Validate the target with the space key
+                    if event.key == pygame.K_SPACE:
+                        print("Launching SKY CLEAR !!!")
+                        selecting_target = False  # Exit the selection phase
+                        break
+
+                    # annuler le skill
+                    elif event.key == pygame.K_x:
+                        print("Skill canceled.")
+                        return
+                        
+
+        # Explosion phase
+        game.draw_map_units()
+        pygame.display.flip()
+
+        # Play sound effect
+        if self.sound_effect:
+            sound1 = pygame.mixer.Sound(self.sound_effect)
+            sound1.play()
+            pygame.time.delay(int(sound1.get_length() * 1000))  # Attendre la fin du premier son
+
+            # Jouer un deuxième son
+            sound2 = pygame.mixer.Sound("data/skills/explosion.mp3")
+            sound3 = pygame.mixer.Sound("data/skills/crack.mp3")
+            sound2.play()
+            sound3.play()
+
+        # Damage units in the picked area
+        for new_target_x,new_target_y in target_positions:
+            if 0 <= new_target_x < GRID_SIZE_WIDTH and 0 <= new_target_y < GRID_SIZE_HEIGHT:
+                for potential_target in game.player_units + game.player2_units + game.enemy_units:
+                    if potential_target == owner_unit:
+                        continue
+                    if potential_target.x == new_target_x and potential_target.y == new_target_y:
+                        potential_target.health -= self.damage
+
+                        # Remove units with 0 or less health
+                        if potential_target.health <= 0:
+                            if potential_target.team == "player 1":
+                                game.player_units.remove(potential_target)
+                            elif potential_target.team == "player 2":
+                                game.player2_units.remove(potential_target)
+                            elif potential_target.team == "enemy":
+                                game.enemy_units.remove(potential_target)
+
+                # Play animation for the cell
+                for frame in self.animation_frames:
+                    animation_image = pygame.image.load(frame).convert_alpha()
+                    animation_image = pygame.transform.scale(animation_image, (CELL_SIZE, CELL_SIZE)) 
+                    # Load and display the cracked ground frame
+                    for cracked_frame in self.animation_frames_2:
+                        cracked_image = pygame.image.load(cracked_frame).convert_alpha()
+                        cracked_image = pygame.transform.scale(cracked_image, (CELL_SIZE, CELL_SIZE)) 
+
+                        # Draw the cracked ground image first (background)
+                        game.screen.blit(cracked_image, (new_target_x * CELL_SIZE, new_target_y * CELL_SIZE))
+                        # Draw the ichimonji image on top
+                        game.screen.blit(animation_image, (new_target_x * CELL_SIZE, new_target_y * CELL_SIZE))
+
+                        # Update the display
+                        pygame.display.flip()
+                        pygame.time.delay(50)  # Delay between frames
 
 class PurpleChaos_Skill:
     def __init__(self):
@@ -327,7 +454,7 @@ class PurpleChaos_Skill:
                         break
 
                     # annuler le skill
-                    elif event.key == pygame.K_1:
+                    elif event.key == pygame.K_x:
                         print("Skill canceled.")
                         return
                         
@@ -373,7 +500,145 @@ class PurpleChaos_Skill:
                     pygame.display.flip()
                     pygame.time.delay(50)  # Delay between frames
 
+
+
+class Samurai_Grave:
+    def __init__(self):
+        self.name = "Samurai Grave"
+        self.damage = 15 
+        self.range = 6
+        self.sound_effect = "data/skills/ichimonji.mp3"
+        self.animation_frames = ["data/skills/samurai_grave.png"]
+        self.animation_frames_2 = ["data/skills/gris.png"]
+
+    def use_skill(self, owner_unit, game):
+        target_x, target_y = owner_unit.x, owner_unit.y  # Start with the owner's position
+        new_target_x, new_target_y = owner_unit.x, owner_unit.y
+
+        # Initial target zone draw
+        game.draw_map_units()
+        highlight_rect = pygame.Rect((target_x-1) * CELL_SIZE, (target_y-1) * CELL_SIZE, CELL_SIZE*3, CELL_SIZE*3)
+        pygame.draw.rect(game.screen, (128, 128, 128, 128), highlight_rect, 3)  # Gray border
+        pygame.display.flip()
+
+        # Target selection phase
+        selecting_target = True
+        while selecting_target:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    exit()
+
+                # Move the highlight with arrow keys
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_LEFT:
+                        new_target_x = max(0, target_x - 1)
+                        new_target_y = target_y
+                    elif event.key == pygame.K_RIGHT:
+                        new_target_x = min(GRID_SIZE_WIDTH - 1, target_x + 1)
+                        new_target_y = target_y
+                    elif event.key == pygame.K_UP:
+                        new_target_x = target_x
+                        new_target_y = max(0, target_y - 1)
+                    elif event.key == pygame.K_DOWN:
+                        new_target_x = target_x
+                        new_target_y = min(GRID_SIZE_HEIGHT - 1, target_y + 1)
+
+                    # validate the new target if whithin range 
+                    if abs(owner_unit.x - new_target_x) <= self.range and abs(owner_unit.y - new_target_y) <= self.range:
+                        target_x = new_target_x
+                        target_y = new_target_y
+                        
+                    # Redraw the map with the highlight
+                    game.draw_map_units()
+                    highlight_rect = pygame.Rect((target_x-1) * CELL_SIZE, (target_y-1) * CELL_SIZE, CELL_SIZE*3, CELL_SIZE*3)
+                    pygame.draw.rect(game.screen, (128, 128, 128, 128), highlight_rect, 3)  # Gray border
+                    pygame.display.flip()
+
+                    # Validate the target with the space key
+                    if event.key == pygame.K_SPACE:
+                        print("Launching SAMURAI GRAVE !")
+                        selecting_target = False  # Exit the selection phase
+                        break
+
+                    # annuler le skill
+                    elif event.key == pygame.K_x:
+                        print("Skill canceled.")
+                        return
+                        
+
+        # Explosion phase
+        game.draw_map_units()
+        pygame.display.flip()
+
+        # Play sound effect
+        if self.sound_effect:
+            sound = pygame.mixer.Sound(self.sound_effect)
+            sound2=pygame.mixer.Sound("data/skills/die.mp3")
+            sound.play()
+            sound2.play()
+            
+
+        # play animations and apply damage
+        affected_cells = []
+        for dx in range(-1, 2):  # -1, 0, 1 for 3x3 area
+            for dy in range(-1, 2):
+                cell_x = target_x + dx
+                cell_y = target_y + dy
+
+                # Skip cells out of bounds
+                if cell_x < 0 or cell_x >= GRID_SIZE_WIDTH or cell_y < 0 or cell_y >= GRID_SIZE_HEIGHT:
+                    continue
+
+                affected_cells.append((cell_x, cell_y))
+
+        # Play animations and apply damage simultaneously
+        for frame1 in self.animation_frames:
+            for frame2 in self.animation_frames_2:
+                game.draw_map_units()
+
+                # Draw the "gris" animation
+                for cell_x, cell_y in affected_cells:
+                    animation_image2 = pygame.image.load(frame2).convert_alpha()
+                    animation_image2 = pygame.transform.scale(animation_image2, (CELL_SIZE, CELL_SIZE))
+                    game.screen.blit(animation_image2, (cell_x * CELL_SIZE, cell_y * CELL_SIZE))
+
+                # Draw the "samurai_grave" animation
+                for cell_x, cell_y in affected_cells:
+                    animation_image1 = pygame.image.load(frame1).convert_alpha()
+                    animation_image1 = pygame.transform.scale(animation_image1, (CELL_SIZE, CELL_SIZE))
+                    game.screen.blit(animation_image1, (cell_x * CELL_SIZE, cell_y * CELL_SIZE))
+
+                pygame.display.flip()
+                pygame.time.delay(3000)  # Delay between frames
         
+        sound3 = pygame.mixer.Sound("data/skills/dagger-slash-sound.mp3")
+        sound3.play()
+        pygame.time.delay(int(sound3.get_length() * 100))  # Attendre la fin du deuxième son
+        sound4=pygame.mixer.Sound("data/skills/sword-blade-slash-fx.mp3")
+        sound4.play()
+        pygame.time.delay(int(sound4.get_length() * 100))  # Attendre la fin du deuxième son
+        sound5 = pygame.mixer.Sound("data/skills/sword-clash.mp3")
+        sound5.play()
+        pygame.time.delay(int(sound5.get_length() * 100))  # Attendre la fin du deuxième son
+        sound6=pygame.mixer.Sound("data/skills/sword-blade-slash-metallic.mp3")
+        sound6.play()
+        pygame.time.delay(int(sound6.get_length() * 100))  # Attendre la fin du deuxième son
+
+        # Apply damage to units in affected cells
+        for cell_x, cell_y in affected_cells:
+            for potential_target in game.player_units + game.player2_units + game.enemy_units:
+                if potential_target.x == cell_x and potential_target.y == cell_y:
+                    potential_target.health -= self.damage
+
+                    # Remove units with 0 or less health
+                    if potential_target.health <= 0:
+                        if potential_target.team == "player 1":
+                            game.player_units.remove(potential_target)
+                        elif potential_target.team == "player 2":
+                            game.player2_units.remove(potential_target)
+                        elif potential_target.team == "enemy":
+                            game.enemy_units.remove(potential_target)        
 
 
         
