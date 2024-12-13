@@ -41,7 +41,11 @@ class Game:
 
         # game mode
         self.GameMode = ""
-
+        self.maps = {
+           "map1": {"name": "map1", "fichier": "data/maps/map2.csv", "photo": "data/maps/map1.png"},
+           "map2": {"name": "map2", "fichier": "data/maps/map3.csv", "photo": "data/maps/map2.png"},
+        } 
+        self.selected_map_file = []
         # map
         self.grass=[]
         self.walls = []
@@ -49,8 +53,8 @@ class Game:
         self.lilypads = []
         self.muds = []
         self.healing=[]
-
-
+        self.grass_oct=[]
+        
 
     # Charger les textures et sons
     def load_textures_sounds(self):
@@ -63,6 +67,7 @@ class Game:
             'lilypad': pygame.mixer.Sound('data/map_sound_effects/water-splash.wav'),
             'healing': pygame.mixer.Sound('data/map_sound_effects/heal-up.wav'),
             'footstep': pygame.mixer.Sound('data/map_sound_effects/footstep.wav'),
+
         }
 
         # Map textures
@@ -73,6 +78,8 @@ class Game:
         self.WATER=pygame.image.load('data/tiles/lilypad.png').convert_alpha()
         self.MUD=pygame.image.load('data/tiles/mud.png').convert_alpha()
         self.APPLE_TREE=pygame.image.load('data/tiles/appletree.png').convert_alpha()
+        self.GRASS_OCT=pygame.image.load('data/tiles/grassoct.png').convert_alpha()
+       
         # Redimensionner les textures
         self.GRASS = pygame.transform.scale(self.GRASS, (CELL_SIZE, CELL_SIZE))
         self.WALL = pygame.transform.scale(self.WALL, (CELL_SIZE, CELL_SIZE))
@@ -80,8 +87,8 @@ class Game:
         self.WATER = pygame.transform.scale(self.WATER, (CELL_SIZE, CELL_SIZE))
         self.MUD = pygame.transform.scale(self.MUD, (CELL_SIZE, CELL_SIZE))
         self.APPLE_TREE = pygame.transform.scale(self.APPLE_TREE, (CELL_SIZE, CELL_SIZE))
-    
-
+        self.GRASS_OCT=pygame.transform.scale(self.GRASS_OCT, (CELL_SIZE, CELL_SIZE))
+        
 
 
     # Display and Map
@@ -96,6 +103,7 @@ class Game:
                     3 : lilypad 
                     4 : mud 
                     5 : healing 
+                    6 : grass
         
         """
 
@@ -120,6 +128,9 @@ class Game:
                     self.muds.append((x, y))
                 if cell == '5':  # Si la valeur est '5', c'est une case healing
                     self.healing.append((x, y))
+                if cell == '6':   # Si la valeur est '6', c'est un type de terrain 
+                    self.grass_oct.append((x,y))
+                
 
     def is_wall(self, x, y):
         """
@@ -127,14 +138,95 @@ class Game:
         """
         return (x, y) in self.walls
 
+
+    def choose_map(self):
+       
+    
+          # Charger l'image de fond
+        splash_menu_image_1 = pygame.image.load("data/splash_images/pic_avatar.png") 
+        splash_menu_image_1 = pygame.transform.scale(splash_menu_image_1, (WIDTH, HEIGHT))
+       
+           
+        # affiche l'image de fond
+        self.screen.blit(splash_menu_image_1, (0,0))
+
+        # Charger la musique de fond
+        pygame.mixer.music.load("data/musics/cinematic_music.mp3")
+        pygame.mixer.music.play(loops=0) # joue en boucle
+
+        # rafraichir l'écran
+        pygame.display.flip()
+        # Charger les cartes 
+        map_previews = {
+            name: {
+             "image": pygame.image.load(info["photo"]).convert_alpha(),
+             "fichier": info["fichier"],
+        }
+        for name, info in self.maps.items()
+        }
+
+        # Redimensionner les map pour qu'elles tiennent dans la fenêtre
+        card_width, card_height = 180, 140
+        positions = {
+           "map1": pygame.Rect(WIDTH // 3 - card_width // 2, HEIGHT // 2 - card_height // 2, card_width, card_height),
+           "map2": pygame.Rect(2 * WIDTH // 3 - card_width // 2, HEIGHT // 2 - card_height // 2, card_width, card_height),
+        }
+
+        for name, info in map_previews.items():
+            map_previews[name]["image"] = pygame.transform.scale(info["image"], (card_width, card_height))
+
+        # Texte pour le titre
+        title_font = pygame.font.Font(None, 60)
+        title_text = title_font.render("Choose Your Map:", True, WHITE)
+
+        while True:
+           
+
+           # Afficher le titre
+           self.screen.blit(title_text, (WIDTH // 2 - title_text.get_width() // 2, HEIGHT // 8))
+
+           # Afficher les cartes avec leurs noms
+           for name, rect in positions.items():
+               # Dessiner la carte 
+               self.screen.blit(map_previews[name]["image"], rect.topleft)
+               # Ajouter une bordure blanche autour
+               pygame.draw.rect(self.screen, WHITE, rect, 3)
+
+               # Dessiner le nom de la carte
+               map_name_font = pygame.font.Font(None, 40)
+               map_name_text = map_name_font.render(self.maps[name]["name"], True, WHITE)
+               self.screen.blit( map_name_text,(rect.centerx - map_name_text.get_width() // 2, rect.bottom + 10))
+               
+           
+             # Rafraîchir l'écran
+           pygame.display.flip()
+
+            # Gérer les événements
+           for event in pygame.event.get():
+              if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+              elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1: 
+                mouse_pos = event.pos
+                for name, rect in positions.items():
+                    if rect.collidepoint(mouse_pos):
+                         self.selected_map_file = self.maps[name]["fichier"]
+                         return self.selected_map_file
+                 
+
     def draw_map_units(self, ShowGrille=False):
         """Affiche le jeu."""
+
+        if len( self.selected_map_file)==0:
+            print("No map selected!")
+            return
 
         # pour effacer l'ancienne image
         self.screen.fill(BLACK)
 
-        # charger la map du csv
-        self.read_map_from_csv('data/maps/map2.csv')
+        # charger la map du fichier CSV
+        self.read_map_from_csv(self.selected_map_file)
+
 
         # Affiche les blocs : "GRASS"
         for grass in self.grass:    
@@ -172,6 +264,14 @@ class Game:
             y = healing[1] * CELL_SIZE
             self.screen.blit(self.APPLE_TREE, (x, y))        
 
+       # Affiche les blocs : "GRASS_OCT"
+        for grasse_ocr in self.grass_oct:
+            x = grasse_ocr[0] * CELL_SIZE
+            y = grasse_ocr[1] * CELL_SIZE
+            self.screen.blit(self.GRASS_OCT, (x, y))       
+
+  
+
         if ShowGrille == True :
             # Affiche les contours de la grille (optionnel si vous voulez une bordure blanche)
             for x in range(0, WIDTH, CELL_SIZE):
@@ -181,7 +281,7 @@ class Game:
 
         # Affiche les unités selon le mode de jeu
         for unit in self.player_units + self.enemy_units + self.player2_units:
-            unit.draw(self.screen)
+           unit.draw(self.screen)
 
         # Rafraîchit l'écran
         pygame.display.flip()
@@ -198,11 +298,11 @@ class Game:
         """
 
         # Charger l'image de fond
-        splash_menu_image = pygame.image.load("data\splash_images\menu_image.png")
+        splash_menu_image = pygame.image.load("data/splash_images/menu_image.png")
         splash_menu_image = pygame.transform.scale(splash_menu_image, (WIDTH,HEIGHT))
 
         # Charger la musique de fond
-        pygame.mixer.music.load("data\musics\Ost_MainMenu.mp3")
+        pygame.mixer.music.load("data/musics/Ost_MainMenu.mp3")
         pygame.mixer.music.play(-1) # joue en boucle
 
         # Texte du titre
@@ -259,14 +359,14 @@ class Game:
         """
 
         # Charger l'image de fond
-        splash_menu_image_1 = pygame.image.load("data\splash_images\pic_avatar.png") 
+        splash_menu_image_1 = pygame.image.load("data/splash_images/pic_avatar.png") 
         splash_menu_image_1 = pygame.transform.scale(splash_menu_image_1, (WIDTH,HEIGHT))
 
         # affiche l'image de fond
         self.screen.blit(splash_menu_image_1, (0,0))
 
         # Charger la musique de fond
-        pygame.mixer.music.load("data\musics\cinematic_music.mp3")
+        pygame.mixer.music.load("data/musics/cinematic_music.mp3")
         pygame.mixer.music.play(loops=0) # joue en boucle
 
         # rafraichir l'écran
@@ -301,10 +401,10 @@ class Game:
 
         # Charger la musique de fond
 
-        pygame.mixer.music.load("data\musics\cinematic_trash_kick_loop.mp3")
+        pygame.mixer.music.load("data/musics/cinematic_trash_kick_loop.mp3")
         pygame.mixer.music.play(loops=3) # joue en boucle
 
-        pygame.mixer.music.load("data\musics\cinematic_trash_kick_loop.mp3")
+        pygame.mixer.music.load("data/musics/cinematic_trash_kick_loop.mp3")
         pygame.mixer.music.play(-1) # joue en boucle
         if player == "player 1":
             self.player_units = selected_units
@@ -655,15 +755,14 @@ class Game:
 
         # Afficher le menu principale
         MenuChoice = self.Main_menu(GAME_TITLE)
-
-        # Reinitialize the game based on the menu choice
+        self.choose_map()
         if MenuChoice == "PvE":
             self.Characters_choice("player 1", CHARACTER_PER_TEAM)
             self.Characters_choice("enemy", CHARACTER_PER_TEAM)
         elif MenuChoice == "PvP":
             self.Characters_choice("player 1", CHARACTER_PER_TEAM)
             self.Characters_choice("player 2", CHARACTER_PER_TEAM)
-
+        
         # Start the game loop again
         if MenuChoice == "PvE":
             while True:
@@ -674,7 +773,7 @@ class Game:
                 self.handle_player_turn("player 1")
                 self.handle_player_turn("player 2")
                     
-
+        
 
 
 # main function
