@@ -120,6 +120,8 @@ class Game:
                     self.muds.append((x, y))
                 if cell == '5':  # Si la valeur est '5', c'est une case healing
                     self.healing.append((x, y))
+                if cell == '*':  # Si la valeur est '5', c'est une case healing
+                    self.healing.append((x, y))
 
     def is_wall(self, x, y):
         """
@@ -424,7 +426,7 @@ class Game:
 
                                 has_acted = True
                                 selected_unit.is_selected = False
-                
+
             if self.GameMode == "PvE" :
                 if len(self.enemy_units) == 0 :
                     self.game_end("enemy")
@@ -515,7 +517,7 @@ class Game:
 
                                 has_acted = True
                                 selected_unit.is_selected = False
-                
+
             if self.GameMode == "PvE" :
                 if len(self.enemy_units) == 0 :
                     self.game_end("enemy")
