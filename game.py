@@ -1,6 +1,6 @@
 from unit import *
 
-# Test
+
 
 
 class Game:
@@ -41,12 +41,15 @@ class Game:
 
         # game mode
         self.GameMode = ""
+
+        # maps
         self.maps = {
            "map1": {"name": "map1", "fichier": "data/maps/map2.csv", "photo": "data/maps/map1.png"},
            "map2": {"name": "map2", "fichier": "data/maps/map3.csv", "photo": "data/maps/map2.png"},
-        } 
+        }
+        # map choice
         self.selected_map_file = []
-        # map
+        # map textures
         self.grass=[]
         self.walls = []
         self.magmas = []
@@ -54,7 +57,9 @@ class Game:
         self.muds = []
         self.healing=[]
         self.grass_oct=[]
-        
+
+
+
 
     # Charger les textures et sons
     def load_textures_sounds(self):
@@ -90,6 +95,8 @@ class Game:
         self.GRASS_OCT=pygame.transform.scale(self.GRASS_OCT, (CELL_SIZE, CELL_SIZE))
         
 
+
+    # bouton retourner
     def draw_back_button(self):
        
        back_button_width = 200
@@ -103,6 +110,10 @@ class Game:
        self.screen.blit(back_button_text, (back_button_rect.centerx - back_button_text.get_width() // 2, back_button_rect.centery - back_button_text.get_height() // 2))
 
        return back_button_rect
+    
+
+
+
     # Display and Map
     def read_map_from_csv(self, filename):
         """
@@ -144,6 +155,9 @@ class Game:
                     self.grass_oct.append((x,y))
                 
 
+
+
+    # verifie si c'est un mur
     def is_wall(self, x, y):
         """
         Vérifie si une cellule est un mur.
@@ -151,14 +165,15 @@ class Game:
         return (x, y) in self.walls
 
 
+
+
+    # ecran de choix de la carte
     def choose_map(self):
-       
     
-          # Charger l'image de fond
+        # Charger l'image de fond
         splash_menu_image_1 = pygame.image.load("data/splash_images/pic_avatar.png") 
         splash_menu_image_1 = pygame.transform.scale(splash_menu_image_1, (WIDTH, HEIGHT))
-       
-           
+        
         # affiche l'image de fond
         self.screen.blit(splash_menu_image_1, (0,0))
 
@@ -168,6 +183,7 @@ class Game:
 
         # rafraichir l'écran
         pygame.display.flip()
+
         # Charger les cartes 
         map_previews = {
             name: {
@@ -191,49 +207,50 @@ class Game:
         title_font = pygame.font.Font(None, 60)
         title_text = title_font.render("Choose Your Map:", True, WHITE)
 
+        # boucle pour le choix de la carte
         while True:
            
+            # Afficher le titre
+            self.screen.blit(title_text, (WIDTH // 2 - title_text.get_width() // 2, HEIGHT // 8))
 
-           # Afficher le titre
-           self.screen.blit(title_text, (WIDTH // 2 - title_text.get_width() // 2, HEIGHT // 8))
-
-           # Afficher les cartes avec leurs noms
-           for name, rect in positions.items():
-               # Dessiner la carte 
-               self.screen.blit(map_previews[name]["image"], rect.topleft)
-               # Ajouter une bordure blanche autour
-               pygame.draw.rect(self.screen, WHITE, rect, 3)
-
-               # Dessiner le nom de la carte
-               map_name_font = pygame.font.Font(None, 40)
-               map_name_text = map_name_font.render(self.maps[name]["name"], True, WHITE)
-               self.screen.blit( map_name_text,(rect.centerx - map_name_text.get_width() // 2, rect.bottom + 10))
+            # Afficher les cartes avec leurs noms
+            for name, rect in positions.items():
+                # Dessiner la carte 
+                self.screen.blit(map_previews[name]["image"], rect.topleft)
+                # Ajouter une bordure blanche autour
+                pygame.draw.rect(self.screen, WHITE, rect, 3)
+                # Dessiner le nom de la carte
+                map_name_font = pygame.font.Font(None, 40)
+                map_name_text = map_name_font.render(self.maps[name]["name"], True, WHITE)
+                self.screen.blit( map_name_text,(rect.centerx - map_name_text.get_width() // 2, rect.bottom + 10))
                
-           back_button_rect = self.draw_back_button()
-             # Rafraîchir l'écran
-           pygame.display.flip()
+            back_button_rect = self.draw_back_button()
+            # Rafraîchir l'écran
+            pygame.display.flip()
 
             # Gérer les événements
-           for event in pygame.event.get():
-              if event.type == pygame.QUIT:
-                pygame.quit()
-                exit()
-              elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1: 
-                mouse_pos = event.pos
-                for name, rect in positions.items():
-                    if rect.collidepoint(mouse_pos):
-                         self.selected_map_file = self.maps[name]["fichier"]
-                         return self.selected_map_file
-                 
-                if back_button_rect.collidepoint(mouse_pos):
-                    # Action lorsque le bouton Retour est cliqué (par exemple, retourner au menu principal)
-                   
-                    pygame.event.clear()  # Nettoyer les événements restants
-                    self.Main_menu(GAME_TITLE)
-                    return None
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    exit()
+                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1: 
+                    mouse_pos = event.pos
+                    for name, rect in positions.items():
+                        if rect.collidepoint(mouse_pos):
+                            self.selected_map_file = self.maps[name]["fichier"]
+                            return self.selected_map_file
+                    
+                    if back_button_rect.collidepoint(mouse_pos):
+                        # Action lorsque le bouton Retour est cliqué (par exemple, retourner au menu principal)
+                    
+                        pygame.event.clear()  # Nettoyer les événements restants
+                        self.Main_menu(GAME_TITLE)
+                        return None
           
           
-        
+
+
+    # Affichage de la carte et les unites pendent le jeux 
     def draw_map_units(self, ShowGrille=False):
         """Affiche le jeu."""
 
@@ -457,7 +474,7 @@ class Game:
 
 
 
-    # Handle turns
+    # Tour des joueurs 1 et 2
     def handle_player_turn(self, team):
         """
             input : 
@@ -649,8 +666,7 @@ class Game:
 
 
 
-
-
+    # IA de enemy
     def handle_enemy_turn(self):
         """IA très simple pour les ennemis."""
 
@@ -817,6 +833,8 @@ def main():
 
     # Lancer le jeu
     game.lunch_game()
+
+
 
 
 if __name__ == "__main__":

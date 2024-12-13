@@ -4,6 +4,9 @@ import os
 import copy
 import csv
 
+
+
+
 # Constantes
 GAME_TITLE = "Forest Gate"
 CELL_SIZE = 40
@@ -22,6 +25,8 @@ GREY= (128,128,128)
 ORANGE=(255,178,102)
 YELLOW = (255, 255, 0)
 CHARACTER_PER_TEAM = 2
+
+
 
 
 class Unit:
@@ -53,6 +58,9 @@ class Unit:
     draw(screen)
         Dessine l'unité sur la grille.
     """
+
+
+
 
     def __init__(self, x, y, health, attack_power, endurence_max, team, texture_path, x_choiceButton, y_choiceButton, name):
         """
@@ -96,6 +104,9 @@ class Unit:
                 self.texture = None
                 self.choice_texture = None
 
+
+
+
     def move(self, dx, dy, game):
         """Déplace l'unité de dx, dy."""
 
@@ -133,10 +144,16 @@ class Unit:
             else:
                 game.current_sound=None # Aucun son à jouer 
 
+
+
+
     def attack(self, target):
         """Attaque une unité cible."""
         if abs(self.x - target.x) <= 1 and abs(self.y - target.y) <= 1:
             target.health -= self.attack_power
+
+
+
 
     def draw(self, screen):
 
@@ -180,7 +197,10 @@ class Unit:
         else:
             health_color=RED 
         pygame.draw.rect(screen, health_color, (bar_x, bar_y, current_bar_width, bar_height))
-     
+
+
+
+
     # affichage libre
     def choiceButton_draw(self, screen):
         if self.texture:
@@ -198,9 +218,13 @@ class Unit:
             # screen.blit(text, (self.button.x, self.button.y+int(CELL_SIZE*1.5)))
 
     
+
+
     def Unit_target_button(self):
         return pygame.Rect(self.x*CELL_SIZE, self.y*CELL_SIZE, CELL_SIZE, CELL_SIZE)
                                          
+
+
 
 # Definitions Des Types d'unités :
 class Sorceress(Unit):
@@ -218,6 +242,8 @@ class Swordsman(Unit):
 class Monster(Unit):
     def __init__(self, x, y, team, texture_path, x_choiceButton, y_choiceButton, name):
         super().__init__(x, y, health=28, attack_power=2, endurence_max=4, team=team, texture_path=texture_path, x_choiceButton=x_choiceButton, y_choiceButton=y_choiceButton, name=name)
+
+
 
 
 # Definition des compétances :
@@ -267,6 +293,8 @@ class Ichimonji_Skill:
         if target == None :
             print("No valid target in range, Skill canceled.")
             self.used = True
+
+
 
 
 class Sky_Clear:
@@ -395,6 +423,9 @@ class Sky_Clear:
                         pygame.display.flip()
                         pygame.time.delay(50)  # Delay between frames
 
+
+
+
 class PurpleChaos_Skill:
     def __init__(self):
         self.name = "Purple Chaos"
@@ -499,6 +530,7 @@ class PurpleChaos_Skill:
                     game.screen.blit(animation_image, (cell_x * CELL_SIZE, cell_y * CELL_SIZE))
                     pygame.display.flip()
                     pygame.time.delay(50)  # Delay between frames
+
 
 
 
