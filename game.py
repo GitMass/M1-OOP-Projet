@@ -90,7 +90,19 @@ class Game:
         self.GRASS_OCT=pygame.transform.scale(self.GRASS_OCT, (CELL_SIZE, CELL_SIZE))
         
 
+    def draw_back_button(self):
+       
+       back_button_width = 200
+       back_button_height = 50
+       back_button_rect = pygame.Rect(WIDTH // 2 - back_button_width // 2, HEIGHT - 100, back_button_width, back_button_height)
 
+       # Dessiner le bouton
+       pygame.draw.rect(self.screen, WHITE, back_button_rect)  
+       back_button_font = pygame.font.Font(None, 40)
+       back_button_text = back_button_font.render("Retour", True, BLACK ) 
+       self.screen.blit(back_button_text, (back_button_rect.centerx - back_button_text.get_width() // 2, back_button_rect.centery - back_button_text.get_height() // 2))
+
+       return back_button_rect
     # Display and Map
     def read_map_from_csv(self, filename):
         """
@@ -197,7 +209,7 @@ class Game:
                map_name_text = map_name_font.render(self.maps[name]["name"], True, WHITE)
                self.screen.blit( map_name_text,(rect.centerx - map_name_text.get_width() // 2, rect.bottom + 10))
                
-           
+           back_button_rect = self.draw_back_button()
              # Rafraîchir l'écran
            pygame.display.flip()
 
@@ -213,7 +225,15 @@ class Game:
                          self.selected_map_file = self.maps[name]["fichier"]
                          return self.selected_map_file
                  
-
+                if back_button_rect.collidepoint(mouse_pos):
+                    # Action lorsque le bouton Retour est cliqué (par exemple, retourner au menu principal)
+                   
+                    pygame.event.clear()  # Nettoyer les événements restants
+                    self.Main_menu(GAME_TITLE)
+                    return None
+          
+          
+        
     def draw_map_units(self, ShowGrille=False):
         """Affiche le jeu."""
 
@@ -296,7 +316,7 @@ class Game:
         Output : 
             - str : "PvE" pour jouer contre l'ordinateur, "PVP" pour jouer contre un autre utilisateur
         """
-
+        
         # Charger l'image de fond
         splash_menu_image = pygame.image.load("data/splash_images/menu_image.png")
         splash_menu_image = pygame.transform.scale(splash_menu_image, (WIDTH,HEIGHT))
@@ -346,7 +366,7 @@ class Game:
                             self.GameMode = info["mode"]
                             return info["mode"]
 
-
+              
 
 
     # Character choice menu
@@ -383,7 +403,7 @@ class Game:
             # Affiche les personnages disponibles :
             for key in Personnages:
                 Personnages[key].choiceButton_draw(self.screen)
-            
+           
             # update screen :
             pygame.display.flip()
 
@@ -397,10 +417,12 @@ class Game:
                     for key in Personnages:
                         if Personnages[key].button.collidepoint(mouse_pos):
                             selected_units.append(copy.copy(Personnages[key]))
+                    
+                  
         pygame.mixer.music.stop() # Arréte la musique de fond
 
         # Charger la musique de fond
-
+      
         pygame.mixer.music.load("data/musics/cinematic_trash_kick_loop.mp3")
         pygame.mixer.music.play(loops=3) # joue en boucle
 
@@ -430,7 +452,8 @@ class Game:
                 self.enemy_units[i].y = GRID_SIZE_HEIGHT - 3 - i
         
         return selected_units
-
+        
+                        
 
 
 
@@ -683,14 +706,14 @@ class Game:
             button_rect = pygame.Rect(WIDTH // 3, HEIGHT // 2 + 100, WIDTH // 3, 50)
 
             # Charger l'image de fond
-            splash_menu_image_1 = pygame.image.load("data\splash_images\you_win.png") 
+            splash_menu_image_1 = pygame.image.load("data/splash_images/you_win.png") 
             splash_menu_image_1 = pygame.transform.scale(splash_menu_image_1, (WIDTH,HEIGHT))
 
             # affiche l'image de fond
             self.screen.blit(splash_menu_image_1, (0,0))
 
             # Charger la musique de fond
-            pygame.mixer.music.load("data\musics\end_victory.mp3")
+            pygame.mixer.music.load("data/musics/end_victory.mp3")
             pygame.mixer.music.play(loops=0) # joue en boucle
 
             # rafraichir l'écran
@@ -752,12 +775,15 @@ class Game:
         self.player_units = []
         self.player2_units = []
         self.enemy_units = []
+        self.selected_map_file = []
 
         # Afficher le menu principale
         MenuChoice = self.Main_menu(GAME_TITLE)
-        self.choose_map()
+        selected_map = self.choose_map()
+        if selected_map is None:
+           return self.lunch_game()
         if MenuChoice == "PvE":
-            self.Characters_choice("player 1", CHARACTER_PER_TEAM)
+            result=self.Characters_choice("player 1", CHARACTER_PER_TEAM)
             self.Characters_choice("enemy", CHARACTER_PER_TEAM)
         elif MenuChoice == "PvP":
             self.Characters_choice("player 1", CHARACTER_PER_TEAM)
