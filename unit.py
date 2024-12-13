@@ -3,7 +3,9 @@ import random
 import os
 import copy
 import csv
-import time 
+
+
+
 
 # Constantes
 GAME_TITLE = "Forest Gate"
@@ -23,6 +25,8 @@ GREY= (128,128,128)
 ORANGE=(255,178,102)
 YELLOW = (255, 255, 0)
 CHARACTER_PER_TEAM = 2
+
+
 
 
 class Unit:
@@ -54,6 +58,9 @@ class Unit:
     draw(screen)
         Dessine l'unité sur la grille.
     """
+
+
+
 
     def __init__(self, x, y, health, attack_power, endurence_max, team, texture_path, x_choiceButton, y_choiceButton, name):
         """
@@ -97,6 +104,9 @@ class Unit:
                 self.texture = None
                 self.choice_texture = None
 
+
+
+
     def move(self, dx, dy, game):
         """Déplace l'unité de dx, dy."""
 
@@ -134,10 +144,16 @@ class Unit:
             else:
                 game.current_sound=None # Aucun son à jouer 
 
+
+
+
     def attack(self, target):
         """Attaque une unité cible."""
         if abs(self.x - target.x) <= 1 and abs(self.y - target.y) <= 1:
             target.health -= self.attack_power
+
+
+
 
     def draw(self, screen):
 
@@ -181,7 +197,10 @@ class Unit:
         else:
             health_color=RED 
         pygame.draw.rect(screen, health_color, (bar_x, bar_y, current_bar_width, bar_height))
-     
+
+
+
+
     # affichage libre
     def choiceButton_draw(self, screen):
         if self.texture:
@@ -199,26 +218,19 @@ class Unit:
             # screen.blit(text, (self.button.x, self.button.y+int(CELL_SIZE*1.5)))
 
     
+
+
     def Unit_target_button(self):
         return pygame.Rect(self.x*CELL_SIZE, self.y*CELL_SIZE, CELL_SIZE, CELL_SIZE)
-    
-    def load_poison_zones(self,filename):
-        zones = []
-        with open(filename, mode='r') as file:
-            reader = csv.reader(file)
-            for y, row in enumerate(reader):
-                for x, cell in enumerate(row):
-                    if cell == '*':
-                        zones.append((x, y))  # Ajouter la position du flacon (x, y)
-        return zones
                                          
+
+
 
 # Definitions Des Types d'unités :
 class Sorceress(Unit):
     def __init__(self, x, y, team, texture_path, x_choiceButton, y_choiceButton, name):
         super().__init__(x, y, health=18, attack_power=4, endurence_max=4, team=team, texture_path=texture_path, x_choiceButton=x_choiceButton, y_choiceButton=y_choiceButton, name=name)
         self.skills.append(PurpleChaos_Skill())
-        self.skills.append(Poison_Master())
         
 class Swordsman(Unit):
     def __init__(self, x, y, team, texture_path, x_choiceButton, y_choiceButton, name):
@@ -230,6 +242,8 @@ class Swordsman(Unit):
 class Monster(Unit):
     def __init__(self, x, y, team, texture_path, x_choiceButton, y_choiceButton, name):
         super().__init__(x, y, health=28, attack_power=2, endurence_max=4, team=team, texture_path=texture_path, x_choiceButton=x_choiceButton, y_choiceButton=y_choiceButton, name=name)
+
+
 
 
 # Definition des compétances :
@@ -279,6 +293,8 @@ class Ichimonji_Skill:
         if target == None :
             print("No valid target in range, Skill canceled.")
             self.used = True
+
+
 
 
 class Sky_Clear:
@@ -406,6 +422,117 @@ class Sky_Clear:
                         # Update the display
                         pygame.display.flip()
                         pygame.time.delay(50)  # Delay between frames
+
+
+
+
+class PurpleChaos_Skill:
+    def __init__(self):
+        self.name = "Purple Chaos"
+        self.damage = 6
+        self.range = 6
+        self.sound_effect = "data/skills/magicblast.mp3"
+        self.animation_frames = ["data/skills/purple.png"]
+
+    def use_skill(self, owner_unit, game):
+        target_x, target_y = owner_unit.x, owner_unit.y  # Start with the owner's position
+        new_target_x, new_target_y = owner_unit.x, owner_unit.y
+
+        # Initial target zone draw
+        game.draw_map_units()
+        highlight_rect = pygame.Rect((target_x-1) * CELL_SIZE, (target_y-1) * CELL_SIZE, CELL_SIZE*3, CELL_SIZE*3)
+        pygame.draw.rect(game.screen, (128, 128, 128, 128), highlight_rect, 3)  # Gray border
+        pygame.display.flip()
+
+        # Target selection phase
+        selecting_target = True
+        while selecting_target:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    exit()
+
+                # Move the highlight with arrow keys
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_LEFT:
+                        new_target_x = max(0, target_x - 1)
+                        new_target_y = target_y
+                    elif event.key == pygame.K_RIGHT:
+                        new_target_x = min(GRID_SIZE_WIDTH - 1, target_x + 1)
+                        new_target_y = target_y
+                    elif event.key == pygame.K_UP:
+                        new_target_x = target_x
+                        new_target_y = max(0, target_y - 1)
+                    elif event.key == pygame.K_DOWN:
+                        new_target_x = target_x
+                        new_target_y = min(GRID_SIZE_HEIGHT - 1, target_y + 1)
+
+                    # validate the new target if whithin range 
+                    if abs(owner_unit.x - new_target_x) <= self.range and abs(owner_unit.y - new_target_y) <= self.range:
+                        target_x = new_target_x
+                        target_y = new_target_y
+                        
+                    # Redraw the map with the highlight
+                    game.draw_map_units()
+                    highlight_rect = pygame.Rect((target_x-1) * CELL_SIZE, (target_y-1) * CELL_SIZE, CELL_SIZE*3, CELL_SIZE*3)
+                    pygame.draw.rect(game.screen, (128, 128, 128, 128), highlight_rect, 3)  # Gray border
+                    pygame.display.flip()
+
+                    # Validate the target with the space key
+                    if event.key == pygame.K_SPACE:
+                        print("Launching Purple Chaos !")
+                        selecting_target = False  # Exit the selection phase
+                        break
+
+                    # annuler le skill
+                    elif event.key == pygame.K_x:
+                        print("Skill canceled.")
+                        return
+                        
+
+        # Explosion phase
+        game.draw_map_units()
+        pygame.display.flip()
+
+        # Play sound effect
+        if self.sound_effect:
+            sound = pygame.mixer.Sound(self.sound_effect)
+            sound.play()
+
+        # play animations and apply damage
+        for dx in range(-1, 2):  # -1, 0, 1 for 3x3 area
+            for dy in range(-1, 2):
+                cell_x = target_x + dx
+                cell_y = target_y + dy
+
+                # Skip cells out of bounds
+                if cell_x < 0 or cell_x >= GRID_SIZE_WIDTH or cell_y < 0 or cell_y >= GRID_SIZE_HEIGHT:
+                    continue
+
+                # Damage units in the 3x3 area
+                for potential_target in game.player_units + game.player2_units + game.enemy_units:
+                    if potential_target.x == cell_x and potential_target.y == cell_y:
+                        potential_target.health -= self.damage
+
+                        # Remove units with 0 or less health
+                        if potential_target.health <= 0:
+                            if potential_target.team == "player 1":
+                                game.player_units.remove(potential_target)
+                            elif potential_target.team == "player 2":
+                                game.player2_units.remove(potential_target)
+                            elif potential_target.team == "enemy":
+                                game.enemy_units.remove(potential_target)
+
+                # Play animation for the cell
+                for frame in self.animation_frames:
+                    animation_image = pygame.image.load(frame).convert_alpha()
+                    animation_image = pygame.transform.scale(animation_image, (CELL_SIZE, CELL_SIZE))
+                    game.screen.blit(animation_image, (cell_x * CELL_SIZE, cell_y * CELL_SIZE))
+                    pygame.display.flip()
+                    pygame.time.delay(50)  # Delay between frames
+
+
+
 
 class Samurai_Grave:
     def __init__(self):
@@ -546,228 +673,7 @@ class Samurai_Grave:
                             game.enemy_units.remove(potential_target)        
 
 
-class PurpleChaos_Skill:
-    def __init__(self):
-        self.name = "Purple Chaos"
-        self.damage = 10
-        self.range = 6
-        self.sound_effect = "data/skills/magicblast.mp3"
-        self.animation_frames = ["data/skills/purple.png"]
-
-    def use_skill(self, owner_unit, game):
-        target_x, target_y = owner_unit.x, owner_unit.y  # Start with the owner's position
-        new_target_x, new_target_y = owner_unit.x, owner_unit.y
-
-        # Initial target zone draw
-        game.draw_map_units()
-        highlight_rect = pygame.Rect((target_x-1) * CELL_SIZE, (target_y-1) * CELL_SIZE, CELL_SIZE*3, CELL_SIZE*3)
-        pygame.draw.rect(game.screen, (128, 128, 128, 128), highlight_rect, 3)  # Gray border
-        pygame.display.flip()
-
-        # Target selection phase
-        selecting_target = True
-        while selecting_target:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    exit()
-
-                # Move the highlight with arrow keys
-                elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_LEFT:
-                        new_target_x = max(0, target_x - 1)
-                        new_target_y = target_y
-                    elif event.key == pygame.K_RIGHT:
-                        new_target_x = min(GRID_SIZE_WIDTH - 1, target_x + 1)
-                        new_target_y = target_y
-                    elif event.key == pygame.K_UP:
-                        new_target_x = target_x
-                        new_target_y = max(0, target_y - 1)
-                    elif event.key == pygame.K_DOWN:
-                        new_target_x = target_x
-                        new_target_y = min(GRID_SIZE_HEIGHT - 1, target_y + 1)
-
-                    # validate the new target if whithin range 
-                    if abs(owner_unit.x - new_target_x) <= self.range and abs(owner_unit.y - new_target_y) <= self.range:
-                        target_x = new_target_x
-                        target_y = new_target_y
-                        
-                    # Redraw the map with the highlight
-                    game.draw_map_units()
-                    highlight_rect = pygame.Rect((target_x-1) * CELL_SIZE, (target_y-1) * CELL_SIZE, CELL_SIZE*3, CELL_SIZE*3)
-                    pygame.draw.rect(game.screen, (128, 128, 128, 128), highlight_rect, 3)  # Gray border
-                    pygame.display.flip()
-
-                    # Validate the target with the space key
-                    if event.key == pygame.K_SPACE:
-                        print("Launching Purple Chaos !")
-                        selecting_target = False  # Exit the selection phase
-                        break
-
-                    # annuler le skill
-                    elif event.key == pygame.K_x:
-                        print("Skill canceled.")
-                        return
-                        
-
-        # Explosion phase
-        game.draw_map_units()
-        pygame.display.flip()
-
-        # Play sound effect
-        if self.sound_effect:
-            sound = pygame.mixer.Sound(self.sound_effect)
-            sound.play()
-
-        # play animations and apply damage
-        for dx in range(-1, 2):  # -1, 0, 1 for 3x3 area
-            for dy in range(-1, 2):
-                cell_x = target_x + dx
-                cell_y = target_y + dy
-
-                # Skip cells out of bounds
-                if cell_x < 0 or cell_x >= GRID_SIZE_WIDTH or cell_y < 0 or cell_y >= GRID_SIZE_HEIGHT:
-                    continue
-
-                # Damage units in the 3x3 area
-                for potential_target in game.player_units + game.player2_units + game.enemy_units:
-                    if potential_target.x == cell_x and potential_target.y == cell_y:
-                        potential_target.health -= self.damage
-
-                        # Remove units with 0 or less health
-                        if potential_target.health <= 0:
-                            if potential_target.team == "player 1":
-                                game.player_units.remove(potential_target)
-                            elif potential_target.team == "player 2":
-                                game.player2_units.remove(potential_target)
-                            elif potential_target.team == "enemy":
-                                game.enemy_units.remove(potential_target)
-
-                # Play animation for the cell
-                for frame in self.animation_frames:
-                    animation_image = pygame.image.load(frame).convert_alpha()
-                    animation_image = pygame.transform.scale(animation_image, (CELL_SIZE, CELL_SIZE))
-                    game.screen.blit(animation_image, (cell_x * CELL_SIZE, cell_y * CELL_SIZE))
-                    pygame.display.flip()
-                    pygame.time.delay(50)  # Delay between frames
-
-
-class Poison_Master:
-    def __init__(self):
-        self.name = "Poison Master"
-        self.damage = 6
-        self.range = 6
-        self.sound_effect = "data/skills/poison_master.mp3"
-        self.animation_frames = ["data/skills/poison_cell.png"]
-        self.maps = ["data/maps/map_poison_1.csv", "data/maps/map_poison_2.csv", "data/maps/map_poison_3.csv"]
-        self.current_map_index = 0
-        self.poison_zones = self.load_poison_zones(self.maps[self.current_map_index])
-
-        # Variables graphiques
-        self.temp_surface = None
-        self.animation_image = None
-
-    def initialize_graphics(self):
-        """Initialise les graphismes et les surfaces après l'initialisation de Pygame."""
-        if self.animation_image is None:
-            self.animation_image = pygame.image.load(self.animation_frames[0]).convert_alpha()
-            self.animation_image = pygame.transform.scale(self.animation_image, (CELL_SIZE, CELL_SIZE))
-
-    def load_poison_zones(self, filename):
-        """Charge les zones de poison depuis un fichier CSV."""
-        zones = []
-        with open(filename, mode='r') as file:
-            reader = csv.reader(file)
-            for y, row in enumerate(reader):
-                for x, cell in enumerate(row):
-                    if cell == '*':
-                        zones.append((x, y))  # Ajouter la position du flacon (x, y)
-        return zones
-
-    def use_skill(self, owner_unit, game):
-        # S'assurer que les graphismes sont initialisés
-        if self.animation_image is None:
-            self.initialize_graphics()
-
-        selecting_target = True
-
-        # Préparer une surface temporaire de la taille de l'écran
-        if self.temp_surface is None:
-            self.temp_surface = pygame.Surface(game.screen.get_size(), pygame.SRCALPHA)
-
-        while selecting_target:
-            # Dessiner sur la surface temporaire
-            self.temp_surface.fill((0, 0, 0, 0))  # Effacer la surface temporaire (transparent)
-            for x, y in self.poison_zones:
-                rect = pygame.Rect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
-                pygame.draw.rect(self.temp_surface, (0,0,0, 128), rect)  # Dessiner les zones de poison
-
-            # Blitter la surface temporaire sur l'écran principal
-            game.draw_map_units()  # Dessiner l'état de la carte
-            game.screen.blit(self.temp_surface, (0, 0))
-            pygame.display.flip()
-
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    exit()
-
-                elif event.type == pygame.KEYDOWN:
-                    # Changer de carte avec les flèches directionnelles
-                    if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
-                        self.current_map_index = (self.current_map_index + 1) % len(self.maps)
-                        self.poison_zones = self.load_poison_zones(self.maps[self.current_map_index])
-                        break
-
-                    # Valider avec K_SPACE
-                    elif event.key == pygame.K_SPACE:
-                        print("Lancement du flacon de poison avec la carte sélectionnée !")
-                        selecting_target = False
-                        break
-
-                    # Annuler avec K_X
-                    elif event.key == pygame.K_x:
-                        print("Skill annulé.")
-                        return
-
-        # Play sound effect
-        if self.sound_effect:
-            sound = pygame.mixer.Sound(self.sound_effect)
-            sound.play()
-            
-
-        # Phase d'explosion
-        game.draw_map_units()
-        self.temp_surface.fill((0, 0, 0, 0))  # Effacer la surface temporaire
-        for x, y in self.poison_zones:
-            self.temp_surface.blit(self.animation_image, (x * CELL_SIZE, y * CELL_SIZE))  # Dessiner l'image d'animation
-        # Afficher la surface avec toutes les animations sur l'écran
-        game.screen.blit(self.temp_surface, (0, 0))
-        pygame.display.flip()
-        pygame.time.delay(1000)  # Réduire le délai pour un affichage fluide
-
-
-        # Appliquer les dégâts
-        for cell_x, cell_y in self.poison_zones:
-            for potential_target in game.player_units + game.player2_units + game.enemy_units:
-                if potential_target == owner_unit:
-                    continue
-                if potential_target.x == cell_x and potential_target.y == cell_y:
-                    potential_target.health -= self.damage
-                    if potential_target.health <= 0:
-                        if potential_target.team == "player 1":
-                            game.player_units.remove(potential_target)
-                        elif potential_target.team == "player 2":
-                            game.player2_units.remove(potential_target)
-                        elif potential_target.team == "enemy":
-                            game.enemy_units.remove(potential_target)
-
-
-
         
-
-
-
 
 
         
