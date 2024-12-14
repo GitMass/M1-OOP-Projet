@@ -238,8 +238,8 @@ class Game:
         self.screen.blit(splash_menu_image_1, (0,0))
 
         # Charger la musique de fond
-        pygame.mixer.music.load("data/musics/cinematic_music.mp3")
-        pygame.mixer.music.play(loops=0) # joue en boucle
+        # pygame.mixer.music.load("data/musics/cinematic_music.mp3")
+        # pygame.mixer.music.play(loops=0) # joue en boucle
 
         # rafraichir l'écran
         pygame.display.flip()
@@ -427,7 +427,8 @@ class Game:
         splash_menu_image = pygame.transform.scale(splash_menu_image, (WIDTH,HEIGHT))
 
         # Charger la musique de fond
-        pygame.mixer.music.load("data/musics/Ost_MainMenu.mp3")
+        pygame.mixer.music.load("data/musics/Dark Souls - A moment's peace.mp3")
+        pygame.mixer.music.set_volume(0.4)
         pygame.mixer.music.play(-1) # joue en boucle
 
         # Texte du titre
@@ -467,7 +468,7 @@ class Game:
                     mouse_pos = event.pos
                     for info in buttons.values():
                         if info["rect"].collidepoint(mouse_pos):
-                            pygame.mixer.music.stop() # Arréte la musique de fond
+                            # pygame.mixer.music.stop() # Arréte la musique de fond
                             self.GameMode = info["mode"]
                             return info["mode"]
 
@@ -491,8 +492,8 @@ class Game:
         self.screen.blit(splash_menu_image_1, (0,0))
 
         # Charger la musique de fond
-        pygame.mixer.music.load("data/musics/cinematic_music.mp3")
-        pygame.mixer.music.play(loops=0) # joue en boucle
+        # pygame.mixer.music.load("data/musics/cinematic_music.mp3")
+        # pygame.mixer.music.play(loops=0) # joue en boucle
 
         # rafraichir l'écran
         pygame.display.flip()
@@ -522,17 +523,7 @@ class Game:
                     for key in Personnages:
                         if Personnages[key].button.collidepoint(mouse_pos):
                             selected_units.append(copy.copy(Personnages[key]))
-                    
-                  
-        pygame.mixer.music.stop() # Arréte la musique de fond
 
-        # Charger la musique de fond
-      
-        pygame.mixer.music.load("data/musics/cinematic_trash_kick_loop.mp3")
-        pygame.mixer.music.play(loops=3) # joue en boucle
-
-        pygame.mixer.music.load("data/musics/cinematic_trash_kick_loop.mp3")
-        pygame.mixer.music.play(-1) # joue en boucle
         
         if player == "player 1":
             self.player_units = selected_units
@@ -565,10 +556,16 @@ class Game:
                 self.enemy_units[i].team = "enemy"
                 self.enemy_units[i].x = GRID_SIZE_WIDTH - 1
                 self.enemy_units[i].y = GRID_SIZE_HEIGHT - 3 - i
-        
+
         return selected_units
         
-                        
+
+    def play_game_music(self):
+        # Lancer la musique de jeu
+        pygame.mixer.music.load("data/musics/The Witcher 3 - The Hunt Begins.mp3")
+        pygame.mixer.music.set_volume(0.1)
+        pygame.mixer.music.play(-1) # joue en boucle
+        return                  
 
 
 
@@ -893,17 +890,24 @@ class Game:
 
         # Afficher le menu principale
         MenuChoice = self.Main_menu(GAME_TITLE)
+
+        # choix de la carte
         selected_map = self.choose_map()
         if selected_map is None:
            return self.lunch_game()
+        
+        # choix des personnages
         if MenuChoice == "PvE":
-            result=self.Characters_choice("player 1", CHARACTER_PER_TEAM)
+            self.Characters_choice("player 1", CHARACTER_PER_TEAM)
             self.Characters_choice("enemy", CHARACTER_PER_TEAM)
         elif MenuChoice == "PvP":
             self.Characters_choice("player 1", CHARACTER_PER_TEAM)
             self.Characters_choice("player 2", CHARACTER_PER_TEAM)
         
-        # Start the game loop again
+        # lancer la musique
+        self.play_game_music()
+
+        # Lancer la game
         if MenuChoice == "PvE":
             while True:
                 self.handle_player_turn("player 1")
