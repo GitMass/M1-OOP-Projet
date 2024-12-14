@@ -22,9 +22,11 @@ BLUE = (0, 0, 255)
 ANOTHER_BLUE = (51, 153, 255)
 GREEN = (0, 255, 0)
 GREY= (128,128,128)
+ANOTHER_GREY= (224,224,224)
 ORANGE=(255,178,102)
 YELLOW = (255, 255, 0)
-CHARACTER_PER_TEAM = 2
+PURPLE = (153, 51, 255)
+CHARACTER_PER_TEAM = 3
 
 
 
@@ -240,6 +242,13 @@ class Swordsman(Unit):
         self.skills.append(Ichimonji_Skill())
         self.skills.append(Sky_Clear())
         self.skills.append(Samurai_Grave())
+
+class Assasin(Unit):
+    def __init__(self, x, y, team, texture_path, x_choiceButton, y_choiceButton, name):
+        super().__init__(x, y, health=22, attack_power=3, endurence_max=6, team=team, texture_path=texture_path, x_choiceButton=x_choiceButton, y_choiceButton=y_choiceButton, name=name)
+        self.skills.append(Shuriken())
+        self.skills.append(Sky_Clear())
+        self.skills.append(Assasin_Flicker())
 
 class Monster(Unit):
     def __init__(self, x, y, team, texture_path, x_choiceButton, y_choiceButton, name):
@@ -858,18 +867,275 @@ class Healer:
             pygame.time.delay(1000)  # Delay between frames
 
         
+class Shuriken:
+    def __init__(self):
+        self.name = "Shuriken"
+        self.damage = 8 
+        self.range = 4  
+        self.sound_effect = "data/skills/shuriken_sound_1.mp3"
+        self.animation_frames = ["data/skills/shuriken.png"]
+        self.animation_frames_2 = ["data/skills/green_magma.png"]
 
+    def use_skill(self, owner_unit, game):
+        target_x, target_y = owner_unit.x, owner_unit.y  # Start with the owner's position
 
+        # Initial target zone draw
+        game.draw_map_units()
+        highlight_rect = pygame.Rect((target_x) * CELL_SIZE, (target_y) * CELL_SIZE, CELL_SIZE, CELL_SIZE)
+        pygame.draw.rect(game.screen, (128, 128, 128, 128), highlight_rect, 3)  # Gray border
+        pygame.display.flip()
+
+        direction=None 
+
+        # Target selection phase
+        selecting_target = True
+        while selecting_target:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    exit()
+
+                # Move the highlight with arrow keys
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_LEFT:
+                        direction="left"
+                    elif event.key == pygame.K_RIGHT:
+                        direction="right"                      
+                    elif event.key == pygame.K_UP:                        
+                        direction="up"                        
+                    elif event.key == pygame.K_DOWN:                        
+                        direction="down"
+                        
+
+                    # Déterminer les 3 cases consécutives basées sur la direction
+                    target_positions=[]
+                    if direction=="up":
+                        target_positions=[(owner_unit.x,owner_unit.y-i) for i in range(1,5)]
+                    if direction=="down":
+                        target_positions=[(owner_unit.x,owner_unit.y+i) for i in range(1,5)]
+                    if direction=="left":
+                        target_positions=[(owner_unit.x-i,owner_unit.y) for i in range(1,5)]
+                    if direction=="right":
+                        target_positions=[(owner_unit.x+i,owner_unit.y) for i in range(1,5)]
+
+                    # Ensure the effect zone does not include the caster
+                    target_positions = [(x, y) for x, y in target_positions if (x, y) != (owner_unit.x, owner_unit.y)]
+
+                    # Redraw the map with the highlight
+                    game.draw_map_units()
+                    for new_target_x,new_target_y in target_positions:
+                        if 0 <= new_target_x < GRID_SIZE_WIDTH and 0 <= new_target_y < GRID_SIZE_HEIGHT:
+                            highlight_rect = pygame.Rect((new_target_x) * CELL_SIZE, (new_target_y) * CELL_SIZE, CELL_SIZE, CELL_SIZE)
+                            pygame.draw.rect(game.screen, (128, 128, 128, 128), highlight_rect, 3)  # Gray border
+                    pygame.display.flip()
+
+                    # Validate the target with the space key
+                    if event.key == pygame.K_SPACE:
+                        print("Launching SKY CLEAR !!!")
+                        selecting_target = False  # Exit the selection phase
+                        break
+
+                    # annuler le skill
+                    elif event.key == pygame.K_x:
+                        print("Skill canceled.")
+                        return
+                        
+
+        # Explosion phase
+        game.draw_map_units()
+        pygame.display.flip()
+
+        # Play sound effect
+        if self.sound_effect:
+            sound1 = pygame.mixer.Sound(self.sound_effect)
+            sound1.play()
+            pygame.time.delay(int(sound1.get_length() * 1000))  # Attendre la fin du premier son
+
+            # Jouer un deuxième son
+            sound2 = pygame.mixer.Sound("data/skills/shuriken_sound_2.mp3")
+            sound3 = pygame.mixer.Sound("data/skills/sword-blade-slash-metallic.mp3")
+            sound2.play()
+            sound3.play()
+
+        # Damage units in the picked area
+        for new_target_x,new_target_y in target_positions:
+            if 0 <= new_target_x < GRID_SIZE_WIDTH and 0 <= new_target_y < GRID_SIZE_HEIGHT:
+                for potential_target in game.player_units + game.player2_units + game.enemy_units:
+                    if potential_target == owner_unit:
+                        continue
+                    if potential_target.x == new_target_x and potential_target.y == new_target_y:
+                        potential_target.health -= self.damage
+
+                        # Remove units with 0 or less health
+                        if potential_target.health <= 0:
+                            if potential_target.team == "player 1":
+                                game.player_units.remove(potential_target)
+                            elif potential_target.team == "player 2":
+                                game.player2_units.remove(potential_target)
+                            elif potential_target.team == "enemy":
+                                game.enemy_units.remove(potential_target)
+
+                # Play animation for the cell
+                for frame in self.animation_frames:
+                    animation_image = pygame.image.load(frame).convert_alpha()
+                    animation_image = pygame.transform.scale(animation_image, (CELL_SIZE, CELL_SIZE)) 
+                    # Load and display the cracked ground frame
+                    for cracked_frame in self.animation_frames_2:
+                        cracked_image = pygame.image.load(cracked_frame).convert_alpha()
+                        cracked_image = pygame.transform.scale(cracked_image, (CELL_SIZE, CELL_SIZE)) 
+
+                        # Draw the cracked ground image first (background)
+                        game.screen.blit(cracked_image, (new_target_x * CELL_SIZE, new_target_y * CELL_SIZE))
+                        # Draw the ichimonji image on top
+                        game.screen.blit(animation_image, (new_target_x * CELL_SIZE, new_target_y * CELL_SIZE))
+
+                        # Update the display
+                        pygame.display.flip()
+                        pygame.time.delay(100)  # Delay between frames
         
 
 
-        
+class Assasin_Flicker :
+    def __init__(self):
+        self.name = "Ichimonji"
+        self.damage = 10
+        self.range = 5
+        self.sound_effect = "data/skills/ichimonji.mp3"
+        self.animation_frames = ["data/skills/ichimonji.png"]
+
+    def use_skill(self, owner_unit, game):
+        target = None
+
+        # Draw the initial range area
+        game.draw_map_units()
+        for dx in range(-self.range, self.range + 1):
+            for dy in range(-self.range, self.range + 1):
+                x, y = owner_unit.x + dx, owner_unit.y + dy
+                if 0 <= x < GRID_SIZE_WIDTH and 0 <= y < GRID_SIZE_HEIGHT:
+                    highlight_rect = pygame.Rect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
+                    pygame.draw.rect(game.screen, (128, 128, 128, 128), highlight_rect, 3)
+        pygame.display.flip()
+
+        selecting_target = True
+        while selecting_target:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    exit()
+
+                # Handle mouse clicks for target selection
+                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:  # Left click
+                    mouse_x, mouse_y = pygame.mouse.get_pos()
+                    clicked_x, clicked_y = mouse_x // CELL_SIZE, mouse_y // CELL_SIZE
+
+                    # Check if the clicked position is within range and has an enemy
+                    if abs(owner_unit.x - clicked_x) <= self.range and abs(owner_unit.y - clicked_y) <= self.range:
+                        for potential_target in game.player_units + game.player2_units + game.enemy_units:
+                            if potential_target.x == clicked_x and potential_target.y == clicked_y:
+                                target = potential_target
+                                selecting_target = False
+                                break
+
+                # Cancel skill
+                elif event.type == pygame.KEYDOWN and event.key == pygame.K_x:
+                    print("Skill canceled.")
+                    return
+
+        if not target:
+            print("No valid target selected.")
+            return
+
+        # Highlight the area around the target
+        adjacent_units = []
+        for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+            adj_x, adj_y = target.x + dx, target.y + dy
+            if 0 <= adj_x < GRID_SIZE_WIDTH and 0 <= adj_y < GRID_SIZE_HEIGHT:
+                adjacent_units.append((adj_x, adj_y))
+
+        direction_selection = True
+        selected_position = None
+        while direction_selection:
+            game.draw_map_units()
+            for adj_x, adj_y in adjacent_units:
+                highlight_rect = pygame.Rect(adj_x * CELL_SIZE, adj_y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
+                pygame.draw.rect(game.screen, (153, 51, 255, 128), highlight_rect, 3)  # Purple border
+            pygame.display.flip()
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    exit()
+
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_LEFT:
+                        selected_position = (target.x - 1, target.y)
+                        highlight_rect = pygame.Rect( (target.x - 1)* CELL_SIZE, target.y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
+                        pygame.draw.rect(game.screen, (255, 255, 0, 128), highlight_rect, 3)  # Yellow border
+                        pygame.display.flip()
+                        pygame.time.delay(2000) 
+                    elif event.key == pygame.K_RIGHT:
+                        selected_position = (target.x + 1, target.y)
+                        highlight_rect = pygame.Rect( (target.x + 1)* CELL_SIZE, target.y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
+                        pygame.draw.rect(game.screen, (255, 255, 0, 128), highlight_rect, 3)  # Yellow border
+                        pygame.display.flip()
+                        pygame.time.delay(2000)
+                    elif event.key == pygame.K_UP:
+                        selected_position = (target.x, target.y - 1)
+                        highlight_rect = pygame.Rect( (target.x)* CELL_SIZE, (target.y-1) * CELL_SIZE, CELL_SIZE, CELL_SIZE)
+                        pygame.draw.rect(game.screen, (255, 255, 0, 128), highlight_rect, 3)  # Yellow border
+                        pygame.display.flip()
+                        pygame.time.delay(2000)
+                    elif event.key == pygame.K_DOWN:
+                        selected_position = (target.x, target.y + 1)
+                        highlight_rect = pygame.Rect( (target.x)* CELL_SIZE, (target.y+1) * CELL_SIZE, CELL_SIZE, CELL_SIZE)
+                        pygame.draw.rect(game.screen, (255, 255, 0, 128), highlight_rect, 3)  # Yellow border
+                        pygame.display.flip()
+                        pygame.time.delay(2000)
+
+                    # Confirm selection with space key
+                    if event.key == pygame.K_SPACE and selected_position in adjacent_units:
+                        direction_selection = False
+                        break
+
+                    # Cancel skill
+                    elif event.key == pygame.K_x:
+                        print("Skill canceled.")
+                        return
+
+        # Teleport behind the target and apply damage
+        owner_unit.x, owner_unit.y = selected_position
+
+        # Play sound effect
+        if self.sound_effect:
+            sound = pygame.mixer.Sound(self.sound_effect)
+            sound.play()
+
+        # Apply damage
+        target.health -= self.damage
+        if target.health <= 0:
+            if target in game.player_units:
+                game.player_units.remove(target)
+            elif target in game.player2_units:
+                game.player2_units.remove(target)
+            elif target in game.enemy_units:
+                game.enemy_units.remove(target)
+
+
+    
+        # Play animation
+        animation_image = pygame.image.load(self.animation_frames[0]).convert_alpha()
+        animation_image = pygame.transform.scale(animation_image, (CELL_SIZE, CELL_SIZE))
+        game.screen.blit(animation_image, (target.x * CELL_SIZE, target.y * CELL_SIZE))
+        pygame.display.flip()
+        pygame.time.delay(100)
+
 
 
 # Création des personnages :
 Personnages = {
-        "Yennefer": Sorceress(2, 0, 'player', 'data/characters/yennefer.png', 3, 3, "Yennefer"),
-        "Sekiro": Swordsman(3, 0, 'player', 'data/characters/samurai.png', 6, 3, "Sekiro"),
+        "Yennefer": Sorceress(2, 0, 'player', 'data/characters/yennefer.png', 8, 8, "Yennefer"),
+        "Shogun": Swordsman(3, 0, 'player', 'data/characters/samurai.png', 14, 8, "Shogun"),
+        "Sekiro": Assasin(4, 0, 'player', 'data/characters/sekiro.png', 20, 8, "Sekiro"),
     }
 
 

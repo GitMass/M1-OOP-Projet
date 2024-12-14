@@ -413,9 +413,9 @@ class Game:
         while len(selected_units) < NumberOfCharacters:
 
             # Afficher l'instruction de choix :
-            font = pygame.font.Font(None, 50)
-            text = font.render(f"{player} : Choose your characters ({len(selected_units) + 1}/{NumberOfCharacters})", True, WHITE)
-            self.screen.blit(text, (WIDTH//2 - text.get_width()//2, HEIGHT//8))
+            font = pygame.font.Font(None, 60)
+            text = font.render(f"{player} : Choose your characters ({len(selected_units) + 1}/{NumberOfCharacters})", True, ANOTHER_GREY)
+            self.screen.blit(text, (WIDTH//2 - text.get_width()//2, HEIGHT//4))
 
             # Affiche les personnages disponibles :
             for key in Personnages:
@@ -445,6 +445,7 @@ class Game:
 
         pygame.mixer.music.load("data/musics/cinematic_trash_kick_loop.mp3")
         pygame.mixer.music.play(-1) # joue en boucle
+        
         if player == "player 1":
             self.player_units = selected_units
             # position initiale des personnages :
@@ -460,6 +461,15 @@ class Game:
                 self.player2_units[i].team = "player 2"
                 self.player2_units[i].x = GRID_SIZE_WIDTH - 1
                 self.player2_units[i].y = GRID_SIZE_HEIGHT - 3 - i
+
+        elif player == "player 2":
+            self.player2_units = selected_units
+            # position initiale des personnages :
+            for i in range(len(self.player2_units)):
+                self.player2_units[i].team = "player 2"
+                self.player2_units[i].x = GRID_SIZE_WIDTH - 1
+                self.player2_units[i].y = GRID_SIZE_HEIGHT - 4 - i
+
         elif player == "enemy" :
             self.enemy_units = selected_units
             # position initiale des personnages :
