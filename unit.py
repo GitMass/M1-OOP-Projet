@@ -134,14 +134,20 @@ class Unit:
             elif (self.x, self.y) in game.muds:
                 game.current_sound=game.sounds['mud']
                 game.current_sound.play()
-            elif (self.x, self.y) in game.lilypads:
-                game.current_sound=game.sounds['lilypad']
+            elif (self.x, self.y) in game.water:
+                game.current_sound=game.sounds['water']
                 game.current_sound.play()
             elif (self.x, self.y) in game.healing:
                 game.current_sound=game.sounds['healing']
                 game.current_sound.play()
             elif (self.x, self.y) in game.grass:
                 game.current_sound=game.sounds['footstep']
+                game.current_sound.play()
+            elif (self.x, self.y) in game.snow:
+                game.current_sound=game.sounds['snow']
+                game.current_sound.play()
+            elif (self.x, self.y) in game.bush:
+                game.current_sound=game.sounds['bush']
                 game.current_sound.play()
             else:
                 game.current_sound=None # Aucun son à jouer 

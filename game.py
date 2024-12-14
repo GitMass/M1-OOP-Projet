@@ -53,10 +53,11 @@ class Game:
         self.grass=[]
         self.walls = []
         self.magmas = []
-        self.lilypads = []
+        self.water = []
         self.muds = []
         self.healing=[]
-        self.grass_oct=[]
+        self.snow=[]
+        self.bush=[]
 
 
 
@@ -67,23 +68,26 @@ class Game:
         pygame.mixer.init()
         self.current_sound = None
         self.sounds = {
+            'footstep': pygame.mixer.Sound('data/map_sound_effects/grass_footstep.wav'),
             'magma': pygame.mixer.Sound('data/map_sound_effects/fire.wav'),
             'mud': pygame.mixer.Sound('data/map_sound_effects/mud.wav'),
-            'lilypad': pygame.mixer.Sound('data/map_sound_effects/water-splash.wav'),
-            'healing': pygame.mixer.Sound('data/map_sound_effects/heal-up.wav'),
-            'footstep': pygame.mixer.Sound('data/map_sound_effects/footstep.wav'),
+            'water': pygame.mixer.Sound('data/map_sound_effects/swimming.mp3'),
+            'healing': pygame.mixer.Sound('data/map_sound_effects/apple.wav'),
+            'snow': pygame.mixer.Sound('data/map_sound_effects/snow.mp3'),
+            'bush': pygame.mixer.Sound('data/map_sound_effects/bush.mp3'),
 
         }
 
         # Map textures
         # charger les textures de la map
         self.GRASS=pygame.image.load('data/tiles/simplegrass.png').convert_alpha()
-        self.WALL= pygame.image.load('data/tiles/wall.png').convert_alpha()
+        self.WALL= pygame.image.load('data/tiles/cartoon_wall.png').convert_alpha()
         self.MAGMA=pygame.image.load('data/tiles/magma.png').convert_alpha()
         self.WATER=pygame.image.load('data/tiles/lilypad.png').convert_alpha()
         self.MUD=pygame.image.load('data/tiles/mud.png').convert_alpha()
-        self.APPLE_TREE=pygame.image.load('data/tiles/appletree.png').convert_alpha()
-        self.GRASS_OCT=pygame.image.load('data/tiles/grassoct.png').convert_alpha()
+        self.APPLE_TREE=pygame.image.load('data/tiles/appletree2.png').convert_alpha()
+        self.SNOW=pygame.image.load('data/tiles/snow.jpg').convert_alpha()
+        self.BUSH=pygame.image.load('data/tiles/bush.png').convert_alpha()
        
         # Redimensionner les textures
         self.GRASS = pygame.transform.scale(self.GRASS, (CELL_SIZE, CELL_SIZE))
@@ -92,7 +96,8 @@ class Game:
         self.WATER = pygame.transform.scale(self.WATER, (CELL_SIZE, CELL_SIZE))
         self.MUD = pygame.transform.scale(self.MUD, (CELL_SIZE, CELL_SIZE))
         self.APPLE_TREE = pygame.transform.scale(self.APPLE_TREE, (CELL_SIZE, CELL_SIZE))
-        self.GRASS_OCT=pygame.transform.scale(self.GRASS_OCT, (CELL_SIZE, CELL_SIZE))
+        self.SNOW=pygame.transform.scale(self.SNOW, (CELL_SIZE, CELL_SIZE))
+        self.BUSH=pygame.transform.scale(self.BUSH, (CELL_SIZE, CELL_SIZE))
         
 
 
@@ -123,7 +128,7 @@ class Game:
                     0 : grass
                     1 : murs
                     2 : magma 
-                    3 : lilypad 
+                    3 : water 
                     4 : mud 
                     5 : healing 
                     6 : grass
@@ -146,13 +151,15 @@ class Game:
                 if cell == '2':  # Si la valeur est '2', c'est un magma
                     self.magmas.append((x, y))
                 if cell == '3':  # Si la valeur est '3', c'est un lilypad
-                    self.lilypads.append((x, y))
+                    self.water.append((x, y))
                 if cell == '4':  # Si la valeur est '4', c'est un mud
                     self.muds.append((x, y))
                 if cell == '5':  # Si la valeur est '5', c'est une case healing
                     self.healing.append((x, y))
                 if cell == '6':   # Si la valeur est '6', c'est un type de terrain 
-                    self.grass_oct.append((x,y))
+                    self.snow.append((x,y))
+                if cell == '7':   # Si la valeur est '7', c'est un buisson
+                    self.bush.append((x,y))
                 
 
 
@@ -337,9 +344,9 @@ class Game:
             self.screen.blit(self.MAGMA, (x, y))
 
         # Affiche les blocs : "LILYPAD"
-        for lilypad in self.lilypads:
-            x = lilypad[0] * CELL_SIZE
-            y = lilypad[1] * CELL_SIZE
+        for water in self.water:
+            x = water[0] * CELL_SIZE
+            y = water[1] * CELL_SIZE
             self.screen.blit(self.WATER, (x, y))
 
         # Affiche les blocs : "MUD"
@@ -354,11 +361,17 @@ class Game:
             y = healing[1] * CELL_SIZE
             self.screen.blit(self.APPLE_TREE, (x, y))        
 
-       # Affiche les blocs : "GRASS_OCT"
-        for grasse_ocr in self.grass_oct:
+        # Affiche les blocs : "SNOW"
+        for grasse_ocr in self.snow:
             x = grasse_ocr[0] * CELL_SIZE
             y = grasse_ocr[1] * CELL_SIZE
-            self.screen.blit(self.GRASS_OCT, (x, y))       
+            self.screen.blit(self.SNOW, (x, y))     
+
+        # Affiche les blocs : "BUSH"
+        for bush in self.bush:
+            x = bush[0] * CELL_SIZE
+            y = bush[1] * CELL_SIZE
+            self.screen.blit(self.BUSH, (x, y))     
 
         # Affiche les contours de la grille (optionnel si vous voulez une bordure blanche)
         if ShowGrille == True :
