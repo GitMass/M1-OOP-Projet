@@ -134,14 +134,20 @@ class Unit:
             elif (self.x, self.y) in game.muds:
                 game.current_sound=game.sounds['mud']
                 game.current_sound.play()
-            elif (self.x, self.y) in game.lilypads:
-                game.current_sound=game.sounds['lilypad']
+            elif (self.x, self.y) in game.water:
+                game.current_sound=game.sounds['water']
                 game.current_sound.play()
             elif (self.x, self.y) in game.healing:
                 game.current_sound=game.sounds['healing']
                 game.current_sound.play()
             elif (self.x, self.y) in game.grass:
                 game.current_sound=game.sounds['footstep']
+                game.current_sound.play()
+            elif (self.x, self.y) in game.snow:
+                game.current_sound=game.sounds['snow']
+                game.current_sound.play()
+            elif (self.x, self.y) in game.bush:
+                game.current_sound=game.sounds['bush']
                 game.current_sound.play()
             else:
                 game.current_sound=None # Aucun son à jouer 
@@ -243,7 +249,7 @@ class Swordsman(Unit):
         self.skills.append(Sky_Clear())
         self.skills.append(Samurai_Grave())
 
-class Assasin(Unit):
+class Shinobi(Unit):
     def __init__(self, x, y, team, texture_path, x_choiceButton, y_choiceButton, name):
         super().__init__(x, y, health=22, attack_power=3, endurence_max=6, team=team, texture_path=texture_path, x_choiceButton=x_choiceButton, y_choiceButton=y_choiceButton, name=name)
         self.skills.append(Shuriken())
@@ -1408,7 +1414,7 @@ class Allies:
 Personnages = {
         "Yennefer": Sorceress(2, 0, 'player', 'data/characters/yennefer.png', 8, 8, "Yennefer"),
         "Shogun": Swordsman(3, 0, 'player', 'data/characters/samurai.png', 14, 8, "Shogun"),
-        "Sekiro": Assasin(4, 0, 'player', 'data/characters/sekiro.png', 20, 8, "Sekiro"),
+        "Sekiro": Shinobi(4, 0, 'player', 'data/characters/sekiro.png', 20, 8, "Sekiro"),
     }
 
 

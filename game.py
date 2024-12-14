@@ -53,10 +53,11 @@ class Game:
         self.grass=[]
         self.walls = []
         self.magmas = []
-        self.lilypads = []
+        self.water = []
         self.muds = []
         self.healing=[]
-        self.grass_oct=[]
+        self.snow=[]
+        self.bush=[]
 
 
 
@@ -67,23 +68,26 @@ class Game:
         pygame.mixer.init()
         self.current_sound = None
         self.sounds = {
+            'footstep': pygame.mixer.Sound('data/map_sound_effects/grass_footstep.wav'),
             'magma': pygame.mixer.Sound('data/map_sound_effects/fire.wav'),
             'mud': pygame.mixer.Sound('data/map_sound_effects/mud.wav'),
-            'lilypad': pygame.mixer.Sound('data/map_sound_effects/water-splash.wav'),
-            'healing': pygame.mixer.Sound('data/map_sound_effects/heal-up.wav'),
-            'footstep': pygame.mixer.Sound('data/map_sound_effects/footstep.wav'),
+            'water': pygame.mixer.Sound('data/map_sound_effects/swimming.mp3'),
+            'healing': pygame.mixer.Sound('data/map_sound_effects/apple.wav'),
+            'snow': pygame.mixer.Sound('data/map_sound_effects/snow.mp3'),
+            'bush': pygame.mixer.Sound('data/map_sound_effects/bush.mp3'),
 
         }
 
         # Map textures
         # charger les textures de la map
         self.GRASS=pygame.image.load('data/tiles/simplegrass.png').convert_alpha()
-        self.WALL= pygame.image.load('data/tiles/wall.png').convert_alpha()
+        self.WALL= pygame.image.load('data/tiles/cartoon_wall.png').convert_alpha()
         self.MAGMA=pygame.image.load('data/tiles/magma.png').convert_alpha()
         self.WATER=pygame.image.load('data/tiles/lilypad.png').convert_alpha()
         self.MUD=pygame.image.load('data/tiles/mud.png').convert_alpha()
-        self.APPLE_TREE=pygame.image.load('data/tiles/appletree.png').convert_alpha()
-        self.GRASS_OCT=pygame.image.load('data/tiles/grassoct.png').convert_alpha()
+        self.APPLE_TREE=pygame.image.load('data/tiles/appletree2.png').convert_alpha()
+        self.SNOW=pygame.image.load('data/tiles/snow.jpg').convert_alpha()
+        self.BUSH=pygame.image.load('data/tiles/bush.png').convert_alpha()
        
         # Redimensionner les textures
         self.GRASS = pygame.transform.scale(self.GRASS, (CELL_SIZE, CELL_SIZE))
@@ -92,7 +96,8 @@ class Game:
         self.WATER = pygame.transform.scale(self.WATER, (CELL_SIZE, CELL_SIZE))
         self.MUD = pygame.transform.scale(self.MUD, (CELL_SIZE, CELL_SIZE))
         self.APPLE_TREE = pygame.transform.scale(self.APPLE_TREE, (CELL_SIZE, CELL_SIZE))
-        self.GRASS_OCT=pygame.transform.scale(self.GRASS_OCT, (CELL_SIZE, CELL_SIZE))
+        self.SNOW=pygame.transform.scale(self.SNOW, (CELL_SIZE, CELL_SIZE))
+        self.BUSH=pygame.transform.scale(self.BUSH, (CELL_SIZE, CELL_SIZE))
         
 
 
@@ -123,7 +128,7 @@ class Game:
                     0 : grass
                     1 : murs
                     2 : magma 
-                    3 : lilypad 
+                    3 : water 
                     4 : mud 
                     5 : healing 
                     6 : grass
@@ -146,13 +151,15 @@ class Game:
                 if cell == '2':  # Si la valeur est '2', c'est un magma
                     self.magmas.append((x, y))
                 if cell == '3':  # Si la valeur est '3', c'est un lilypad
-                    self.lilypads.append((x, y))
+                    self.water.append((x, y))
                 if cell == '4':  # Si la valeur est '4', c'est un mud
                     self.muds.append((x, y))
                 if cell == '5':  # Si la valeur est '5', c'est une case healing
                     self.healing.append((x, y))
                 if cell == '6':   # Si la valeur est '6', c'est un type de terrain 
-                    self.grass_oct.append((x,y))
+                    self.snow.append((x,y))
+                if cell == '7':   # Si la valeur est '7', c'est un buisson
+                    self.bush.append((x,y))
                 
 
 
@@ -163,6 +170,59 @@ class Game:
         Vérifie si une cellule est un mur.
         """
         return (x, y) in self.walls
+
+
+
+
+    # determiner les blocks visibles :
+    def get_visible_cells(self, unit):
+
+        def est_visible(x1, y1, x2, y2):
+            # tester si le aucun obstacle est entre le block 2 et 1 grace a l'algorithme de Bresenham
+            dx = abs(x2 - x1)
+            dy = abs(y2 - y1)
+            sx = 1 if x1 < x2 else -1
+            sy = 1 if y1 < y2 else -1
+            err = dx - dy
+
+            while True:
+                # If the current cell is a wall, the line of sight is blocked
+                if (x1, y1) in self.walls:
+                    return False
+
+                # If we've reached the target cell, the line of sight is clear
+                if (x1, y1) == (x2, y2):
+                    return True
+
+                e2 = 2 * err
+                if e2 > -dy:
+                    err -= dy
+                    x1 += sx
+                if e2 < dx:
+                    err += dx
+                    y1 += sy
+
+        # retourne un set de tuples representant les cellules visibles (x, y)
+        # we use set() to avoid overlap, cheking if a cell is in the set is also very fast (complexity of O(1))
+        # cells must store immutable objects, thats why we chose to use tuples for a cell coordinate
+
+        
+        max_range = 6
+        visible_cells = set()
+        
+        for dx in range(-max_range, max_range + 1):
+            for dy in range(-max_range, max_range + 1):
+                x, y = unit.x + dx, unit.y + dy
+
+                # Skip cells outside the grid
+                if not (0 <= x < GRID_SIZE_WIDTH and 0 <= y < GRID_SIZE_HEIGHT):
+                    continue
+
+                # tester si aucun obstacle est entre le block et l'unité
+                if est_visible(unit.x, unit.y, x, y):
+                    visible_cells.add((x, y))
+
+        return visible_cells
 
 
 
@@ -251,7 +311,7 @@ class Game:
 
 
     # Affichage de la carte et les unites pendent le jeux 
-    def draw_map_units(self, ShowGrille=False):
+    def draw_map_units(self, team="player 1", ShowGrille=False):
         """Affiche le jeu."""
 
         if len( self.selected_map_file)==0:
@@ -284,9 +344,9 @@ class Game:
             self.screen.blit(self.MAGMA, (x, y))
 
         # Affiche les blocs : "LILYPAD"
-        for lilypad in self.lilypads:
-            x = lilypad[0] * CELL_SIZE
-            y = lilypad[1] * CELL_SIZE
+        for water in self.water:
+            x = water[0] * CELL_SIZE
+            y = water[1] * CELL_SIZE
             self.screen.blit(self.WATER, (x, y))
 
         # Affiche les blocs : "MUD"
@@ -301,24 +361,52 @@ class Game:
             y = healing[1] * CELL_SIZE
             self.screen.blit(self.APPLE_TREE, (x, y))        
 
-       # Affiche les blocs : "GRASS_OCT"
-        for grasse_ocr in self.grass_oct:
+        # Affiche les blocs : "SNOW"
+        for grasse_ocr in self.snow:
             x = grasse_ocr[0] * CELL_SIZE
             y = grasse_ocr[1] * CELL_SIZE
-            self.screen.blit(self.GRASS_OCT, (x, y))       
+            self.screen.blit(self.SNOW, (x, y))     
 
-  
+        # Affiche les blocs : "BUSH"
+        for bush in self.bush:
+            x = bush[0] * CELL_SIZE
+            y = bush[1] * CELL_SIZE
+            self.screen.blit(self.BUSH, (x, y))     
 
+        # Affiche les contours de la grille (optionnel si vous voulez une bordure blanche)
         if ShowGrille == True :
-            # Affiche les contours de la grille (optionnel si vous voulez une bordure blanche)
             for x in range(0, WIDTH, CELL_SIZE):
                 for y in range(0, HEIGHT, CELL_SIZE):
                     rect = pygame.Rect(x, y, CELL_SIZE, CELL_SIZE)
                     pygame.draw.rect(self.screen, WHITE, rect, 1)
 
-        # Affiche les unités selon le mode de jeu
+        # Calculer les cellules visibles pour les unités de l'équipe
+        all_visible_cells = set()
+        if team == "player 1":
+            units = self.player_units
+        elif team == "player 2":
+            units = self.player2_units
+        elif team == "enemy":
+            units = self.enemy_units
+
+        for unit in units:
+            all_visible_cells.update(self.get_visible_cells(unit))
+
+        # Afficher les unités
         for unit in self.player_units + self.enemy_units + self.player2_units:
-           unit.draw(self.screen)
+            if (unit.x, unit.y) in all_visible_cells or unit.team == team:
+                unit.draw(self.screen)
+
+        # Ajouter un overlay gris pour les zones non visibles
+        for x in range(GRID_SIZE_WIDTH):
+            for y in range(GRID_SIZE_HEIGHT):
+                if (x, y) not in all_visible_cells:
+                    overlay_rect = pygame.Rect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
+                    # Dessiner une couleur grise transparente (alpha blending)
+                    s = pygame.Surface((CELL_SIZE, CELL_SIZE))  # Surface temporaire
+                    s.set_alpha(100)  # Niveau de transparence (0-255)
+                    s.fill((50, 50, 50))  # Couleur grise
+                    self.screen.blit(s, overlay_rect.topleft)
 
         # Rafraîchit l'écran
         pygame.display.flip()
@@ -498,7 +586,7 @@ class Game:
                 has_acted = False
                 selected_unit.is_selected = True
                 endurence = selected_unit.endurence_max
-                self.draw_map_units()
+                self.draw_map_units(team)
 
                 while not has_acted:
                     
@@ -533,7 +621,7 @@ class Game:
                                     endurence = endurence - 1
 
                             selected_unit.move(dx, dy, self)
-                            self.draw_map_units()
+                            self.draw_map_units(team)
 
                             # Use skills : skill 1, 2 or 3
                             if event.key == pygame.K_1:
@@ -542,7 +630,7 @@ class Game:
                                     skill.use_skill(selected_unit, self)
                                     has_acted = True
                                     selected_unit.is_selected = False
-                                    self.draw_map_units()
+                                    self.draw_map_units(team)
                                 else:
                                     print(f"{selected_unit.name} has no skill 1.")
                             elif event.key == pygame.K_2:
@@ -551,7 +639,7 @@ class Game:
                                     skill.use_skill(selected_unit, self)
                                     has_acted = True
                                     selected_unit.is_selected = False
-                                    self.draw_map_units()
+                                    self.draw_map_units(team)
                                 else:
                                     print(f"{selected_unit.name} has no skill 2.")
                             elif event.key == pygame.K_3:
@@ -560,7 +648,7 @@ class Game:
                                     skill.use_skill(selected_unit, self)
                                     has_acted = True
                                     selected_unit.is_selected = False
-                                    self.draw_map_units()
+                                    self.draw_map_units(team)
                                 else:
                                     print(f"{selected_unit.name} has no skill 3.")
 
@@ -589,7 +677,7 @@ class Game:
                 has_acted = False
                 selected_unit.is_selected = True
                 endurence = selected_unit.endurence_max
-                self.draw_map_units()
+                self.draw_map_units(team)
 
                 while not has_acted:
                     
@@ -624,7 +712,7 @@ class Game:
                                     endurence = endurence - 1
 
                             selected_unit.move(dx, dy, self)
-                            self.draw_map_units()
+                            self.draw_map_units(team)
 
                             # Use skills : skill 1, 2 or 3
                             if event.key == pygame.K_1:
@@ -633,7 +721,7 @@ class Game:
                                     skill.use_skill(selected_unit, self)
                                     has_acted = True
                                     selected_unit.is_selected = False
-                                    self.draw_map_units()
+                                    self.draw_map_units(team)
                                 else:
                                     print(f"{selected_unit.name} has no skill 1.")
                             elif event.key == pygame.K_2:
@@ -642,7 +730,7 @@ class Game:
                                     skill.use_skill(selected_unit, self)
                                     has_acted = True
                                     selected_unit.is_selected = False
-                                    self.draw_map_units()
+                                    self.draw_map_units(team)
                                 else:
                                     print(f"{selected_unit.name} has no skill 2.")
                             elif event.key == pygame.K_3:
@@ -651,7 +739,7 @@ class Game:
                                     skill.use_skill(selected_unit, self)
                                     has_acted = True
                                     selected_unit.is_selected = False
-                                    self.draw_map_units()
+                                    self.draw_map_units(team)
                                 else:
                                     print(f"{selected_unit.name} has no skill 3.")
 
