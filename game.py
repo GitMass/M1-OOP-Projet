@@ -44,8 +44,8 @@ class Game:
 
         # maps
         self.maps = {
-           "map1": {"name": "map1", "fichier": "data/maps/map2.csv", "photo": "data/maps/map1.png"},
-           "map2": {"name": "map2", "fichier": "data/maps/map3.csv", "photo": "data/maps/map2.png"},
+           "map1": {"name": "Novigrad Meadows", "fichier": "data/maps/map1.csv", "photo": "data/maps/map1.png"},
+           "map2": {"name": "Skellige Mountains", "fichier": "data/maps/map2.csv", "photo": "data/maps/map2.png"},
         }
         # map choice
         self.selected_map_file = []
@@ -304,7 +304,7 @@ class Game:
                         # Action lorsque le bouton Retour est cliqué (par exemple, retourner au menu principal)
                     
                         pygame.event.clear()  # Nettoyer les événements restants
-                        self.Main_menu(GAME_TITLE)
+                        self.lunch_game()
                         return None
           
           
@@ -314,16 +314,12 @@ class Game:
     def draw_map_units(self, team="player 1", ShowGrille=False):
         """Affiche le jeu."""
 
-        if len( self.selected_map_file)==0:
+        if len(self.selected_map_file)==0:
             print("No map selected!")
             return
 
         # pour effacer l'ancienne image
         self.screen.fill(BLACK)
-
-        # charger la map du fichier CSV
-        self.read_map_from_csv(self.selected_map_file)
-
 
         # Affiche les blocs : "GRASS"
         for grass in self.grass:    
@@ -893,6 +889,7 @@ class Game:
 
         # choix de la carte
         selected_map = self.choose_map()
+        self.read_map_from_csv(selected_map)
         if selected_map is None:
            return self.lunch_game()
         
