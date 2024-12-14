@@ -390,7 +390,7 @@ class Game:
 
         # Afficher les unités
         for unit in self.player_units + self.enemy_units + self.player2_units:
-            if (unit.x, unit.y) in all_visible_cells or unit.team == team:
+            if (((unit.x, unit.y) in all_visible_cells) and ((unit.x, unit.y) not in self.bush)) or unit.team == team:
                 unit.draw(self.screen)
 
         # Ajouter un overlay gris pour les zones non visibles
