@@ -243,7 +243,7 @@ class Swordsman(Unit):
         self.skills.append(Sky_Clear())
         self.skills.append(Samurai_Grave())
 
-class Assasin(Unit):
+class Shinobi(Unit):
     def __init__(self, x, y, team, texture_path, x_choiceButton, y_choiceButton, name):
         super().__init__(x, y, health=22, attack_power=3, endurence_max=6, team=team, texture_path=texture_path, x_choiceButton=x_choiceButton, y_choiceButton=y_choiceButton, name=name)
         self.skills.append(Shuriken())
@@ -1135,7 +1135,7 @@ class Assasin_Flicker :
 Personnages = {
         "Yennefer": Sorceress(2, 0, 'player', 'data/characters/yennefer.png', 8, 8, "Yennefer"),
         "Shogun": Swordsman(3, 0, 'player', 'data/characters/samurai.png', 14, 8, "Shogun"),
-        "Sekiro": Assasin(4, 0, 'player', 'data/characters/sekiro.png', 20, 8, "Sekiro"),
+        "Sekiro": Shinobi(4, 0, 'player', 'data/characters/sekiro.png', 20, 8, "Sekiro"),
     }
 
 

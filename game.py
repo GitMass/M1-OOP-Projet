@@ -167,6 +167,59 @@ class Game:
 
 
 
+    # determiner les blocks visibles :
+    def get_visible_cells(self, unit):
+
+        def est_visible(x1, y1, x2, y2):
+            # tester si le aucun obstacle est entre le block 2 et 1 grace a l'algorithme de Bresenham
+            dx = abs(x2 - x1)
+            dy = abs(y2 - y1)
+            sx = 1 if x1 < x2 else -1
+            sy = 1 if y1 < y2 else -1
+            err = dx - dy
+
+            while True:
+                # If the current cell is a wall, the line of sight is blocked
+                if (x1, y1) in self.walls:
+                    return False
+
+                # If we've reached the target cell, the line of sight is clear
+                if (x1, y1) == (x2, y2):
+                    return True
+
+                e2 = 2 * err
+                if e2 > -dy:
+                    err -= dy
+                    x1 += sx
+                if e2 < dx:
+                    err += dx
+                    y1 += sy
+
+        # retourne un set de tuples representant les cellules visibles (x, y)
+        # we use set() to avoid overlap, cheking if a cell is in the set is also very fast (complexity of O(1))
+        # cells must store immutable objects, thats why we chose to use tuples for a cell coordinate
+
+        
+        max_range = 6
+        visible_cells = set()
+        
+        for dx in range(-max_range, max_range + 1):
+            for dy in range(-max_range, max_range + 1):
+                x, y = unit.x + dx, unit.y + dy
+
+                # Skip cells outside the grid
+                if not (0 <= x < GRID_SIZE_WIDTH and 0 <= y < GRID_SIZE_HEIGHT):
+                    continue
+
+                # tester si aucun obstacle est entre le block et l'unité
+                if est_visible(unit.x, unit.y, x, y):
+                    visible_cells.add((x, y))
+
+        return visible_cells
+
+
+
+
     # ecran de choix de la carte
     def choose_map(self):
     
@@ -251,7 +304,7 @@ class Game:
 
 
     # Affichage de la carte et les unites pendent le jeux 
-    def draw_map_units(self, ShowGrille=False):
+    def draw_map_units(self, team="player 1", ShowGrille=False):
         """Affiche le jeu."""
 
         if len( self.selected_map_file)==0:
@@ -307,18 +360,40 @@ class Game:
             y = grasse_ocr[1] * CELL_SIZE
             self.screen.blit(self.GRASS_OCT, (x, y))       
 
-  
-
+        # Affiche les contours de la grille (optionnel si vous voulez une bordure blanche)
         if ShowGrille == True :
-            # Affiche les contours de la grille (optionnel si vous voulez une bordure blanche)
             for x in range(0, WIDTH, CELL_SIZE):
                 for y in range(0, HEIGHT, CELL_SIZE):
                     rect = pygame.Rect(x, y, CELL_SIZE, CELL_SIZE)
                     pygame.draw.rect(self.screen, WHITE, rect, 1)
 
-        # Affiche les unités selon le mode de jeu
+        # Calculer les cellules visibles pour les unités de l'équipe
+        all_visible_cells = set()
+        if team == "player 1":
+            units = self.player_units
+        elif team == "player 2":
+            units = self.player2_units
+        elif team == "enemy":
+            units = self.enemy_units
+
+        for unit in units:
+            all_visible_cells.update(self.get_visible_cells(unit))
+
+        # Afficher les unités
         for unit in self.player_units + self.enemy_units + self.player2_units:
-           unit.draw(self.screen)
+            if (unit.x, unit.y) in all_visible_cells or unit.team == team:
+                unit.draw(self.screen)
+
+        # Ajouter un overlay gris pour les zones non visibles
+        for x in range(GRID_SIZE_WIDTH):
+            for y in range(GRID_SIZE_HEIGHT):
+                if (x, y) not in all_visible_cells:
+                    overlay_rect = pygame.Rect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
+                    # Dessiner une couleur grise transparente (alpha blending)
+                    s = pygame.Surface((CELL_SIZE, CELL_SIZE))  # Surface temporaire
+                    s.set_alpha(100)  # Niveau de transparence (0-255)
+                    s.fill((50, 50, 50))  # Couleur grise
+                    self.screen.blit(s, overlay_rect.topleft)
 
         # Rafraîchit l'écran
         pygame.display.flip()
@@ -498,7 +573,7 @@ class Game:
                 has_acted = False
                 selected_unit.is_selected = True
                 endurence = selected_unit.endurence_max
-                self.draw_map_units()
+                self.draw_map_units(team)
 
                 while not has_acted:
                     
@@ -533,7 +608,7 @@ class Game:
                                     endurence = endurence - 1
 
                             selected_unit.move(dx, dy, self)
-                            self.draw_map_units()
+                            self.draw_map_units(team)
 
                             # Use skills : skill 1, 2 or 3
                             if event.key == pygame.K_1:
@@ -542,7 +617,7 @@ class Game:
                                     skill.use_skill(selected_unit, self)
                                     has_acted = True
                                     selected_unit.is_selected = False
-                                    self.draw_map_units()
+                                    self.draw_map_units(team)
                                 else:
                                     print(f"{selected_unit.name} has no skill 1.")
                             elif event.key == pygame.K_2:
@@ -551,7 +626,7 @@ class Game:
                                     skill.use_skill(selected_unit, self)
                                     has_acted = True
                                     selected_unit.is_selected = False
-                                    self.draw_map_units()
+                                    self.draw_map_units(team)
                                 else:
                                     print(f"{selected_unit.name} has no skill 2.")
                             elif event.key == pygame.K_3:
@@ -560,7 +635,7 @@ class Game:
                                     skill.use_skill(selected_unit, self)
                                     has_acted = True
                                     selected_unit.is_selected = False
-                                    self.draw_map_units()
+                                    self.draw_map_units(team)
                                 else:
                                     print(f"{selected_unit.name} has no skill 3.")
 
@@ -589,7 +664,7 @@ class Game:
                 has_acted = False
                 selected_unit.is_selected = True
                 endurence = selected_unit.endurence_max
-                self.draw_map_units()
+                self.draw_map_units(team)
 
                 while not has_acted:
                     
@@ -624,7 +699,7 @@ class Game:
                                     endurence = endurence - 1
 
                             selected_unit.move(dx, dy, self)
-                            self.draw_map_units()
+                            self.draw_map_units(team)
 
                             # Use skills : skill 1, 2 or 3
                             if event.key == pygame.K_1:
@@ -633,7 +708,7 @@ class Game:
                                     skill.use_skill(selected_unit, self)
                                     has_acted = True
                                     selected_unit.is_selected = False
-                                    self.draw_map_units()
+                                    self.draw_map_units(team)
                                 else:
                                     print(f"{selected_unit.name} has no skill 1.")
                             elif event.key == pygame.K_2:
@@ -642,7 +717,7 @@ class Game:
                                     skill.use_skill(selected_unit, self)
                                     has_acted = True
                                     selected_unit.is_selected = False
-                                    self.draw_map_units()
+                                    self.draw_map_units(team)
                                 else:
                                     print(f"{selected_unit.name} has no skill 2.")
                             elif event.key == pygame.K_3:
@@ -651,7 +726,7 @@ class Game:
                                     skill.use_skill(selected_unit, self)
                                     has_acted = True
                                     selected_unit.is_selected = False
-                                    self.draw_map_units()
+                                    self.draw_map_units(team)
                                 else:
                                     print(f"{selected_unit.name} has no skill 3.")
 
