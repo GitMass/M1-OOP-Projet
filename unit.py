@@ -253,8 +253,8 @@ class Shinobi(Unit):
     def __init__(self, x, y, team, texture_path, x_choiceButton, y_choiceButton, name):
         super().__init__(x, y, health=22, attack_power=3, endurence_max=6, team=team, texture_path=texture_path, x_choiceButton=x_choiceButton, y_choiceButton=y_choiceButton, name=name)
         self.skills.append(Shuriken())
-        self.skills.append(Sky_Clear())
         self.skills.append(Assasin_Flicker())
+        self.skills.append(Allies())
 
 class Monster(Unit):
     def __init__(self, x, y, team, texture_path, x_choiceButton, y_choiceButton, name):
@@ -321,7 +321,7 @@ class Sky_Clear:
         self.range = 3 
         self.sound_effect = "data/skills/ichimonji.mp3"
         self.animation_frames = ["data/skills/ichimonji.png"]
-        self.animation_frames_2 = ["data/interface_graphique/cracked_ground.png"]
+        self.animation_frames_2 = ["data/Tiles/cracked_ground.png"]
 
     def use_skill(self, owner_unit, game):
         target_x, target_y = owner_unit.x, owner_unit.y  # Start with the owner's position
@@ -997,7 +997,7 @@ class Shuriken:
 
                         # Update the display
                         pygame.display.flip()
-                        pygame.time.delay(100)  # Delay between frames
+                        pygame.time.delay(70)  # Delay between frames
         
 
 
@@ -1134,6 +1134,144 @@ class Assasin_Flicker :
         game.screen.blit(animation_image, (target.x * CELL_SIZE, target.y * CELL_SIZE))
         pygame.display.flip()
         pygame.time.delay(100)
+    
+class Shadow:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.animation_frames = ["data/skills/shadow.png"]
+
+class Allies:
+    def __init__(self):
+        self.name = "Allies"
+        self.damage = 10
+        self.range = 3 
+        self.sound_effect = "data/skills/ichimonji.mp3"
+        self.animation_frames = ["data/skills/ichimonji.png"]
+
+    def use_skill(self, owner_unit, game):
+        # Calculate the zone of effect
+        zone_of_effect = []
+        for dx in range(-self.range, self.range ):
+            for dy in range(-self.range, self.range ):
+                x, y = owner_unit.x + dx, owner_unit.y + dy
+                if 0 <= x < GRID_SIZE_WIDTH and 0 <= y < GRID_SIZE_HEIGHT:
+                    zone_of_effect.append((x, y))
+
+        # Draw the zone of effect
+        game.draw_map_units()
+        for x, y in zone_of_effect:
+            highlight_rect = pygame.Rect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
+            pygame.draw.rect(game.screen, (128, 128, 128, 128), highlight_rect, 3)
+        pygame.display.flip()
+
+        selecting_target = True
+        while selecting_target:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    exit()
+
+                # Validate the skill activation with space
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_SPACE:
+                        selecting_target = False
+                        break
+
+                    # Cancel the skill
+                    elif event.key == pygame.K_x:
+                        print("Skill canceled.")
+                        return
+
+        # Find all enemies in the zone of effect
+        enemies_in_zone = [
+            unit for unit in game.player_units + game.player2_units + game.enemy_units
+            if (unit.x, unit.y) in zone_of_effect and unit !=owner_unit 
+        ]
+
+        if not enemies_in_zone:
+            print("No enemies in the zone of effect.")
+            return
+
+        # Crée des shadows et les positionne près des ennemis
+        shadows = []
+        shadows_next=[]
+
+        adjacent_positions = [
+            (owner_unit.x + dx, owner_unit.y + dy)
+            for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]
+            if 0 <= owner_unit.x + dx < GRID_SIZE_WIDTH and 0 <= owner_unit.y + dy < GRID_SIZE_HEIGHT
+        ]
+        for pos in adjacent_positions:
+            shadow_next = Shadow(*pos)
+            shadows_next.append(shadow_next)
+
+        # Affiche les shadows autour du personnage
+        for shadow_next in shadows_next:
+            animation_image = pygame.image.load(shadow_next.animation_frames[0]).convert_alpha()
+            animation_image = pygame.transform.scale(animation_image, (CELL_SIZE, CELL_SIZE))
+            game.screen.blit(animation_image, (shadow_next.x * CELL_SIZE, shadow_next.y * CELL_SIZE))
+        pygame.display.flip()
+        pygame.time.delay(1000)
+
+        for enemy in enemies_in_zone:
+            # Trouver une position adjacente disponible pour le shadow
+            shadow_position = self.get_adjacent_position(enemy, game)
+            if shadow_position:
+                shadow = Shadow(*shadow_position)
+                shadows.append((shadow, enemy))  # Associer le shadow à son ennemi
+
+        # Affiche les shadows sur la carte
+        for shadow_enemy_pair in shadows:
+            shadow, enemy = shadow_enemy_pair  # Extraire shadow et enemy explicitement
+            animation_image = pygame.image.load(shadow.animation_frames[0]).convert_alpha()
+            animation_image = pygame.transform.scale(animation_image, (CELL_SIZE, CELL_SIZE))
+            game.screen.blit(animation_image, (shadow.x * CELL_SIZE, shadow.y * CELL_SIZE))
+        pygame.display.flip()
+        pygame.time.delay(1000)
+
+        # Les shadows attaquent leurs ennemis associés
+        for shadow, enemy in shadows:
+            # Téléportation du shadow près de l'ennemi
+            shadow.x, shadow.y = self.get_adjacent_position(enemy, game)
+
+            # Animation d'attaque
+            animation_image = pygame.image.load(self.animation_frames[0]).convert_alpha()
+            animation_image = pygame.transform.scale(animation_image, (CELL_SIZE, CELL_SIZE))
+            game.screen.blit(animation_image, (enemy.x * CELL_SIZE, enemy.y * CELL_SIZE))
+            pygame.display.flip()
+            pygame.time.delay(500)
+
+            # Appliquer les dégâts à l'ennemi
+            enemy.health -= self.damage
+            if enemy.health <= 0:
+                if enemy in game.player_units:
+                    game.player_units.remove(enemy)
+                elif enemy in game.player2_units:
+                    game.player2_units.remove(enemy)
+                elif enemy in game.enemy_units:
+                    game.enemy_units.remove(enemy)
+
+        # Jouer l'effet sonore
+        if self.sound_effect:
+            sound = pygame.mixer.Sound(self.sound_effect)
+            sound.play()
+
+    def get_adjacent_position(self, target, game):
+        """
+        Trouve une position libre adjacente à une cible (target).
+        Retourne une position (x, y) ou None si aucune position n'est disponible.
+        """
+        for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+            adj_x, adj_y = target.x + dx, target.y + dy
+            if 0 <= adj_x < GRID_SIZE_WIDTH and 0 <= adj_y < GRID_SIZE_HEIGHT:
+                # Vérifie qu'aucune autre unité n'est sur cette position
+                if not any(
+                    unit.x == adj_x and unit.y == adj_y
+                    for unit in game.player_units + game.player2_units + game.enemy_units
+                ):
+                    return adj_x, adj_y
+        return None  # Aucune position disponible
 
 
 
