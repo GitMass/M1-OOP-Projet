@@ -232,6 +232,7 @@ class Sorceress(Unit):
         super().__init__(x, y, health=18, attack_power=4, endurence_max=4, team=team, texture_path=texture_path, x_choiceButton=x_choiceButton, y_choiceButton=y_choiceButton, name=name)
         self.skills.append(PurpleChaos_Skill())
         self.skills.append(Poison_Master())
+        self.skills.append(Healer())
         
 class Swordsman(Unit):
     def __init__(self, x, y, team, texture_path, x_choiceButton, y_choiceButton, name):
@@ -756,7 +757,7 @@ class Poison_Master:
         # Afficher la surface avec toutes les animations sur l'écran
         game.screen.blit(self.temp_surface, (0, 0))
         pygame.display.flip()
-        pygame.time.delay(1000)  # Réduire le délai pour un affichage fluide
+        pygame.time.delay(2000)  # Réduire le délai pour un affichage fluide
         
         
         # Appliquer les dégâts
@@ -777,6 +778,84 @@ class Poison_Master:
                             game.enemy_units.remove(potential_target)
 
 
+class Healer:
+    def __init__(self):
+        self.name = "Healer"
+        self.heal_amount = 5  # Montant de soin par unité
+        self.range = 3  # Portée de la compétence
+        self.sound_effect = "data/skills/healer.mp3"  # Effet sonore
+        self.animation_frames = ["data/skills/healer.png"]  # Animation de soin
+
+    def use_skill(self, owner_unit, game):
+        target_x, target_y = owner_unit.x, owner_unit.y  # Position du propriétaire
+
+        # Afficher la zone grise de la portée
+        game.draw_map_units()
+        highlight_rect = pygame.Rect((target_x-2) * CELL_SIZE, (target_y-2) * CELL_SIZE, CELL_SIZE*5, CELL_SIZE*5)
+        pygame.draw.rect(game.screen, (GREEN), highlight_rect, 3)  # Bord gris
+        pygame.display.flip()
+
+        # Attendre que l'utilisateur appuie sur la barre d'espace pour lancer la compétence
+        selecting_target = True
+        while selecting_target:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    exit()
+
+                # Vérifier si l'utilisateur appuie sur la barre d'espace pour lancer la compétence
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_SPACE:
+                        print("Lancement du soin !")
+                        selecting_target = False  # Quitter la phase de sélection
+                        break
+
+                    # Annuler la compétence si l'utilisateur appuie sur la touche X
+                    elif event.key == pygame.K_x:
+                        print("Compétence annulée.")
+                        return
+
+        # Phase d'activation de la compétence
+        game.draw_map_units()
+        pygame.display.flip()
+
+        # Jouer l'effet sonore
+        if self.sound_effect:
+            sound = pygame.mixer.Sound(self.sound_effect)
+            sound.play()
+        affected_cells=[]
+        # Appliquer les soins aux alliés dans la zone d'effet
+        for dx in range(-self.range, self.range-1):  # -range, ..., +range pour une zone carrée
+            for dy in range(-self.range, self.range -1):
+                cell_x = target_x+1 + dx
+                cell_y = target_y+1 + dy
+
+                # Vérifier si la cellule est dans les limites du terrain
+                if cell_x < 0 or cell_x >= GRID_SIZE_WIDTH or cell_y < 0 or cell_y >= GRID_SIZE_HEIGHT:
+                    continue
+
+                # Soigner les unités alliées dans la zone d'effet
+                for potential_target in game.player_units + game.player2_units:  # Allié dans les deux équipes
+                    if potential_target.x == cell_x and potential_target.y == cell_y:
+                        potential_target.health += self.heal_amount  # Augmenter les PV de l'unité
+
+                        # Assurer que les PV ne dépassent pas la capacité maximale de l'unité
+                        if potential_target.health > potential_target.max_health:
+                            potential_target.health = potential_target.max_health
+
+                affected_cells.append((cell_x,cell_y))
+        # Jouer l'animation de soin pour la cellule
+        for frame in self.animation_frames:
+            game.draw_map_units()
+
+            # Draw the "samurai_grave" animation
+            for cell_x, cell_y in affected_cells:
+                animation_image = pygame.image.load(frame).convert_alpha()
+                animation_image = pygame.transform.scale(animation_image, (CELL_SIZE, CELL_SIZE))
+                game.screen.blit(animation_image, (cell_x * CELL_SIZE, cell_y * CELL_SIZE))
+
+            pygame.display.flip()
+            pygame.time.delay(1000)  # Delay between frames
 
         
 
