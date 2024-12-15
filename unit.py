@@ -33,6 +33,15 @@ WINDOW_HEIGHT = HEIGHT + INFO_PANEL_HEIGHT
 
 
 
+# Initialisation de Pygame
+pygame.init()
+
+# Instanciation de la fenêtre
+screen = pygame.display.set_mode((WIDTH, WINDOW_HEIGHT))
+pygame.display.set_caption(GAME_TITLE)
+
+
+
 class Unit:
     """
     Classe pour représenter une unité.
@@ -90,21 +99,20 @@ class Unit:
         self.attack_power = attack_power
         self.endurence_max_init=endurence_max 
         self.endurence_max = endurence_max
+        self.endurence = self.endurence_max
         self.team = team  # 'player 1' , 'player 2' ou 'enemy'
         self.is_selected = False
         self.x_choiceButton = x_choiceButton
         self.y_choiceButton = y_choiceButton
         self.skills = []
         self.name = name
-        self.is_moving = False
-        self.is_attacking = False
         # Ajouter la texture
         self.texture = None
         if texture_path:
             if os.path.exists(texture_path):
-                raw_texture = pygame.image.load(texture_path)
-                self.texture = pygame.transform.scale(raw_texture, (CELL_SIZE, CELL_SIZE))  # Redimensionner l'image
-                self.choice_texture = pygame.transform.scale(raw_texture, (CELL_SIZE*2, CELL_SIZE*2))
+                self.raw_texture = pygame.image.load(texture_path)
+                self.texture = pygame.transform.scale(self.raw_texture, (CELL_SIZE, CELL_SIZE))  # Redimensionner l'image
+                self.choice_texture = pygame.transform.scale(self.raw_texture, (CELL_SIZE*2, CELL_SIZE*2))
             else:
                 print(f"{texture_path} not found")
                 self.texture = None
@@ -115,10 +123,6 @@ class Unit:
 
     def move(self, dx, dy, game):
         """Déplace l'unité de dx, dy."""
-
-        self.is_moving = True
-        self.is_attacking = False
-
 
         new_x = self.x + dx
         new_y = self.y + dy
@@ -217,8 +221,6 @@ class Unit:
 
     def attack(self, target):
         """Attaque une unité cible."""
-        self.is_moving = False
-        self.is_attacking = True
 
         if abs(self.x - target.x) <= 1 and abs(self.y - target.y) <= 1:
             target.health -= self.attack_power
@@ -317,7 +319,7 @@ class Shinobi(Unit):
         super().__init__(x, y, health=22, attack_power=3, endurence_max=6, team=team, texture_path=texture_path, x_choiceButton=x_choiceButton, y_choiceButton=y_choiceButton, name=name)
         self.skills.append(Shuriken())
         self.skills.append(Assasin_Flicker())
-        self.skills.append(Allies())
+        self.skills.append(Shadow_Berserk())
 
 class Monster(Unit):
     def __init__(self, x, y, team, texture_path, x_choiceButton, y_choiceButton, name):
@@ -331,9 +333,26 @@ class Ichimonji_Skill:
     def __init__(self):
         self.name = "Ichimonji"
         self.damage = 10
-        self.range = 1
+        self.range = 2
         self.sound_effect = "data/skills/ichimonji.mp3"
+
+        # animations
+        self.animation_image = []
         self.animation_frames = ["data/skills/ichimonji.png"]
+        for frame in self.animation_frames:
+            image = pygame.image.load(frame).convert_alpha()
+            image = pygame.transform.scale(image, (CELL_SIZE, CELL_SIZE))
+            self.animation_image.append(image)
+
+        # skill logo
+        skill_logo_path = "data/skills/samurai_slash.jpg"
+        self.skill_logo = pygame.image.load(skill_logo_path).convert_alpha()
+
+        # commandes 
+        self.instructions = [
+                "Attack (if enemy is in range) : Space",
+                "Cancel Skill : X",
+            ]
 
     def use_skill(self, owner_unit, game):
         target = None  # Initialize the target
@@ -353,10 +372,8 @@ class Ichimonji_Skill:
                     sound.play()
 
                 # Play the animation
-                for frame in self.animation_frames:
-                    animation_image = pygame.image.load(frame).convert_alpha()
-                    animation_image = pygame.transform.scale(animation_image, (CELL_SIZE, CELL_SIZE))
-                    game.screen.blit(animation_image, (target.x * CELL_SIZE, target.y * CELL_SIZE))
+                for image in self.animation_image:
+                    game.screen.blit(image, (target.x * CELL_SIZE, target.y * CELL_SIZE))
                     pygame.display.flip()
                     pygame.time.delay(100)  # Delay between frames
 
@@ -383,7 +400,25 @@ class Sky_Clear:
         self.damage = 12 
         self.range = 3 
         self.sound_effect = "data/skills/ichimonji.mp3"
-        self.animation_frames = ["data/skills/ichimonji.png"]
+
+        # animations
+        self.animation_frames = ["data/skills/skyclear.jpg"]
+        self.animation_image = []
+        for frame in self.animation_frames:
+            image = pygame.image.load(frame).convert_alpha()
+            image = pygame.transform.scale(image, (CELL_SIZE, CELL_SIZE))
+            self.animation_image.append(image)
+
+        # skill logo
+        skill_logo_path = "data/skills/skyclear.jpg"
+        self.skill_logo = pygame.image.load(skill_logo_path).convert_alpha()
+
+        # commandes 
+        self.instructions = [
+                "Choose Trajectory : Arrow Keys",
+                "Throw the katana : Space",
+                "Cancel Skill : X",
+            ]
 
     def use_skill(self, owner_unit, game):
         target_x, target_y = owner_unit.x, owner_unit.y  # Start with the owner's position
@@ -480,18 +515,13 @@ class Sky_Clear:
                                 game.enemy_units.remove(potential_target)
 
                 # Play animation for the cell
-                for frame in self.animation_frames:
-                    animation_image = pygame.image.load(frame).convert_alpha()
-                    animation_image = pygame.transform.scale(animation_image, (CELL_SIZE, CELL_SIZE)) 
-                    # Load and display the cracked ground frame
-                    for cracked_frame in self.animation_frames:
-                        cracked_image = pygame.image.load(cracked_frame).convert_alpha()
-                        cracked_image = pygame.transform.scale(cracked_image, (CELL_SIZE, CELL_SIZE)) 
+                for image in self.animation_image:
+                    for cracked_image in self.animation_image:
 
                         # Draw the cracked ground image first (background)
                         game.screen.blit(cracked_image, (new_target_x * CELL_SIZE, new_target_y * CELL_SIZE))
                         # Draw the ichimonji image on top
-                        game.screen.blit(animation_image, (new_target_x * CELL_SIZE, new_target_y * CELL_SIZE))
+                        game.screen.blit(image, (new_target_x * CELL_SIZE, new_target_y * CELL_SIZE))
 
                         # Update the display
                         pygame.display.flip()
@@ -504,8 +534,25 @@ class Samurai_Grave:
         self.damage = 15 
         self.range = 6
         self.sound_effect = "data/skills/ichimonji.mp3"
+
+        # Animations
         self.animation_frames = ["data/skills/samurai_grave.png"]
-        self.animation_frames_2 = ["data/skills/gris.png"]
+        self.animation_image = []
+        for frame in self.animation_frames:
+            image = pygame.image.load(frame).convert_alpha()
+            image = pygame.transform.scale(image, (CELL_SIZE, CELL_SIZE))
+            self.animation_image.append(image)
+
+        # skill logo
+        skill_logo_path = "data/skills/samurai_grave.png"
+        self.skill_logo = pygame.image.load(skill_logo_path).convert_alpha()
+
+        # commandes 
+        self.instructions = [
+                "Choose Target Area : Arrow Keys",
+                "Perform The Ritual : Space",
+                "Cancel Skill : X",
+            ]
 
     def use_skill(self, owner_unit, game):
         target_x, target_y = owner_unit.x, owner_unit.y  # Start with the owner's position
@@ -589,12 +636,10 @@ class Samurai_Grave:
                 affected_cells.append((cell_x, cell_y))
 
         # Play animations and apply damage simultaneously
-        for frame1 in self.animation_frames:
+        for image in self.animation_image:
             # Draw the "samurai_grave" animation
             for cell_x, cell_y in affected_cells:
-                animation_image1 = pygame.image.load(frame1).convert_alpha()
-                animation_image1 = pygame.transform.scale(animation_image1, (CELL_SIZE, CELL_SIZE))
-                game.screen.blit(animation_image1, (cell_x * CELL_SIZE, cell_y * CELL_SIZE))
+                game.screen.blit(image, (cell_x * CELL_SIZE, cell_y * CELL_SIZE))
 
             pygame.display.flip()
             pygame.time.delay(500)  # Delay between frames
@@ -633,7 +678,25 @@ class PurpleChaos_Skill:
         self.damage = 10 
         self.range = 6
         self.sound_effect = "data/skills/magicblast.mp3"
+
+        # Animations 
         self.animation_frames = ["data/skills/purple.png"]
+        self.animation_image = []
+        for frame in self.animation_frames:
+            image = pygame.image.load(frame).convert_alpha()
+            image = pygame.transform.scale(image, (CELL_SIZE, CELL_SIZE))
+            self.animation_image.append(image)
+
+        # skill logo
+        skill_logo_path = "data/skills/purple.png"
+        self.skill_logo = pygame.image.load(skill_logo_path).convert_alpha()
+
+        # commandes 
+        self.instructions = [
+                "Choose Target Area : Arrow Keys",
+                "Unleash Chaos : Space",
+                "Cancel Skill : X",
+            ]
 
     def use_skill(self, owner_unit, game):
         target_x, target_y = owner_unit.x, owner_unit.y  # Start with the owner's position
@@ -725,23 +788,35 @@ class PurpleChaos_Skill:
                                 game.enemy_units.remove(potential_target)
 
                 # Play animation for the cell
-                for frame in self.animation_frames:
-                    animation_image = pygame.image.load(frame).convert_alpha()
-                    animation_image = pygame.transform.scale(animation_image, (CELL_SIZE, CELL_SIZE))
-                    game.screen.blit(animation_image, (cell_x * CELL_SIZE, cell_y * CELL_SIZE))
+                for image in self.animation_image:
+                    game.screen.blit(image, (cell_x * CELL_SIZE, cell_y * CELL_SIZE))
                     pygame.display.flip()
                     pygame.time.delay(50)  # Delay between frames
 
 class Poison_Master:
     def __init__(self):
-        self.name = "Poison Master"
+        self.name = "Poison Apocalypse"
         self.damage = 6
         self.range = 6
         self.sound_effect = "data/skills/poison_master.mp3"
+
+        # animations
         self.animation_frames = ["data/skills/poison_cell.png"]
+
         self.maps = ["data/maps/map_poison_1.csv", "data/maps/map_poison_2.csv", "data/maps/map_poison_3.csv"]
         self.current_map_index = 0
         self.poison_zones = self.load_poison_zones(self.maps[self.current_map_index])
+
+        # skill logo
+        skill_logo_path = "data/skills/poison_cell.png"
+        self.skill_logo = pygame.image.load(skill_logo_path).convert_alpha()
+
+        # commandes 
+        self.instructions = [
+                "Choose Target Area : Arrow Keys Left and Right",
+                "Unleash Poison : Space",
+                "Cancel Skill : X",
+            ]
         
         # Variables graphiques
         self.temp_surface = None
@@ -843,11 +918,28 @@ class Poison_Master:
 
 class Healer:
     def __init__(self):
-        self.name = "Healer"
+        self.name = "Healing"
         self.heal_amount = 5  # Montant de soin par unité
         self.range = 3  # Portée de la compétence
         self.sound_effect = "data/skills/magic.mp3"  # Effet sonore
+
+        # animations 
         self.animation_frames = ["data/skills/healer.png"]  # Animation de soin
+        self.animation_image = []
+        for frame in self.animation_frames:
+            image = pygame.image.load(frame).convert_alpha()
+            image = pygame.transform.scale(image, (CELL_SIZE, CELL_SIZE))
+            self.animation_image.append(image)
+
+        # skill logo
+        skill_logo_path = "data/skills/healer.png"
+        self.skill_logo = pygame.image.load(skill_logo_path).convert_alpha()
+
+        # commandes 
+        self.instructions = [
+                "Heal : Space",
+                "Cancel Skill : X",
+            ]
 
     def use_skill(self, owner_unit, game):
         target_x, target_y = owner_unit.x, owner_unit.y  # Position du propriétaire
@@ -908,14 +1000,12 @@ class Healer:
 
                 affected_cells.append((cell_x,cell_y))
         # Jouer l'animation de soin pour la cellule
-        for frame in self.animation_frames:
+        for image in self.animation_image:
             game.draw_map_units()
 
             # Draw the "samurai_grave" animation
             for cell_x, cell_y in affected_cells:
-                animation_image = pygame.image.load(frame).convert_alpha()
-                animation_image = pygame.transform.scale(animation_image, (CELL_SIZE, CELL_SIZE))
-                game.screen.blit(animation_image, (cell_x * CELL_SIZE, cell_y * CELL_SIZE))
+                game.screen.blit(image, (cell_x * CELL_SIZE, cell_y * CELL_SIZE))
 
             pygame.display.flip()
             pygame.time.delay(1000)  # Delay between frames
@@ -927,8 +1017,31 @@ class Shuriken:
         self.damage = 8 
         self.range = 4  
         self.sound_effect = "data/skills/shuriken_sound_1.mp3"
-        self.animation_frames = ["data/skills/shuriken.png"]
-        self.animation_frames_2 = ["data/skills/green_magma.png"]
+
+        # animations
+        self.animation_frames = ["data/skills/green_magma.png"]
+        self.animation_image = []
+        for frame in self.animation_frames:
+            image = pygame.image.load(frame).convert_alpha()
+            image = pygame.transform.scale(image, (CELL_SIZE, CELL_SIZE))
+            self.animation_image.append(image)
+        self.animation_frames_2 = ["data/skills/shuriken.png"]
+        self.animation_image_2 = []
+        for frame2 in self.animation_frames_2:
+            image = pygame.image.load(frame2).convert_alpha()
+            image = pygame.transform.scale(image, (CELL_SIZE, CELL_SIZE))
+            self.animation_image_2.append(image)
+
+        # skill logo
+        skill_logo_path = "data/skills/poison_shuriken.jpg"
+        self.skill_logo = pygame.image.load(skill_logo_path).convert_alpha()
+
+        # commandes 
+        self.instructions = [
+                "Choose Trajectory : Arrow Keys",
+                "Throw Poisoned Shuriken : Space",
+                "Cancel Skill : X",
+            ]
 
     def use_skill(self, owner_unit, game):
         target_x, target_y = owner_unit.x, owner_unit.y  # Start with the owner's position
@@ -1030,18 +1143,14 @@ class Shuriken:
                                 game.enemy_units.remove(potential_target)
 
                 # Play animation for the cell
-                for frame in self.animation_frames:
-                    animation_image = pygame.image.load(frame).convert_alpha()
-                    animation_image = pygame.transform.scale(animation_image, (CELL_SIZE, CELL_SIZE)) 
+                for image in self.animation_image:
                     # Load and display the cracked ground frame
-                    for cracked_frame in self.animation_frames_2:
-                        cracked_image = pygame.image.load(cracked_frame).convert_alpha()
-                        cracked_image = pygame.transform.scale(cracked_image, (CELL_SIZE, CELL_SIZE)) 
+                    for image2 in self.animation_image_2:
 
                         # Draw the cracked ground image first (background)
-                        game.screen.blit(cracked_image, (new_target_x * CELL_SIZE, new_target_y * CELL_SIZE))
+                        game.screen.blit(image, (new_target_x * CELL_SIZE, new_target_y * CELL_SIZE))
                         # Draw the ichimonji image on top
-                        game.screen.blit(animation_image, (new_target_x * CELL_SIZE, new_target_y * CELL_SIZE))
+                        game.screen.blit(image2, (new_target_x * CELL_SIZE, new_target_y * CELL_SIZE))
 
                         # Update the display
                         pygame.display.flip()
@@ -1049,13 +1158,26 @@ class Shuriken:
         
 
 
+
 class Assasin_Flicker :
     def __init__(self):
-        self.name = "Ichimonji"
+        self.name = "Death Shadow"
         self.damage = 10
         self.range = 5
         self.sound_effect = "data/skills/ichimonji.mp3"
-        self.animation_frames = ["data/skills/ichimonji.png"]
+        self.animation_frames = ["data/skills/butterfly_slash.png"]
+
+        # skill logo
+        skill_logo_path = "data/skills/butterfly_slash.png"
+        self.skill_logo = pygame.image.load(skill_logo_path).convert_alpha()
+
+        # commandes 
+        self.instructions = [
+                "Choose Target : Mouse",
+                "Choose Dash Direction : Arrow keys",
+                "Execute The Shadow Art : Arrow keys",
+                "Cancel Skill : X",
+            ]
 
     def use_skill(self, owner_unit, game):
         target = None
@@ -1184,18 +1306,50 @@ class Assasin_Flicker :
         pygame.time.delay(100)
 
 
+
+
 class Shadow:
     def __init__(self, x, y):
         self.x = x
         self.y = y
+
+        # animations
         self.animation_frames = ["data/skills/shadow.png"]
-class Allies:
+        self.animation_image = []
+        for frame in self.animation_frames:
+            image = pygame.image.load(frame).convert_alpha()
+            image = pygame.transform.scale(image, (CELL_SIZE, CELL_SIZE))
+            self.animation_image.append(image)
+
+
+
+
+
+class Shadow_Berserk:
     def __init__(self):
-        self.name = "Allies"
+        self.name = "Shadow Berserk"
         self.damage = 10
         self.range = 3 
         self.sound_effect = "data/skills/ichimonji.mp3"
+
+        # animations
         self.animation_frames = ["data/skills/ichimonji.png"]
+        self.animation_image = []
+        for frame in self.animation_frames:
+            image = pygame.image.load(frame).convert_alpha()
+            image = pygame.transform.scale(image, (CELL_SIZE, CELL_SIZE))
+            self.animation_image.append(image)
+
+        # skill logo
+        skill_logo_path = "data/skills/shadow.png"
+        self.skill_logo = pygame.image.load(skill_logo_path).convert_alpha()
+
+        # commandes 
+        self.instructions = [
+                "Perform The Shadow Berserk Ritual : Space",
+                "Cancel Skill : X",
+            ]
+        
     def use_skill(self, owner_unit, game):
         # Calculate the zone of effect
         zone_of_effect = []
@@ -1246,11 +1400,9 @@ class Allies:
             shadows_next.append(shadow_next)
         # Affiche les shadows autour du personnage
         for shadow_next in shadows_next:
-            animation_image = pygame.image.load(shadow_next.animation_frames[0]).convert_alpha()
-            animation_image = pygame.transform.scale(animation_image, (CELL_SIZE, CELL_SIZE))
-            game.screen.blit(animation_image, (shadow_next.x * CELL_SIZE, shadow_next.y * CELL_SIZE))
+            game.screen.blit(shadow_next.animation_image[0], (shadow_next.x * CELL_SIZE, shadow_next.y * CELL_SIZE))
         pygame.display.flip()
-        pygame.time.delay(500)
+        pygame.time.delay(200)
         for enemy in enemies_in_zone:
             # Trouver une position adjacente disponible pour le shadow
             shadow_position = self.get_adjacent_position(enemy, game)
@@ -1260,21 +1412,17 @@ class Allies:
         # Affiche les shadows sur la carte
         for shadow_enemy_pair in shadows:
             shadow, enemy = shadow_enemy_pair  # Extraire shadow et enemy explicitement
-            animation_image = pygame.image.load(shadow.animation_frames[0]).convert_alpha()
-            animation_image = pygame.transform.scale(animation_image, (CELL_SIZE, CELL_SIZE))
-            game.screen.blit(animation_image, (shadow.x * CELL_SIZE, shadow.y * CELL_SIZE))
+            game.screen.blit(shadow.animation_image[0], (shadow.x * CELL_SIZE, shadow.y * CELL_SIZE))
         pygame.display.flip()
-        pygame.time.delay(1000)
+        pygame.time.delay(500)
         # Les shadows attaquent leurs ennemis associés
         for shadow, enemy in shadows:
             # Téléportation du shadow près de l'ennemi
             shadow.x, shadow.y = self.get_adjacent_position(enemy, game)
             # Animation d'attaque
-            animation_image = pygame.image.load(self.animation_frames[0]).convert_alpha()
-            animation_image = pygame.transform.scale(animation_image, (CELL_SIZE, CELL_SIZE))
-            game.screen.blit(animation_image, (enemy.x * CELL_SIZE, enemy.y * CELL_SIZE))
+            game.screen.blit(self.animation_image[0], (enemy.x * CELL_SIZE, enemy.y * CELL_SIZE))
             pygame.display.flip()
-            pygame.time.delay(500)
+            pygame.time.delay(200)
             # Appliquer les dégâts à l'ennemi
             enemy.health -= self.damage
             if enemy.health <= 0:

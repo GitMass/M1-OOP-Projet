@@ -62,6 +62,10 @@ class Game:
         self.snow=[]
         self.bush=[]
 
+        # Load background image
+        self.info_panel_background_image = pygame.image.load("data\splash_images\info_panel_background.png").convert()
+        self.info_panel_background_image = pygame.transform.scale(self.info_panel_background_image, (WIDTH, INFO_PANEL_HEIGHT))
+
 
 
 
@@ -322,8 +326,9 @@ class Game:
             print("No map selected!")
             return
 
-        # pour effacer l'ancienne image
-        self.screen.fill(BLACK)
+        # Pour effacer ce qui étai affiché precedement
+        rect_to_fill = pygame.Rect(0, 0, WIDTH, HEIGHT)
+        self.screen.fill(BLACK, rect_to_fill)
 
         # Affiche les blocs : "GRASS"
         for grass in self.grass:    
@@ -572,81 +577,129 @@ class Game:
     
 
 
-    def draw_info_panel(self, team=None, unit=None):
-       
+    def draw_info_panel(self, team=None, unit=None, mode=None):
 
+        # afficher l'image de fond 
+        self.screen.blit(self.info_panel_background_image, (0, HEIGHT))
+
+        # initialiser le rectangle de la bordure
         info_panel_rect = pygame.Rect(0, HEIGHT, WIDTH, INFO_PANEL_HEIGHT)
-        panel_color = (30, 30, 30)  # Fond du panneau
-       
-        border_color = (200, 200, 200)  # Couleur des bordures
-        font = pygame.font.Font(None, 24)  # Police pour le texte
 
-        # Dessiner le panneau principal:
-        pygame.draw.rect(self.screen, panel_color, info_panel_rect)
+        # Determine border color based on the team
+        if team == "player 1":
+            border_color = BLUE
+        elif team == "player 2":
+            border_color = GREEN
+        elif team == "enemy":
+            border_color = RED
+        else:
+            border_color = WHITE  # Default color
 
-        # Diviser en trois colonnes:
+        # Draw border around the panel
+        pygame.draw.rect(self.screen, border_color, info_panel_rect, 4)
+
+        # Font for text
+        font = pygame.font.Font(None, 20)  
+
+        # Draw columns
         column_width = WIDTH // 3
 
-        #1: Informations sur l'unité:
+        # --- First Column: Unit Info ---
         if unit:
-           
-           # Texte : Nom, santé, endurance
-           name_text = font.render(f"Name: {unit.name}", True, WHITE)
-           health_text = font.render(f"HP: {unit.health}/{unit.max_health}", True, WHITE)
-           endurance_text = font.render(f"Endurance: {unit.endurence_max}/{unit.endurence_max}", True, WHITE)
-           ataque_power_text = font.render(f"Attack_power: {unit.attack_power}", True, WHITE)
+            # Display Unit Picture
+            if unit.texture:
+                profile_picture_x = 20
+                profile_picture_y = HEIGHT + 20
+                profile_picture_width = 60
+                profile_picture__height = 60
 
-           # Afficher les textes
-           self.screen.blit(name_text, (10, HEIGHT + 10))
-           self.screen.blit(health_text, (10, HEIGHT + 40))
-           self.screen.blit(endurance_text, (10, HEIGHT + 70))
-           self.screen.blit(ataque_power_text, (10, HEIGHT + 100))
+                picture_rect = pygame.Rect(profile_picture_x, profile_picture_y, profile_picture_width, profile_picture__height)
+                self.screen.blit(pygame.transform.scale(unit.raw_texture, (profile_picture_width, profile_picture__height)), (profile_picture_x, profile_picture_y))
+                pygame.draw.rect(self.screen, border_color, picture_rect, 2)
 
+            # Display Name Below Picture
+            name_text = font.render(unit.name, True, WHITE)
+            self.screen.blit(name_text, (profile_picture_x + (profile_picture_width - name_text.get_width()) // 2, profile_picture_y + profile_picture__height + 5))
 
-           # Afficher une photo de l'unité si disponible
-           if unit.texture:
-             texture_unite=self.screen.blit(pygame.transform.scale(unit.texture, (60, 60)), (column_width - 70, HEIGHT + 30))
-             pygame.draw.rect(self.screen ,WHITE,texture_unite, 2)
+            # Display Health Bar
+            health_ratio = unit.health / unit.max_health
+            health_bar_width = 200
+            health_bar_x = profile_picture_x + profile_picture_width + 20
+            health_bar_y = HEIGHT + 20
 
-           # 2:Compétences:
-          
-           if unit and unit.skills:  # Vérifie directement si unit et skills ne sont pas None ou vides
-              skill_y = HEIGHT + 10
-             
-              for skill in unit.skills[:4]:  
-                  skill_text = font.render(skill.name, True, WHITE)
-                  self.screen.blit(skill_text, (column_width + 10, skill_y))
-                  skill_y += 30
+            health_bar_rect = pygame.Rect(health_bar_x, health_bar_y, health_bar_width, 10)
+            pygame.draw.rect(self.screen, GREY, health_bar_rect)  # Background bar
+            pygame.draw.rect(self.screen, RED, (health_bar_x, health_bar_y, int(health_ratio * health_bar_width), 10))  # Health bar
+
+            health_text = font.render(f"HP: {unit.health}/{unit.max_health}", True, WHITE)
+            self.screen.blit(health_text, (health_bar_x, health_bar_y + 15))
+
+            # Display Endurance Bar
+            endurance_ratio = unit.endurence / unit.endurence_max
+            endurence_bar_width = health_bar_width
+            endurence_bar_x = health_bar_x
+            endurence_bar_y = health_bar_y + 35
+
+            endurance_bar_rect = pygame.Rect(endurence_bar_x, endurence_bar_y, endurence_bar_width, 10)
+            pygame.draw.rect(self.screen, GREY, endurance_bar_rect)  # Background bar
+            pygame.draw.rect(self.screen, GREEN, (endurence_bar_x, endurence_bar_y, int(endurance_ratio * health_bar_width), 10))  # Endurance bar
+
+            endurance_text = font.render(f"Endurance: {unit.endurence}/{unit.endurence_max}", True, WHITE)
+            self.screen.blit(endurance_text, (endurence_bar_x, endurence_bar_y + 15))
+
+        # --- Second Column: Skills ---
+        if unit and unit.skills:
+            for i, skill in enumerate(unit.skills[:3]):
                 
-                 # Afficher une icône si elle existe
-                  if skill.animation_frames:  # Vérifie si animation_frames existe et n'est pas vide
-                    skill_icon_path = skill.animation_frames[0]
-                   
-                    if os.path.exists(skill_icon_path):  # Vérifie que le fichier existe
-                       skill_icon = pygame.image.load(skill_icon_path).convert_alpha()
-                       skill_icon = pygame.transform.scale(skill_icon, (30, 30))  # Ajuste la taille
-                       self.screen.blit(skill_icon, (column_width + 200, skill_y - 20))  # Position près du texte
-                    else:
-                       print(f"Image non trouvée : {skill_icon_path}")
+                # Skill Icon Rectangle
+                skill_picture_width = 50
+                skill_x = column_width + 60 + (i * (skill_picture_width + 60))  # Position squares with spacing
+                skill_y = HEIGHT + 20
+                skill_rect = pygame.Rect(skill_x, skill_y, skill_picture_width, skill_picture_width)
 
-           #3: Instructions:
+                # Display Skill Icon
+                if skill.skill_logo:
+                    skill_icon = pygame.transform.scale(skill.skill_logo, (skill_picture_width, skill_picture_width))
+                    self.screen.blit(skill_icon, (skill_x, skill_y))
+
+                pygame.draw.rect(self.screen, WHITE, skill_rect, 2)  # Border for skill icon
+
+                # Display Skill Number (1, 2, 3)
+                number_font = pygame.font.Font(None, 20)
+                number_text = number_font.render(str(i + 1), True, WHITE)
+                self.screen.blit(number_text, (skill_x + 5, skill_y + 5))
+
+                # Display Skill Name Below Icon
+                skill_name_text = font.render(skill.name, True, WHITE)
+                self.screen.blit(skill_name_text, (skill_x + (skill_picture_width - skill_name_text.get_width()) // 2, skill_y + skill_picture_width + 5))
+
+        # --- Third Column: Instructions ---
         instructions = []
 
-        if unit and unit.is_moving:
-          instructions = ["Move: Arrow keys"]
+        if unit and (mode == "moving"):
+            instructions = [
+                "Move : Arrow keys",
+                "Skill 1, 2, 3 : Key 1, 2, 3",
+                "Skip Turn : Space",
+                "Cancel Skill : X"
+            ]
 
-        elif unit and unit.is_attacking:
-          instructions = ["Attack: Space"]
+        elif unit and (mode == "skill 1"):
+            instructions = unit.skills[0].instructions
+
+        elif unit and (mode == "skill 2"):
+            instructions = unit.skills[1].instructions
+
+        elif unit and (mode == "skill 3"):
+            instructions = unit.skills[2].instructions
+
         else:
-
-
-          instructions = [
-           "Move: Arrow keys",
-           "Attack: Space",
-           "Skill 1: Key 1",
-           "Skill 2: Key 2",
-           "Skill 3: Key 3",
-        ]
+            instructions = [
+                "Move : Arrow keys",
+                "Skill 1, 2, 3 : Key 1, 2, 3",
+                "Skip Turn : Space",
+                "Cancel Skill : X"
+            ]
 
         instruction_y = HEIGHT + 10
         for instruction in instructions:
@@ -654,8 +707,7 @@ class Game:
             self.screen.blit(instruction_text, (2 * column_width + 10, instruction_y))
             instruction_y += 20
 
-
-        #Bordures entre les colonnes :
+        # Draw Borders Between Columns
         pygame.draw.line(self.screen, border_color, (column_width, HEIGHT), (column_width, HEIGHT + INFO_PANEL_HEIGHT), 2)
         pygame.draw.line(self.screen, border_color, (2 * column_width, HEIGHT), (2 * column_width, HEIGHT + INFO_PANEL_HEIGHT), 2)
 
@@ -665,6 +717,7 @@ class Game:
         for unit in self.player_units + self.player2_units + self.enemy_units:
             unit.endurence_max = unit.endurence_max_init  # Réinitialisation à la valeur initiale
         print("Endurance réinitialisée pour tous les personnages après 6 appuis sur Espace !")
+
 
     # Tour des joueurs 1 et 2
     def handle_player_turn(self, team):
@@ -679,9 +732,9 @@ class Game:
                 # Tant que l'unité n'a pas terminé son tour
                 has_acted = False
                 selected_unit.is_selected = True
-                endurence = selected_unit.endurence_max
+                selected_unit.endurence = selected_unit.endurence_max
                 self.draw_map_units(team)
-                self.draw_info_panel(team, selected_unit)
+                self.draw_info_panel(team, selected_unit, "moving")
                 pygame.display.flip() 
                 while not has_acted:
                     
@@ -699,58 +752,61 @@ class Game:
                             # Déplacement (touches fléchées)
                             dx, dy = 0, 0
                             if event.key == pygame.K_LEFT:
-                                if endurence > 0:
+                                if selected_unit.endurence > 0:
                                     dx = -1
-                                    endurence = endurence - 1
+                                    selected_unit.endurence = selected_unit.endurence - 1
                             elif event.key == pygame.K_RIGHT:
-                                if endurence > 0:
+                                if selected_unit.endurence > 0:
                                     dx = 1
-                                    endurence = endurence - 1
+                                    selected_unit.endurence = selected_unit.endurence - 1
                             elif event.key == pygame.K_UP:
-                                if endurence > 0:
+                                if selected_unit.endurence > 0:
                                     dy = -1
-                                    endurence = endurence - 1
+                                    selected_unit.endurence = selected_unit.endurence - 1
                             elif event.key == pygame.K_DOWN:
-                                if endurence > 0:
+                                if selected_unit.endurence > 0:
                                     dy = 1
-                                    endurence = endurence - 1
+                                    selected_unit.endurence = selected_unit.endurence - 1
 
                             selected_unit.move(dx, dy, self)
                             self.draw_map_units(team)
-                            self.draw_info_panel(team, selected_unit)
+                            self.draw_info_panel(team, selected_unit, "moving")
                             pygame.display.flip()
-                            # Use skills : skill 1, 2 or 3
 
+                            # Use skills : skill 1, 2 or 3
                             if event.key == pygame.K_1:
                                 if len(selected_unit.skills) > 0:
+                                    self.draw_info_panel(team, selected_unit, "skill 1")
+                                    pygame.display.flip()
                                     skill = selected_unit.skills[0]
                                     skill.use_skill(selected_unit, self)
                                     has_acted = True
                                     selected_unit.is_selected = False
-                                    self.draw_map_units(team)
-                                    self.draw_info_panel(team, selected_unit)
+                                    self.draw_map_units(team)   
                                 else:
                                     print(f"{selected_unit.name} has no skill 1.")
                             elif event.key == pygame.K_2:
                                 if len(selected_unit.skills) > 1:
+                                    self.draw_info_panel(team, selected_unit, "skill 2")
+                                    pygame.display.flip()
                                     skill = selected_unit.skills[1]
                                     skill.use_skill(selected_unit, self)
                                     has_acted = True
                                     selected_unit.is_selected = False
                                     self.draw_map_units(team)
-                                    self.draw_info_panel(team, selected_unit)
                                     pygame.display.flip()
 
                                 else:
                                     print(f"{selected_unit.name} has no skill 2.")
                             elif event.key == pygame.K_3:
                                 if len(selected_unit.skills) > 2:
+                                    self.draw_info_panel(team, selected_unit, "skill 3")
+                                    pygame.display.flip()
                                     skill = selected_unit.skills[2]
                                     skill.use_skill(selected_unit, self)
                                     has_acted = True
                                     selected_unit.is_selected = False
                                     self.draw_map_units(team)
-                                    self.draw_info_panel(team, selected_unit)
                                     pygame.display.flip()
                                 else:
                                     print(f"{selected_unit.name} has no skill 3.")
@@ -789,9 +845,9 @@ class Game:
                 # Tant que l'unité n'a pas terminé son tour
                 has_acted = False
                 selected_unit.is_selected = True
-                endurence = selected_unit.endurence_max
+                selected_unit.endurence = selected_unit.endurence_max
                 self.draw_map_units(team)
-                self.draw_info_panel(team, selected_unit)
+                self.draw_info_panel(team, selected_unit, "moving")
                 pygame.display.flip()
 
                 while not has_acted:
@@ -810,58 +866,61 @@ class Game:
                             # Déplacement (touches fléchées)
                             dx, dy = 0, 0
                             if event.key == pygame.K_LEFT:
-                                if endurence > 0:
+                                if selected_unit.endurence > 0:
                                     dx = -1
-                                    endurence = endurence - 1
+                                    selected_unit.endurence = selected_unit.endurence - 1
                             elif event.key == pygame.K_RIGHT:
-                                if endurence > 0:
+                                if selected_unit.endurence > 0:
                                     dx = 1
-                                    endurence = endurence - 1
+                                    selected_unit.endurence = selected_unit.endurence - 1
                             elif event.key == pygame.K_UP:
-                                if endurence > 0:
+                                if selected_unit.endurence > 0:
                                     dy = -1
-                                    endurence = endurence - 1
+                                    selected_unit.endurence = selected_unit.endurence - 1
                             elif event.key == pygame.K_DOWN:
-                                if endurence > 0:
+                                if selected_unit.endurence > 0:
                                     dy = 1
-                                    endurence = endurence - 1
+                                    selected_unit.endurence = selected_unit.endurence - 1
 
                             selected_unit.move(dx, dy, self)
                             self.draw_map_units(team)
-                            self.draw_info_panel(team, selected_unit)
+                            self.draw_info_panel(team, selected_unit, "moving")
                             pygame.display.flip()
 
                             # Use skills : skill 1, 2 or 3
                             if event.key == pygame.K_1:
                                 if len(selected_unit.skills) > 0:
+                                    self.draw_info_panel(team, selected_unit, "skill 1")
+                                    pygame.display.flip()
                                     skill = selected_unit.skills[0]
                                     skill.use_skill(selected_unit, self)
                                     has_acted = True
                                     selected_unit.is_selected = False
                                     self.draw_map_units(team)
-                                    self.draw_info_panel(team, selected_unit)
                                     pygame.display.flip()
                                 else:
                                     print(f"{selected_unit.name} has no skill 1.")
                             elif event.key == pygame.K_2:
                                 if len(selected_unit.skills) > 1:
+                                    self.draw_info_panel(team, selected_unit, "skill 2")
+                                    pygame.display.flip()
                                     skill = selected_unit.skills[1]
                                     skill.use_skill(selected_unit, self)
                                     has_acted = True
                                     selected_unit.is_selected = False
                                     self.draw_map_units(team)
-                                    self.draw_info_panel(team, selected_unit)
                                     pygame.display.flip()
                                 else:
                                     print(f"{selected_unit.name} has no skill 2.")
                             elif event.key == pygame.K_3:
                                 if len(selected_unit.skills) > 2:
+                                    self.draw_info_panel(team, selected_unit, "skill 3")
+                                    pygame.display.flip()
                                     skill = selected_unit.skills[2]
                                     skill.use_skill(selected_unit, self)
                                     has_acted = True
                                     selected_unit.is_selected = False
                                     self.draw_map_units(team)
-                                    self.draw_info_panel(team, selected_unit)
                                     pygame.display.flip()
                                 else:
                                     print(f"{selected_unit.name} has no skill 3.")
@@ -899,17 +958,16 @@ class Game:
 
     # IA de enemy
     def handle_enemy_turn(self):
-        """IA très simple pour les ennemis."""
 
+        # tester si tous les adversaires sont morts
         if len(self.player_units) == 0 :
             self.game_end("player 1")
 
+        # faire le tour de chaque unité de enemy
         for enemy in self.enemy_units:
-            selected_enemy = enemy
-
-            # Met à jour le panneau d'information avec les détails de l'ennemi
-            self.draw_info_panel("enemy", selected_enemy)
-            pygame.display.flip()
+            
+            # attente pour rendre le tour des ennemies plus realistique
+            pygame.time.delay(500)
 
             # Déplacement aléatoire
             target = random.choice(self.player_units)
@@ -923,6 +981,15 @@ class Game:
                 if target.health <= 0:
                     self.player_units.remove(target)
 
+            # Met à jour le panneau d'information avec les détails de l'ennemi
+            self.draw_map_units("enemy")
+            self.draw_info_panel("enemy", enemy)
+            pygame.display.flip()
+
+            # attente pour rendre le tour des ennemies plus realistique
+            pygame.time.delay(100) 
+
+        # tester si tous les adversaires sont morts
         if len(self.player_units) == 0 :
             self.game_end("player 1")
 
@@ -1032,9 +1099,6 @@ class Game:
         # Afficher le menu principale
         MenuChoice = self.Main_menu(GAME_TITLE)
 
-        # Afficher le panneau des informations
-        self.draw_info_panel()
-
         # choix de la carte
         selected_map = self.choose_map()
         self.read_map_from_csv(selected_map)
@@ -1069,12 +1133,7 @@ class Game:
 # main function
 def main():
 
-    # Initialisation de Pygame
-    pygame.init()
-
-    # Instanciation de la fenêtre
-    screen = pygame.display.set_mode((WIDTH, WINDOW_HEIGHT))
-    pygame.display.set_caption(GAME_TITLE)
+    
 
     # Instanciation du jeu
     game = Game(screen)
