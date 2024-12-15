@@ -126,12 +126,13 @@ class Game:
             filename : string
                 the path of the csv containing the map matrix
                     0 : grass
-                    1 : murs
-                    2 : magma 
-                    3 : water 
-                    4 : mud 
-                    5 : healing 
-                    6 : grass
+                    1 : murs 
+                    2 : magma -> -3 Shogun | -4 Assasin | -5 Sorceress (point de vie)
+                    3 : water -> -4 Shogun | -0 Assasin | -2 Sorceress (endurence)
+                    4 : mud   -> -5 Shogun | -1 Assasin | -3 Sorceress (endurence)
+                    5 : healing -> +5 Shogun | +5 Assasin | +5 Sorceress (point de vie)
+                    6 : snow
+                    7 : Bush 
         
         """
 
