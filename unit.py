@@ -133,7 +133,7 @@ class Unit:
                     return  
                 
                 #Vérifie si l'unité a suffisamment d'endurance pour se déplacer
-                if self.endurence_max <= 0:
+                if self.endurence <= 0:
                     print(f"{self.name} n'a plus assez d'endurance pour se déplacer.")
                     return
 
@@ -161,10 +161,13 @@ class Unit:
                 game.current_sound.play()
                 if isinstance(self, Swordsman):  # Shogun
                     self.endurence_max -= 5
+                    self.endurence -= 5
                 elif isinstance(self, Shinobi):  # Assassin
                     self.endurence_max -= 2
+                    self.endurence -= 2
                 elif isinstance(self, Sorceress):# Sorceress 
                     self.endurence_max -= 3
+                    self.endurence -= 3
                 game.turn_counter=0 # Réinitialisation du compteur
 
             elif (self.x, self.y) in game.water:
@@ -172,10 +175,13 @@ class Unit:
                 game.current_sound.play()
                 if isinstance(self, Swordsman):  # Shogun
                     self.endurence_max -= 4
+                    self.endurence -= 4
                 elif isinstance(self, Shinobi):  # Assassin
                     self.endurence_max -= 1
+                    self.endurence -= 1
                 elif isinstance(self, Sorceress):# Sorceress
                     self.endurence_max -= 2
+                    self.endurence -= 2
                 game.turn_counter=0  # Réinitialisation du compteur
 
             elif (self.x, self.y) in game.healing:
@@ -194,11 +200,14 @@ class Unit:
                 game.current_sound=game.sounds['snow']
                 game.current_sound.play()
                 if isinstance(self, Swordsman):  # Shogun
-                    self.endurence_max -= 3
+                    self.endurence_max -= 0
+                    self.endurence -= 0
                 elif isinstance(self, Shinobi):  # Assassin
-                    self.endurence_max -= 2
+                    self.endurence_max -= 0
+                    self.endurence -= 0
                 elif isinstance(self, Sorceress):# Sorceress
-                    self.endurence_max -= 1
+                    self.endurence_max -= 0
+                    self.endurence -= 0
                 game.turn_counter=0  # Réinitialisation du compteur
 
             elif (self.x, self.y) in game.bush:
@@ -215,8 +224,8 @@ class Unit:
                 game.current_sound=None # Aucun son à jouer 
 
             # Vérifie que l'endurance ne soit pas négative
-            if self.endurence_max < 0:
-                self.endurence_max = 0
+            if self.endurence_max <= 0:
+                self.endurence_max = 1
 
 
     def attack(self, target):
@@ -302,21 +311,21 @@ class Unit:
 # Definitions Des Types d'unités :
 class Sorceress(Unit):
     def __init__(self, x, y, team, texture_path, x_choiceButton, y_choiceButton, name):
-        super().__init__(x, y, health=18, attack_power=4, endurence_max=4, team=team, texture_path=texture_path, x_choiceButton=x_choiceButton, y_choiceButton=y_choiceButton, name=name)
+        super().__init__(x, y, health=24, attack_power=4, endurence_max=6, team=team, texture_path=texture_path, x_choiceButton=x_choiceButton, y_choiceButton=y_choiceButton, name=name)
         self.skills.append(PurpleChaos_Skill())
         self.skills.append(Poison_Master())
         self.skills.append(Healer())
         
 class Swordsman(Unit):
     def __init__(self, x, y, team, texture_path, x_choiceButton, y_choiceButton, name):
-        super().__init__(x, y, health=22, attack_power=3, endurence_max=6, team=team, texture_path=texture_path, x_choiceButton=x_choiceButton, y_choiceButton=y_choiceButton, name=name)
+        super().__init__(x, y, health=32, attack_power=3, endurence_max=8, team=team, texture_path=texture_path, x_choiceButton=x_choiceButton, y_choiceButton=y_choiceButton, name=name)
         self.skills.append(Ichimonji_Skill())
         self.skills.append(Sky_Clear())
         self.skills.append(Samurai_Grave())
 
 class Shinobi(Unit):
     def __init__(self, x, y, team, texture_path, x_choiceButton, y_choiceButton, name):
-        super().__init__(x, y, health=22, attack_power=3, endurence_max=6, team=team, texture_path=texture_path, x_choiceButton=x_choiceButton, y_choiceButton=y_choiceButton, name=name)
+        super().__init__(x, y, health=28, attack_power=3, endurence_max=10, team=team, texture_path=texture_path, x_choiceButton=x_choiceButton, y_choiceButton=y_choiceButton, name=name)
         self.skills.append(Shuriken())
         self.skills.append(Assasin_Flicker())
         self.skills.append(Shadow_Berserk())

@@ -822,14 +822,14 @@ class Game:
                                 has_acted = True
                                 selected_unit.is_selected = False
 
-                                # Incrémenter le compteur de tours **à la fin du tour**
-                                self.turn_counter += 1
-                                print(f"Tour {self.turn_counter} terminé.")
+                # Incrémenter le compteur de tours **à la fin du tour**
+                self.turn_counter += 1
+                print(f"Tour {self.turn_counter} terminé.")
 
-                                # Réinitialisation de l’endurance après 6 appuis sur Espace
-                                if self.turn_counter >= 6:
-                                    self.reset_endurance()
-                                    self.turn_counter = 0  # Réinitialiser le compteur après réinitialisation
+                # Réinitialisation de l’endurance après 3 tours
+                if self.turn_counter >= 6:
+                    self.reset_endurance()
+                    self.turn_counter = 0  # Réinitialiser le compteur après réinitialisation
                  
 
             if self.GameMode == "PvE" :
@@ -936,14 +936,14 @@ class Game:
                                 has_acted = True
                                 selected_unit.is_selected = False
 
-                                # Incrémenter le compteur de tours **à la fin du tour**
-                                self.turn_counter += 1
-                                print(f"Tour {self.turn_counter} terminé.")
+                # Incrémenter le compteur de tours **à la fin du tour**
+                self.turn_counter += 1
+                print(f"Tour {self.turn_counter} terminé.")
 
-                                # Réinitialisation de l’endurance après 6 appuis sur Espace
-                                if self.turn_counter >= 6:
-                                    self.reset_endurance()
-                                    self.turn_counter = 0  # Réinitialiser le compteur après réinitialisation
+                # Réinitialisation de l’endurance après 3 tours
+                if self.turn_counter >= 3:
+                    self.reset_endurance()
+                    self.turn_counter = 0  # Réinitialiser le compteur après réinitialisation
                 
 
             if self.GameMode == "PvE" :
