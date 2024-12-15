@@ -611,7 +611,7 @@ class Game:
                 profile_picture__height = 60
 
                 picture_rect = pygame.Rect(profile_picture_x, profile_picture_y, profile_picture_width, profile_picture__height)
-                self.screen.blit(pygame.transform.scale(unit.texture, (profile_picture_width, profile_picture__height)), (profile_picture_x, profile_picture_y))
+                self.screen.blit(pygame.transform.scale(unit.raw_texture, (profile_picture_width, profile_picture__height)), (profile_picture_x, profile_picture_y))
                 pygame.draw.rect(self.screen, border_color, picture_rect, 2)
 
             # Display Name Below Picture
