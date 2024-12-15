@@ -319,7 +319,7 @@ class Samurai(Unit):
     def __init__(self, x, y, team, texture_path, x_choiceButton, y_choiceButton, name):
         super().__init__(x, y, health=30, attack_power=10, endurence_max=8, team=team, texture_path=texture_path, x_choiceButton=x_choiceButton, y_choiceButton=y_choiceButton, name=name)
         self.defense = 30
-        self.skills.append(Ichimonji_Skill())
+        self.skills.append(Ichimonji())
         self.skills.append(Sky_Clear())
         self.skills.append(Samurai_Grave())
 
@@ -345,7 +345,7 @@ class Skill(ABC):
 
 
 
-class Ichimonji_Skill(Skill):
+class Ichimonji(Skill):
     def __init__(self):
         self.name = "Ichimonji"
         self.damage = 14
