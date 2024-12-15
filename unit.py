@@ -132,7 +132,7 @@ class Unit:
                 if unit.x == new_x and unit.y == new_y:
                     return  
                 
-                #Vérifie si l'unité a suffisamment d'endurance pour se déplacer
+                # Vérifie si l'unité a suffisamment d'endurance pour se déplacer
                 if self.endurence <= -1:
                     print(f"{self.name} n'a plus assez d'endurance pour se déplacer.")
                     return
@@ -208,7 +208,6 @@ class Unit:
                 elif isinstance(self, Sorceress):# Sorceress
                     self.endurence_max -= 0
                     self.endurence -= 0
-                game.turn_counter=0  # Réinitialisation du compteur
 
             elif (self.x, self.y) in game.bush:
                 game.current_sound=game.sounds['bush']

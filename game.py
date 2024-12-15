@@ -822,16 +822,6 @@ class Game:
                                 has_acted = True
                                 selected_unit.is_selected = False
 
-                # Incrémenter le compteur de tours **à la fin du tour**
-                self.turn_counter += 1
-                print(f"Tour {self.turn_counter} terminé.")
-
-                # Réinitialisation de l’endurance après 3 tours
-                if self.turn_counter >= 6:
-                    self.reset_endurance()
-                    self.turn_counter = 0  # Réinitialiser le compteur après réinitialisation
-                 
-
             if self.GameMode == "PvE" :
                 if len(self.enemy_units) == 0 :
                     self.game_end("enemy")
@@ -936,22 +926,21 @@ class Game:
                                 has_acted = True
                                 selected_unit.is_selected = False
 
-                # Incrémenter le compteur de tours **à la fin du tour**
-                self.turn_counter += 1
-                print(f"Tour {self.turn_counter} terminé.")
-
-                # Réinitialisation de l’endurance après 3 tours
-                if self.turn_counter >= 3:
-                    self.reset_endurance()
-                    self.turn_counter = 0  # Réinitialiser le compteur après réinitialisation
-                
-
             if self.GameMode == "PvE" :
                 if len(self.enemy_units) == 0 :
                     self.game_end("enemy")
             elif self.GameMode == "PvP" :
                 if len(self.player2_units) == 0 :
                     self.game_end("player 2")
+
+        # Incrémenter le compteur de tours **à la fin du tour**
+        self.turn_counter += 1
+        print(f"Tour {self.turn_counter} terminé.")
+
+        # Réinitialisation de l’endurance après 3 tours
+        if self.turn_counter >= 3:
+            self.reset_endurance()
+            self.turn_counter = 0  # Réinitialiser le compteur après réinitialisation
         
 
 
@@ -992,6 +981,77 @@ class Game:
         # tester si tous les adversaires sont morts
         if len(self.player_units) == 0 :
             self.game_end("player 1")
+
+
+
+
+
+    def enemy_AI_turn(self):
+            
+            # tester si tous les adversaires sont morts
+            if len(self.player_units) == 0 :
+                self.game_end("player 1")
+
+            # tour de chaque unité de enemy
+            for enemy in self.enemy_units:
+
+                # attente pour rendre le tour des ennemies plus realistique
+                pygame.time.delay(200)
+
+                # Movement decision
+                best_move = self.AI_find_best_move(enemy)
+                if best_move:
+                    enemy.move(best_move[0], best_move[1], self)
+
+                # Attack decision
+                target = self.find_best_target(enemy)
+                if target:
+                    enemy.attack(target)
+
+                # Skill usage
+                best_skill = self.evaluate_skills(enemy)
+                if best_skill:
+                    best_skill.use_skill(enemy, self)
+
+                # Update the game state after enemy's action
+                self.draw_map_units("enemy")
+                pygame.display.flip()
+
+
+
+
+    def AI_find_best_move(self, enemy):
+        # Evaluate potential moves and return the best one
+        best_move = None
+        best_score = -500
+
+        for dx in range(-enemy.endurence_max, enemy.endurence_max + 1):  # Example range, adjust for movement rules
+            for dy in range(-enemy.endurence_max, enemy.endurence_max + 1):
+                new_x = enemy.x + dx
+                new_y = enemy.y + dy
+                if not self.is_wall(new_x, new_y) and (0 <= new_x < GRID_SIZE_WIDTH and 0 <= new_y < GRID_SIZE_HEIGHT):
+                    score = self.AI_evaluate_position(new_x, new_y, enemy)
+                    if score > best_score:
+                        best_score = score
+                        best_move = (dx, dy)
+        return best_move
+    
+
+
+
+    def AI_evaluate_position(self, x, y, unit):
+            # Return a score based on strategic factors (e.g., proximity to player units, terrain)
+            score = 0
+            for player in self.player_units:
+                distance = abs(player.x - x) + abs(player.y - y)
+                score -= distance  # Prefer closer positions
+            if (x == player.x) and (x == player.x):
+                score -= 500 # to avoid moving into player block
+            if (x, y) in self.healing:
+                score += 10  # Bonus for healing zones
+            if (x, y) in self.magmas:
+                score -= 10  # Penalty for harmful terrain
+            return score
 
 
 
