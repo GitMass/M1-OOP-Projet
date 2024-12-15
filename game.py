@@ -655,12 +655,9 @@ class Game:
                 skill_rect = pygame.Rect(skill_x, skill_y, skill_picture_width, skill_picture_width)
 
                 # Display Skill Icon
-                if skill.animation_frames:
-                    skill_icon_path = skill.animation_frames[0]
-                    if os.path.exists(skill_icon_path):
-                        skill_icon = pygame.image.load(skill_icon_path).convert_alpha()
-                        skill_icon = pygame.transform.scale(skill_icon, (skill_picture_width, skill_picture_width))
-                        self.screen.blit(skill_icon, (skill_x, skill_y))
+                if skill.skill_logo:
+                    skill_icon = pygame.transform.scale(skill.skill_logo, (skill_picture_width, skill_picture_width))
+                    self.screen.blit(skill_icon, (skill_x, skill_y))
 
                 pygame.draw.rect(self.screen, WHITE, skill_rect, 2)  # Border for skill icon
 
@@ -1110,12 +1107,7 @@ class Game:
 # main function
 def main():
 
-    # Initialisation de Pygame
-    pygame.init()
-
-    # Instanciation de la fenêtre
-    screen = pygame.display.set_mode((WIDTH, WINDOW_HEIGHT))
-    pygame.display.set_caption(GAME_TITLE)
+    
 
     # Instanciation du jeu
     game = Game(screen)
