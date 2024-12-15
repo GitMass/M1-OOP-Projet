@@ -106,6 +106,7 @@ class Unit:
         self.y_choiceButton = y_choiceButton
         self.skills = []
         self.name = name
+        
         # Ajouter la texture
         self.texture = None
         if texture_path:
@@ -298,12 +299,8 @@ class Unit:
             text = font.render(f"{str(self)} : {str(self.__class__.__name__)}", True, WHITE)
             # screen.blit(text, (self.button.x, self.button.y+int(CELL_SIZE*1.5)))
 
-    
 
 
-    def Unit_target_button(self):
-        return pygame.Rect(self.x*CELL_SIZE, self.y*CELL_SIZE, CELL_SIZE, CELL_SIZE)
-                                         
 
 
 
