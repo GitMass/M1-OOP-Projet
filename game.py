@@ -41,6 +41,9 @@ class Game:
 
         # game mode
         self.GameMode = ""
+        
+        # Compteur de tours
+        self.turn_counter = 0  
 
         # maps
         self.maps = {
@@ -128,11 +131,11 @@ class Game:
                     0 : grass
                     1 : murs 
                     2 : magma -> -3 Shogun | -4 Assasin | -5 Sorceress (point de vie)
-                    3 : water -> -4 Shogun | -0 Assasin | -2 Sorceress (endurence)
-                    4 : mud   -> -5 Shogun | -1 Assasin | -3 Sorceress (endurence)
+                    3 : water -> -4 Shogun | -1 Assasin | -2 Sorceress (endurence)
+                    4 : mud   -> -5 Shogun | -2 Assasin | -3 Sorceress (endurence)
                     5 : healing -> +5 Shogun | +5 Assasin | +5 Sorceress (point de vie)
-                    6 : snow
-                    7 : Bush 
+                    6 : snow -> -3 Shogun | -2 Assasin | -1 Sorceress (endurence)
+                    7 : Bush -> -0 Shogun | -1 Assasin | -1 Sorceress (point de vie)
         
         """
 
@@ -657,8 +660,11 @@ class Game:
         pygame.draw.line(self.screen, border_color, (2 * column_width, HEIGHT), (2 * column_width, HEIGHT + INFO_PANEL_HEIGHT), 2)
 
 
-
-
+    def reset_endurance(self):
+        """Réinitialise l'endurance de toutes les unités (alliées et ennemies)."""
+        for unit in self.player_units + self.player2_units + self.enemy_units:
+            unit.endurence_max = unit.endurence_max_init  # Réinitialisation à la valeur initiale
+        print("Endurance réinitialisée pour tous les personnages après 6 appuis sur Espace !")
 
     # Tour des joueurs 1 et 2
     def handle_player_turn(self, team):
@@ -759,7 +765,17 @@ class Game:
 
                                 has_acted = True
                                 selected_unit.is_selected = False
-                
+
+                                # Incrémenter le compteur de tours **à la fin du tour**
+                                self.turn_counter += 1
+                                print(f"Tour {self.turn_counter} terminé.")
+
+                                # Réinitialisation de l’endurance après 6 appuis sur Espace
+                                if self.turn_counter >= 6:
+                                    self.reset_endurance()
+                                    self.turn_counter = 0  # Réinitialiser le compteur après réinitialisation
+                 
+
             if self.GameMode == "PvE" :
                 if len(self.enemy_units) == 0 :
                     self.game_end("enemy")
@@ -860,7 +876,17 @@ class Game:
 
                                 has_acted = True
                                 selected_unit.is_selected = False
+
+                                # Incrémenter le compteur de tours **à la fin du tour**
+                                self.turn_counter += 1
+                                print(f"Tour {self.turn_counter} terminé.")
+
+                                # Réinitialisation de l’endurance après 6 appuis sur Espace
+                                if self.turn_counter >= 6:
+                                    self.reset_endurance()
+                                    self.turn_counter = 0  # Réinitialiser le compteur après réinitialisation
                 
+
             if self.GameMode == "PvE" :
                 if len(self.enemy_units) == 0 :
                     self.game_end("enemy")

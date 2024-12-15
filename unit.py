@@ -88,6 +88,7 @@ class Unit:
         self.health = health
         self.max_health = health
         self.attack_power = attack_power
+        self.endurence_max_init=endurence_max 
         self.endurence_max = endurence_max
         self.team = team  # 'player 1' , 'player 2' ou 'enemy'
         self.is_selected = False
@@ -126,6 +127,11 @@ class Unit:
             for unit in game.player_units + game.player2_units + game.enemy_units:
                 if unit.x == new_x and unit.y == new_y:
                     return  
+                
+                #Vérifie si l'unité a suffisamment d'endurance pour se déplacer
+                if self.endurence_max <= 0:
+                    print(f"{self.name} n'a plus assez d'endurance pour se déplacer.")
+                    return
 
             if hasattr(game, 'current_sound') and game.current_sound:  # Vérifie l'existence de current_sound
                 game.current_sound.stop()
@@ -134,32 +140,79 @@ class Unit:
             self.x = new_x
             self.y = new_y
 
+
             # Détection du type de terrain
             if (self.x, self.y) in game.magmas:
                 game.current_sound=game.sounds['magma']
                 game.current_sound.play()
+                if isinstance(self, Swordsman):  # Shogun
+                    self.health -= 3
+                elif isinstance(self, Shinobi):  # Assassin
+                    self.health -= 4
+                elif isinstance(self, Sorceress):
+                    self.health -= 5
+
             elif (self.x, self.y) in game.muds:
                 game.current_sound=game.sounds['mud']
                 game.current_sound.play()
+                if isinstance(self, Swordsman):  # Shogun
+                    self.endurence_max -= 5
+                elif isinstance(self, Shinobi):  # Assassin
+                    self.endurence_max -= 2
+                elif isinstance(self, Sorceress):# Sorceress 
+                    self.endurence_max -= 3
+                game.turn_counter=0 # Réinitialisation du compteur
+
             elif (self.x, self.y) in game.water:
                 game.current_sound=game.sounds['water']
                 game.current_sound.play()
+                if isinstance(self, Swordsman):  # Shogun
+                    self.endurence_max -= 4
+                elif isinstance(self, Shinobi):  # Assassin
+                    self.endurence_max -= 1
+                elif isinstance(self, Sorceress):# Sorceress
+                    self.endurence_max -= 2
+                game.turn_counter=0  # Réinitialisation du compteur
+
             elif (self.x, self.y) in game.healing:
                 game.current_sound=game.sounds['healing']
                 game.current_sound.play()
+                self.health += 5  # Effet de soin commun
+                # S'assure que la santé ne dépasse pas le maximum
+                if self.health > self.max_health:
+                    self.health = self.max_health
+
             elif (self.x, self.y) in game.grass:
                 game.current_sound=game.sounds['footstep']
                 game.current_sound.play()
+
             elif (self.x, self.y) in game.snow:
                 game.current_sound=game.sounds['snow']
                 game.current_sound.play()
+                if isinstance(self, Swordsman):  # Shogun
+                    self.endurence_max -= 3
+                elif isinstance(self, Shinobi):  # Assassin
+                    self.endurence_max -= 2
+                elif isinstance(self, Sorceress):# Sorceress
+                    self.endurence_max -= 1
+                game.turn_counter=0  # Réinitialisation du compteur
+
             elif (self.x, self.y) in game.bush:
                 game.current_sound=game.sounds['bush']
                 game.current_sound.play()
+                if isinstance(self, Swordsman):  # Shogun
+                    self.health -= 0
+                elif isinstance(self, Shinobi):  # Assassin
+                    self.health -= 1
+                elif isinstance(self, Sorceress):
+                    self.health -= 1
+
             else:
                 game.current_sound=None # Aucun son à jouer 
 
-
+            # Vérifie que l'endurance ne soit pas négative
+            if self.endurence_max < 0:
+                self.endurence_max = 0
 
 
     def attack(self, target):
