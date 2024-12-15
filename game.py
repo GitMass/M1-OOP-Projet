@@ -708,7 +708,7 @@ class Game:
         """Réinitialise l'endurance de toutes les unités (alliées et ennemies)."""
         for unit in self.player_units + self.player2_units + self.enemy_units:
             unit.endurence_max = unit.endurence_max_init  # Réinitialisation à la valeur initiale
-        print("Endurance réinitialisée pour tous les personnages après 6 appuis sur Espace !")
+        print("Endurance réinitialisée pour tous les personnages !")
 
 
     # Tour des joueurs 1 et 2
@@ -989,7 +989,7 @@ class Game:
                 for enemy in self.enemy_units:
 
                     # attente pour rendre le tour des ennemies plus realistique
-                    pygame.time.delay(200)
+                    pygame.time.delay(500)
 
                     # Movement decision
                     best_move = self.AI_find_best_move(enemy)
@@ -1001,9 +1001,21 @@ class Game:
                     if best_skill:
                         best_skill.use_skill(enemy, self)
 
+                    # Attack decision if no skill is ai compatible
+                    target = self.AI_find_best_target(enemy)
+                    if target:
+                        enemy.attack(target)
+
+                    # tester si tous les adversaires sont morts
+                    if len(self.player_units) == 0 :
+                        self.game_end("player 1")
+
                     # Update the game state after enemy's action
                     self.draw_map_units("enemy")
                     pygame.display.flip()
+
+                    # attente pour rendre le tour des ennemies plus realistique
+                    pygame.time.delay(500)
 
 
 
@@ -1022,6 +1034,17 @@ class Game:
                     if score > best_score:
                         best_score = score
                         best_move = (dx, dy)
+
+        # alterer best_move legerement de facon aleatoire
+        potential_alteration = [-2, -1, 0, 1, 2]
+        probabilities = [0.1, 0.1, 0.6, 0.1, 0.1]
+        ax = random.choices(potential_alteration, weights=probabilities, k=1)[0]
+        ay = random.choices(potential_alteration, weights=probabilities, k=1)[0]
+        a_new_x = best_move[0] + ax
+        a_new_y = best_move[0] + ay
+        if not self.is_wall(a_new_x, a_new_y) and (0 <= a_new_x < GRID_SIZE_WIDTH and 0 <= a_new_y < GRID_SIZE_HEIGHT):
+            best_move = (a_new_x, a_new_y)
+
         return best_move
     
 
@@ -1032,11 +1055,11 @@ class Game:
             score = 0
             for player in self.player_units:
                 distance = abs(player.x - x) + abs(player.y - y)
-                score -= distance  # Prefer closer positions
+                score -= (distance * 2)  # Prefer closer positions
             if (x == player.x) and (x == player.x):
                 score -= 500 # to avoid moving into player block
             if (x, y) in self.healing:
-                score += 10  # Bonus for healing zones
+                score += 5  # Bonus for healing zones
             if (x, y) in self.magmas:
                 score -= 10  # Penalty for harmful terrain
             return score

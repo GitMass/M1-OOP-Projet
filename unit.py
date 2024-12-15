@@ -307,21 +307,21 @@ class Unit:
 # Definitions Des Types d'unités :
 class Sorceress(Unit):
     def __init__(self, x, y, team, texture_path, x_choiceButton, y_choiceButton, name):
-        super().__init__(x, y, health=24, attack_power=4, endurence_max=6, team=team, texture_path=texture_path, x_choiceButton=x_choiceButton, y_choiceButton=y_choiceButton, name=name)
+        super().__init__(x, y, health=24, attack_power=8, endurence_max=6, team=team, texture_path=texture_path, x_choiceButton=x_choiceButton, y_choiceButton=y_choiceButton, name=name)
         self.skills.append(PurpleChaos_Skill())
         self.skills.append(Poison_Master())
         self.skills.append(Healer())
         
 class Swordsman(Unit):
     def __init__(self, x, y, team, texture_path, x_choiceButton, y_choiceButton, name):
-        super().__init__(x, y, health=32, attack_power=3, endurence_max=8, team=team, texture_path=texture_path, x_choiceButton=x_choiceButton, y_choiceButton=y_choiceButton, name=name)
+        super().__init__(x, y, health=32, attack_power=10, endurence_max=8, team=team, texture_path=texture_path, x_choiceButton=x_choiceButton, y_choiceButton=y_choiceButton, name=name)
         self.skills.append(Ichimonji_Skill())
         self.skills.append(Sky_Clear())
         self.skills.append(Samurai_Grave())
 
 class Shinobi(Unit):
     def __init__(self, x, y, team, texture_path, x_choiceButton, y_choiceButton, name):
-        super().__init__(x, y, health=28, attack_power=3, endurence_max=10, team=team, texture_path=texture_path, x_choiceButton=x_choiceButton, y_choiceButton=y_choiceButton, name=name)
+        super().__init__(x, y, health=28, attack_power=12, endurence_max=10, team=team, texture_path=texture_path, x_choiceButton=x_choiceButton, y_choiceButton=y_choiceButton, name=name)
         self.skills.append(Shuriken())
         self.skills.append(Assasin_Flicker())
         self.skills.append(Shadow_Berserk())
@@ -337,7 +337,7 @@ class Monster(Unit):
 class Ichimonji_Skill:
     def __init__(self):
         self.name = "Ichimonji"
-        self.damage = 10
+        self.damage = 16
         self.range = 2
         self.sound_effect = "data/skills/ichimonji.mp3"
 
@@ -388,13 +388,6 @@ class Ichimonji_Skill:
                         pygame.display.flip()
                         pygame.time.delay(100)  # Delay between frames
 
-                    if target.team == "player 1" and target.health<=0 :
-                                game.player_units.remove(target)
-                    elif target.team == "player 2" and target.health<=0 :
-                                game.player2_units.remove(target)
-                    elif target.team == "enemy" and target.health<=0 :
-                                game.enemy_units.remove(target)
-
                     self.used = True
                     break
 
@@ -425,19 +418,23 @@ class Ichimonji_Skill:
                         pygame.display.flip()
                         pygame.time.delay(100)  # Delay between frames
 
-                    if target.team == "player 1" and target.health<=0 :
-                                game.player_units.remove(target)
-                    elif target.team == "player 2" and target.health<=0 :
-                                game.player2_units.remove(target)
-                    elif target.team == "enemy" and target.health<=0 :
-                                game.enemy_units.remove(target)
-
                     self.used = True
                     break
 
             if target == None :
                 print("No valid target in range, Skill canceled.")
                 self.used = True
+
+        # test to remove dead units
+        for unit in game.player_units + game.player2_units + game.enemy_units:
+            if unit.team == "player 1" and unit.health<=0 :
+                game.player_units.remove(unit)
+            elif unit.team == "player 2" and unit.health<=0 :
+                game.player2_units.remove(unit)
+            elif unit.team == "enemy" and unit.health<=0 :
+                game.enemy_units.remove(unit)
+
+        
 
 
 
@@ -582,8 +579,8 @@ class Sky_Clear:
 class Samurai_Grave:
     def __init__(self):
         self.name = "Samurai Grave"
-        self.damage = 15 
-        self.range = 6
+        self.damage = 10
+        self.range = 2
         self.sound_effect = "data/skills/ichimonji.mp3"
 
         # Animations
@@ -730,7 +727,7 @@ class PurpleChaos_Skill:
     def __init__(self):
         self.name = "Purple Chaos"
         self.damage = 10 
-        self.range = 6
+        self.range = 3
         self.sound_effect = "data/skills/magicblast.mp3"
 
         # Animations 
@@ -741,31 +738,46 @@ class PurpleChaos_Skill:
             image = pygame.transform.scale(image, (CELL_SIZE, CELL_SIZE))
             self.animation_image.append(image)
 
-        # skill logo
+        # Logo de la compétence
         skill_logo_path = "data/skills/purple.png"
         self.skill_logo = pygame.image.load(skill_logo_path).convert_alpha()
 
-        # commandes 
+        # Commandes 
         self.instructions = [
-                "Choose Target Area : Arrow Keys",
-                "Unleash Chaos : Space",
-                "Cancel Skill : X",
+                "Choisir une zone cible : Flèches directionnelles",
+                "Lancer le chaos : Espace",
+                "Annuler la compétence : X",
             ]
         
-        # est ce que ce skill a une utilisation IA
-        self.AI_compatible = False
+        # Est-ce que cette compétence peut être utilisée par l'IA ?
+        self.AI_compatible = True
 
     def use_skill(self, owner_unit, game):
-        target_x, target_y = owner_unit.x, owner_unit.y  # Start with the owner's position
+        if owner_unit.team in ["player 1", "player 2"]:
+            self.player_use_skill(owner_unit, game)
+        elif owner_unit.team == "enemy":
+            self.enemy_use_skill(owner_unit, game)
+
+        # test to remove dead units
+        for unit in game.player_units + game.player2_units + game.enemy_units:
+            if unit.team == "player 1" and unit.health<=0 :
+                game.player_units.remove(unit)
+            elif unit.team == "player 2" and unit.health<=0 :
+                game.player2_units.remove(unit)
+            elif unit.team == "enemy" and unit.health<=0 :
+                game.enemy_units.remove(unit)
+
+    def player_use_skill(self, owner_unit, game):
+        target_x, target_y = owner_unit.x, owner_unit.y  # Position initiale
         new_target_x, new_target_y = owner_unit.x, owner_unit.y
 
-        # Initial target zone draw
+        # Dessiner la zone cible initiale
         game.draw_map_units()
         highlight_rect = pygame.Rect((target_x-1) * CELL_SIZE, (target_y-1) * CELL_SIZE, CELL_SIZE*3, CELL_SIZE*3)
-        pygame.draw.rect(game.screen, (128, 128, 128, 128), highlight_rect, 3)  # Gray border
+        pygame.draw.rect(game.screen, (128, 128, 128, 128), highlight_rect, 3)  # Bordure grise
         pygame.display.flip()
 
-        # Target selection phase
+        # Phase de sélection de la cible
         selecting_target = True
         while selecting_target:
             for event in pygame.event.get():
@@ -773,7 +785,7 @@ class PurpleChaos_Skill:
                     pygame.quit()
                     exit()
 
-                # Move the highlight with arrow keys
+                # Déplacer la zone cible avec les flèches directionnelles
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_LEFT:
                         new_target_x = max(0, target_x - 1)
@@ -788,72 +800,101 @@ class PurpleChaos_Skill:
                         new_target_x = target_x
                         new_target_y = min(GRID_SIZE_HEIGHT - 1, target_y + 1)
 
-                    # validate the new target if whithin range 
+                    # Valider la nouvelle position cible si elle est à portée
                     if abs(owner_unit.x - new_target_x) <= self.range and abs(owner_unit.y - new_target_y) <= self.range:
                         target_x = new_target_x
                         target_y = new_target_y
-                        
-                    # Redraw the map with the highlight
+
+                    # Redessiner la carte avec la zone cible mise à jour
                     game.draw_map_units()
                     highlight_rect = pygame.Rect((target_x-1) * CELL_SIZE, (target_y-1) * CELL_SIZE, CELL_SIZE*3, CELL_SIZE*3)
-                    pygame.draw.rect(game.screen, (128, 128, 128, 128), highlight_rect, 3)  # Gray border
+                    pygame.draw.rect(game.screen, (128, 128, 128, 128), highlight_rect, 3)
                     pygame.display.flip()
 
-                    # Validate the target with the space key
+                    # Valider la cible avec la barre d'espace
                     if event.key == pygame.K_SPACE:
-                        print("Launching Purple Chaos !")
-                        selecting_target = False  # Exit the selection phase
+                        print("Lancement de Purple Chaos !")
+                        selecting_target = False
                         break
 
-                    # annuler le skill
+                    # Annuler la compétence
                     elif event.key == pygame.K_x:
-                        print("Skill canceled.")
+                        print("Compétence annulée.")
                         return
-                        
 
-        # Explosion phase
+        self.execute_skill(target_x, target_y, owner_unit, game)
+
+    def enemy_use_skill(self, owner_unit, game):
+        # Déterminer toutes les cibles potentielles dans la portée
+        potential_targets = []
+        for dx in range(-self.range, self.range + 1):
+            for dy in range(-self.range, self.range + 1):
+                x, y = owner_unit.x + dx, owner_unit.y + dy
+                if 0 <= x < GRID_SIZE_WIDTH and 0 <= y < GRID_SIZE_HEIGHT:
+                    targets = [
+                        unit for unit in game.player_units + game.player2_units + game.enemy_units
+                        if unit.x == x and unit.y == y
+                    ]
+                    if targets:
+                        potential_targets.append((x, y, targets))
+
+        # Filtrer pour trouver une zone qui ne touche que les unités des joueurs
+        for target_x, target_y, targets in potential_targets:
+            enemy_units_hit = any(unit.team == "enemy" for unit in targets)
+            player_units_hit = any(unit.team in ["player 1", "player 2"] for unit in targets)
+            if player_units_hit and not enemy_units_hit:
+                print("L'ennemi utilise Purple Chaos !")
+                self.execute_skill(target_x, target_y, owner_unit, game)
+                return
+
+        print("L'ennemi annule Purple Chaos car aucune cible appropriée n'est disponible.")
+
+    def execute_skill(self, target_x, target_y, owner_unit, game):
+        # Phase d'explosion
         game.draw_map_units()
         pygame.display.flip()
 
-        # Play sound effect
+        # Jouer l'effet sonore
         if self.sound_effect:
             sound = pygame.mixer.Sound(self.sound_effect)
             sound.play()
 
-        # play animations and apply damage
-        for dx in range(-1, 2):  # -1, 0, 1 for 3x3 area
+        # Jouer les animations et appliquer les dégâts
+        for dx in range(-1, 2):  # -1, 0, 1 pour une zone de 3x3
             for dy in range(-1, 2):
                 cell_x = target_x + dx
                 cell_y = target_y + dy
 
-                # Skip cells out of bounds
+                # Ignorer les cellules hors limites
                 if cell_x < 0 or cell_x >= GRID_SIZE_WIDTH or cell_y < 0 or cell_y >= GRID_SIZE_HEIGHT:
                     continue
 
-                # Damage units in the 3x3 area
+                # Infliger des dégâts aux unités dans la zone 3x3
                 for potential_target in game.player_units + game.player2_units + game.enemy_units:
                     if potential_target.x == cell_x and potential_target.y == cell_y:
                         potential_target.health -= self.damage
 
-                        # Remove units with 0 or less health
+                        # Supprimer les unités avec 0 PV ou moins
                         if potential_target.health <= 0:
-                            if potential_target.team == "player 1":
+                            if potential_target in game.player_units:
                                 game.player_units.remove(potential_target)
-                            elif potential_target.team == "player 2":
+                            elif potential_target in game.player2_units:
                                 game.player2_units.remove(potential_target)
-                            elif potential_target.team == "enemy":
+                            elif potential_target in game.enemy_units:
                                 game.enemy_units.remove(potential_target)
 
-                # Play animation for the cell
+                # Jouer l'animation pour chaque cellule
                 for image in self.animation_image:
                     game.screen.blit(image, (cell_x * CELL_SIZE, cell_y * CELL_SIZE))
                     pygame.display.flip()
-                    pygame.time.delay(50)  # Delay between frames
+                    pygame.time.delay(50)  # Délai entre les frames
+
+
 
 class Poison_Master:
     def __init__(self):
         self.name = "Poison Apocalypse"
-        self.damage = 6
+        self.damage = 10
         self.range = 6
         self.sound_effect = "data/skills/poison_master.mp3"
 
@@ -979,7 +1020,7 @@ class Poison_Master:
 class Healer:
     def __init__(self):
         self.name = "Healing"
-        self.heal_amount = 5  # Montant de soin par unité
+        self.heal_amount = 14  # Montant de soin par unité
         self.damage = 5 # to avoid bugs when this attribute is called outside
         self.range = 3  # Portée de la compétence
         self.sound_effect = "data/skills/magic.mp3"  # Effet sonore
@@ -1078,7 +1119,7 @@ class Healer:
 class Shuriken:
     def __init__(self):
         self.name = "Shuriken"
-        self.damage = 8 
+        self.damage = 13
         self.range = 4  
         self.sound_effect = "data/skills/shuriken_sound_1.mp3"
 
@@ -1229,8 +1270,8 @@ class Shuriken:
 class Assasin_Flicker :
     def __init__(self):
         self.name = "Death Shadow"
-        self.damage = 10
-        self.range = 5
+        self.damage = 12
+        self.range = 4
         self.sound_effect = "data/skills/ichimonji.mp3"
         self.animation_frames = ["data/skills/butterfly_slash.png"]
 
@@ -1399,7 +1440,7 @@ class Shadow_Berserk:
     def __init__(self):
         self.name = "Shadow Berserk"
         self.damage = 10
-        self.range = 3 
+        self.range = 2
         self.sound_effect = "data/skills/ichimonji.mp3"
 
         # animations
@@ -1410,93 +1451,88 @@ class Shadow_Berserk:
             image = pygame.transform.scale(image, (CELL_SIZE, CELL_SIZE))
             self.animation_image.append(image)
 
-        # skill logo
+        # logo de la compétence
         skill_logo_path = "data/skills/shadow.png"
         self.skill_logo = pygame.image.load(skill_logo_path).convert_alpha()
 
         # commandes 
         self.instructions = [
-                "Perform The Shadow Berserk Ritual : Space",
-                "Cancel Skill : X",
+                "Effectuer le rituel Shadow Berserk : Espace",
+                "Annuler la compétence : X",
             ]
 
-        # est ce que ce skill a une utilisation IA
-        self.AI_compatible = False
-        
+        # est-ce que cette compétence peut être utilisée par l'IA
+        self.AI_compatible = True
+
     def use_skill(self, owner_unit, game):
-        # Calculate the zone of effect
+        # utilisation de la compétence par un joueur
+        if owner_unit.team in ["player 1", "player 2"]:
+            self.player_use_skill(owner_unit, game)
+        # utilisation de la compétence automatiquement par un ennemi
+        elif owner_unit.team == "enemy":
+            self.enemy_use_skill(owner_unit, game)
+
+    def player_use_skill(self, owner_unit, game):
+        # Calculer la zone d'effet
         zone_of_effect = []
-        for dx in range(-self.range, self.range ):
-            for dy in range(-self.range, self.range ):
+        for dx in range(-self.range, self.range+1):
+            for dy in range(-self.range, self.range+1):
                 x, y = owner_unit.x + dx, owner_unit.y + dy
                 if 0 <= x < GRID_SIZE_WIDTH and 0 <= y < GRID_SIZE_HEIGHT:
                     zone_of_effect.append((x, y))
-        # Draw the zone of effect
+
+        # Dessiner la zone d'effet
         game.draw_map_units()
         for x, y in zone_of_effect:
             highlight_rect = pygame.Rect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
             pygame.draw.rect(game.screen, (128, 128, 128, 128), highlight_rect, 3)
         pygame.display.flip()
+
         selecting_target = True
         while selecting_target:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     exit()
-                # Validate the skill activation with space
+                # Valider l'activation de la compétence avec espace
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_SPACE:
                         selecting_target = False
                         break
-                    # Cancel the skill
+                    # Annuler la compétence
                     elif event.key == pygame.K_x:
-                        print("Skill canceled.")
+                        print("Compétence annulée.")
                         return
-        # Find all enemies in the zone of effect
+
+        # Trouver tous les ennemis dans la zone d'effet (ignorer les alliés)
         enemies_in_zone = [
             unit for unit in game.player_units + game.player2_units + game.enemy_units
-            if (unit.x, unit.y) in zone_of_effect and unit !=owner_unit 
+            if (unit.x, unit.y) in zone_of_effect and unit.team != owner_unit.team
         ]
         if not enemies_in_zone:
-            print("No enemies in the zone of effect.")
+            print("Aucun ennemi dans la zone d'effet.")
             return
-        # Crée des shadows et les positionne près des ennemis
+
+        # Créer des shadows et les positionner près des ennemis
         shadows = []
-        shadows_next=[]
-        adjacent_positions = [
-            (owner_unit.x + dx, owner_unit.y + dy)
-            for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]
-            if 0 <= owner_unit.x + dx < GRID_SIZE_WIDTH and 0 <= owner_unit.y + dy < GRID_SIZE_HEIGHT
-        ]
-        for pos in adjacent_positions:
-            shadow_next = Shadow(*pos)
-            shadows_next.append(shadow_next)
-        # Affiche les shadows autour du personnage
-        for shadow_next in shadows_next:
-            game.screen.blit(shadow_next.animation_image[0], (shadow_next.x * CELL_SIZE, shadow_next.y * CELL_SIZE))
-        pygame.display.flip()
-        pygame.time.delay(200)
         for enemy in enemies_in_zone:
-            # Trouver une position adjacente disponible pour le shadow
             shadow_position = self.get_adjacent_position(enemy, game)
             if shadow_position:
                 shadow = Shadow(*shadow_position)
-                shadows.append((shadow, enemy))  # Associer le shadow à son ennemi
-        # Affiche les shadows sur la carte
-        for shadow_enemy_pair in shadows:
-            shadow, enemy = shadow_enemy_pair  # Extraire shadow et enemy explicitement
+                shadows.append((shadow, enemy))
+
+        # Afficher les shadows sur la carte
+        for shadow, enemy in shadows:
             game.screen.blit(shadow.animation_image[0], (shadow.x * CELL_SIZE, shadow.y * CELL_SIZE))
         pygame.display.flip()
         pygame.time.delay(500)
+
         # Les shadows attaquent leurs ennemis associés
         for shadow, enemy in shadows:
-            # Téléportation du shadow près de l'ennemi
             shadow.x, shadow.y = self.get_adjacent_position(enemy, game)
-            # Animation d'attaque
             game.screen.blit(self.animation_image[0], (enemy.x * CELL_SIZE, enemy.y * CELL_SIZE))
             pygame.display.flip()
             pygame.time.delay(200)
-            # Appliquer les dégâts à l'ennemi
             enemy.health -= self.damage
             if enemy.health <= 0:
                 if enemy in game.player_units:
@@ -1505,10 +1541,61 @@ class Shadow_Berserk:
                     game.player2_units.remove(enemy)
                 elif enemy in game.enemy_units:
                     game.enemy_units.remove(enemy)
+
         # Jouer l'effet sonore
         if self.sound_effect:
             sound = pygame.mixer.Sound(self.sound_effect)
             sound.play()
+
+    def enemy_use_skill(self, owner_unit, game):
+        # Calculer la zone d'effet
+        zone_of_effect = []
+        for dx in range(-self.range, self.range+1):
+            for dy in range(-self.range, self.range+1):
+                x, y = owner_unit.x + dx, owner_unit.y + dy
+                if 0 <= x < GRID_SIZE_WIDTH and 0 <= y < GRID_SIZE_HEIGHT:
+                    zone_of_effect.append((x, y))
+
+        # Trouver tous les ennemis dans la zone d'effet (ignorer les alliés)
+        enemies_in_zone = [
+            unit for unit in game.player_units + game.player2_units
+            if (unit.x, unit.y) in zone_of_effect and unit.team != owner_unit.team
+        ]
+        if not enemies_in_zone:
+            return
+
+        # Créer des shadows et les positionner près des ennemis
+        shadows = []
+        for enemy in enemies_in_zone:
+            shadow_position = self.get_adjacent_position(enemy, game)
+            if shadow_position:
+                shadow = Shadow(*shadow_position)
+                shadows.append((shadow, enemy))
+
+        # Afficher les shadows sur la carte
+        for shadow, enemy in shadows:
+            game.screen.blit(shadow.animation_image[0], (shadow.x * CELL_SIZE, shadow.y * CELL_SIZE))
+        pygame.display.flip()
+        pygame.time.delay(500)
+
+        # Les shadows attaquent leurs ennemis associés
+        for shadow, enemy in shadows:
+            shadow.x, shadow.y = self.get_adjacent_position(enemy, game)
+            game.screen.blit(self.animation_image[0], (enemy.x * CELL_SIZE, enemy.y * CELL_SIZE))
+            pygame.display.flip()
+            pygame.time.delay(200)
+            enemy.health -= self.damage
+            if enemy.health <= 0:
+                if enemy in game.player_units:
+                    game.player_units.remove(enemy)
+                elif enemy in game.player2_units:
+                    game.player2_units.remove(enemy)
+
+        # Jouer l'effet sonore
+        if self.sound_effect:
+            sound = pygame.mixer.Sound(self.sound_effect)
+            sound.play()
+
     def get_adjacent_position(self, target, game):
         """
         Trouve une position libre adjacente à une cible (target).
@@ -1517,13 +1604,13 @@ class Shadow_Berserk:
         for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
             adj_x, adj_y = target.x + dx, target.y + dy
             if 0 <= adj_x < GRID_SIZE_WIDTH and 0 <= adj_y < GRID_SIZE_HEIGHT:
-                # Vérifie qu'aucune autre unité n'est sur cette position
                 if not any(
                     unit.x == adj_x and unit.y == adj_y
                     for unit in game.player_units + game.player2_units + game.enemy_units
                 ):
                     return adj_x, adj_y
-        return None  # Aucune position disponible
+        return None
+
 
 
 
