@@ -101,6 +101,7 @@ class Unit:
         self.endurence_max_init=endurence_max 
         self.endurence_max = endurence_max
         self.endurence = self.endurence_max
+        self.defense = 0
         self.team = team  # 'player 1' , 'player 2' ou 'enemy'
         self.is_selected = False
         self.x_choiceButton = x_choiceButton
@@ -151,7 +152,7 @@ class Unit:
             if (self.x, self.y) in game.magmas:
                 game.current_sound=game.sounds['magma']
                 game.current_sound.play()
-                if isinstance(self, Swordsman):  # Shogun
+                if isinstance(self, Samurai):  # Shogun
                     self.health -= 6
                 elif isinstance(self, Shinobi):  # Assassin
                     self.health -= 8
@@ -161,7 +162,7 @@ class Unit:
             elif (self.x, self.y) in game.muds:
                 game.current_sound=game.sounds['mud']
                 game.current_sound.play()
-                if isinstance(self, Swordsman):  # Shogun
+                if isinstance(self, Samurai):  # Shogun
                     self.endurence_max -= 5
                     self.endurence -= 5
                 elif isinstance(self, Shinobi):  # Assassin
@@ -175,7 +176,7 @@ class Unit:
             elif (self.x, self.y) in game.water:
                 game.current_sound=game.sounds['water']
                 game.current_sound.play()
-                if isinstance(self, Swordsman):  # Shogun
+                if isinstance(self, Samurai):  # Shogun
                     self.endurence_max -= 4
                     self.endurence -= 4
                 elif isinstance(self, Shinobi):  # Assassin
@@ -201,7 +202,7 @@ class Unit:
             elif (self.x, self.y) in game.snow:
                 game.current_sound=game.sounds['snow']
                 game.current_sound.play()
-                if isinstance(self, Swordsman):  # Shogun
+                if isinstance(self, Samurai):  # Shogun
                     self.endurence_max -= 0
                     self.endurence -= 0
                 elif isinstance(self, Shinobi):  # Assassin
@@ -214,7 +215,7 @@ class Unit:
             elif (self.x, self.y) in game.bush:
                 game.current_sound=game.sounds['bush']
                 game.current_sound.play()
-                if isinstance(self, Swordsman):  # Shogun
+                if isinstance(self, Samurai):  # Shogun
                     self.health -= 0
                 elif isinstance(self, Shinobi):  # Assassin
                     self.health -= 1
@@ -308,21 +309,24 @@ class Unit:
 # Definitions Des Types d'unités :
 class Sorceress(Unit):
     def __init__(self, x, y, team, texture_path, x_choiceButton, y_choiceButton, name):
-        super().__init__(x, y, health=24, attack_power=8, endurence_max=6, team=team, texture_path=texture_path, x_choiceButton=x_choiceButton, y_choiceButton=y_choiceButton, name=name)
-        self.skills.append(PurpleChaos_Skill())
+        super().__init__(x, y, health=30, attack_power=8, endurence_max=6, team=team, texture_path=texture_path, x_choiceButton=x_choiceButton, y_choiceButton=y_choiceButton, name=name)
+        self.defense = 15
+        self.skills.append(Purple_Chaos())
         self.skills.append(Poison_Master())
         self.skills.append(Healer())
         
-class Swordsman(Unit):
+class Samurai(Unit):
     def __init__(self, x, y, team, texture_path, x_choiceButton, y_choiceButton, name):
-        super().__init__(x, y, health=32, attack_power=10, endurence_max=8, team=team, texture_path=texture_path, x_choiceButton=x_choiceButton, y_choiceButton=y_choiceButton, name=name)
+        super().__init__(x, y, health=30, attack_power=10, endurence_max=8, team=team, texture_path=texture_path, x_choiceButton=x_choiceButton, y_choiceButton=y_choiceButton, name=name)
+        self.defense = 30
         self.skills.append(Ichimonji_Skill())
         self.skills.append(Sky_Clear())
         self.skills.append(Samurai_Grave())
 
 class Shinobi(Unit):
     def __init__(self, x, y, team, texture_path, x_choiceButton, y_choiceButton, name):
-        super().__init__(x, y, health=28, attack_power=12, endurence_max=10, team=team, texture_path=texture_path, x_choiceButton=x_choiceButton, y_choiceButton=y_choiceButton, name=name)
+        super().__init__(x, y, health=30, attack_power=12, endurence_max=10, team=team, texture_path=texture_path, x_choiceButton=x_choiceButton, y_choiceButton=y_choiceButton, name=name)
+        self.defense = 20
         self.skills.append(Shuriken())
         self.skills.append(Assasin_Flicker())
         self.skills.append(Shadow_Berserk())
@@ -382,7 +386,7 @@ class Ichimonji_Skill(Skill):
                     target = potential_target
 
                     # Apply skill effects to the target
-                    target.health -= self.damage
+                    target.health -= int(self.damage * (1 - target.defense / 100))
 
                     # Play the sound effect
                     if self.sound_effect:
@@ -412,7 +416,7 @@ class Ichimonji_Skill(Skill):
                     target = potential_target
 
                     # Apply skill effects to the target
-                    target.health -= (self.damage + 6) # buff pour les enemies pour equilibrer
+                    target.health -= (int(self.damage * (1 - target.defense / 100)) + 6) # buff pour les enemies pour equilibrer
 
                     # Play the sound effect
                     if self.sound_effect:
@@ -558,7 +562,7 @@ class Sky_Clear(Skill):
                     if potential_target == owner_unit:
                         continue
                     if potential_target.x == new_target_x and potential_target.y == new_target_y:
-                        potential_target.health -= self.damage
+                        potential_target.health -= int(self.damage * (1 - potential_target.defense / 100))
 
                         # Remove units with 0 or less health
                         if potential_target.health <= 0:
@@ -719,7 +723,7 @@ class Samurai_Grave(Skill):
         for cell_x, cell_y in affected_cells:
             for potential_target in game.player_units + game.player2_units + game.enemy_units:
                 if potential_target.x == cell_x and potential_target.y == cell_y:
-                    potential_target.health -= self.damage
+                    potential_target.health -= int(self.damage * (1 - potential_target.defense / 100))
 
                     # Remove units with 0 or less health
                     if potential_target.health <= 0:
@@ -730,7 +734,7 @@ class Samurai_Grave(Skill):
                         elif potential_target.team == "enemy":
                             game.enemy_units.remove(potential_target)
 
-class PurpleChaos_Skill(Skill):
+class Purple_Chaos(Skill):
     def __init__(self):
         self.name = "Purple Chaos"
         self.damage = 10 
@@ -829,7 +833,7 @@ class PurpleChaos_Skill(Skill):
                         print("Compétence annulée.")
                         return
 
-        self.execute_skill(target_x, target_y, owner_unit, game)
+        self.execute_skill(target_x, target_y, game)
 
     def enemy_use_skill(self, owner_unit, game):
         # Déterminer toutes les cibles potentielles dans la portée
@@ -851,12 +855,12 @@ class PurpleChaos_Skill(Skill):
             player_units_hit = any(unit.team in ["player 1", "player 2"] for unit in targets)
             if player_units_hit and not enemy_units_hit:
                 print("L'ennemi utilise Purple Chaos !")
-                self.execute_skill(target_x, target_y, owner_unit, game)
+                self.execute_skill(target_x, target_y, game)
                 return
 
         print("L'ennemi annule Purple Chaos car aucune cible appropriée n'est disponible.")
 
-    def execute_skill(self, target_x, target_y, owner_unit, game):
+    def execute_skill(self, target_x, target_y, game):
         # Phase d'explosion
         game.draw_map_units()
         pygame.display.flip()
@@ -879,7 +883,7 @@ class PurpleChaos_Skill(Skill):
                 # Infliger des dégâts aux unités dans la zone 3x3
                 for potential_target in game.player_units + game.player2_units + game.enemy_units:
                     if potential_target.x == cell_x and potential_target.y == cell_y:
-                        potential_target.health -= self.damage
+                        potential_target.health -= int(self.damage * (1 - potential_target.defense / 100))
                         # buff pour les enemies pour equilibrer
                         if potential_target.team == "player 1" : 
                             potential_target.health -= 8
@@ -1015,7 +1019,7 @@ class Poison_Master(Skill):
                 if potential_target == owner_unit:
                     continue
                 if potential_target.x == cell_x and potential_target.y == cell_y:
-                    potential_target.health -= self.damage
+                    potential_target.health -= int(self.damage * (1 - potential_target.defense / 100))
                     
                     # Remove units with 0 or less health
                     if potential_target.health <= 0:
@@ -1249,7 +1253,7 @@ class Shuriken(Skill):
                     if potential_target == owner_unit:
                         continue
                     if potential_target.x == new_target_x and potential_target.y == new_target_y:
-                        potential_target.health -= self.damage
+                        potential_target.health -= int(self.damage * (1 - potential_target.defense / 100))
 
                         # Remove units with 0 or less health
                         if potential_target.health <= 0:
@@ -1408,7 +1412,7 @@ class Assasin_Flicker(Skill):
             sound.play()
 
         # Apply damage
-        target.health -= self.damage
+        target.health -= int(self.damage * (1 - target.defense / 100))
         if target.health <= 0:
             if target in game.player_units:
                 game.player_units.remove(target)
@@ -1543,7 +1547,7 @@ class Shadow_Berserk(Skill):
             game.screen.blit(self.animation_image[0], (enemy.x * CELL_SIZE, enemy.y * CELL_SIZE))
             pygame.display.flip()
             pygame.time.delay(200)
-            enemy.health -= self.damage
+            enemy.health -= int(self.damage * (1 - enemy.defense / 100))
             if enemy.health <= 0:
                 if enemy in game.player_units:
                     game.player_units.remove(enemy)
@@ -1594,7 +1598,7 @@ class Shadow_Berserk(Skill):
             game.screen.blit(self.animation_image[0], (enemy.x * CELL_SIZE, enemy.y * CELL_SIZE))
             pygame.display.flip()
             pygame.time.delay(200)
-            enemy.health -= (self.damage + 4) # buff pour les enemies pour equilibrer
+            enemy.health -= (int(self.damage * (1 - enemy.defense / 100)) + 4) # buff pour les enemies pour equilibrer
             if enemy.health <= 0:
                 if enemy in game.player_units:
                     game.player_units.remove(enemy)
@@ -1627,7 +1631,7 @@ class Shadow_Berserk(Skill):
 # Création des personnages :
 Personnages = {
         "Yennefer": Sorceress(2, 0, 'player', 'data/characters/yennefer.png', 8, 8, "Yennefer"),
-        "Shogun": Swordsman(3, 0, 'player', 'data/characters/samurai.png', 14, 8, "Shogun"),
+        "Shogun": Samurai(3, 0, 'player', 'data/characters/samurai.png', 14, 8, "Shogun"),
         "Sekiro": Shinobi(4, 0, 'player', 'data/characters/sekiro.png', 20, 8, "Sekiro"),
     }
 
