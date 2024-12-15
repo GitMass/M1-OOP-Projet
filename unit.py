@@ -106,7 +106,7 @@ class Unit:
         self.y_choiceButton = y_choiceButton
         self.skills = []
         self.name = name
-        
+
         # Ajouter la texture
         self.texture = None
         if texture_path:
@@ -358,43 +358,86 @@ class Ichimonji_Skill:
                 "Attack (if enemy is in range) : Space",
                 "Cancel Skill : X",
             ]
+        
+        # est ce que ce skill a une utilisation IA
+        self.AI_compatible = True
 
     def use_skill(self, owner_unit, game):
-        target = None  # Initialize the target
-        # Check all potential targets
-        for potential_target in game.player_units + game.player2_units + game.enemy_units:
-            if (owner_unit.team != potential_target.team and
-                    (abs(owner_unit.x - potential_target.x) <= self.range and abs(owner_unit.y - potential_target.y) <= self.range)):
-                # validate target
-                target = potential_target
+        
+        # utilisation du skill par un joueur
+        if (owner_unit.team == "player 1") or (owner_unit.team == "player 2"):
+            target = None  # Initialize the target
+            # Check all potential targets
+            for potential_target in game.player_units + game.player2_units + game.enemy_units:
+                if (owner_unit.team != potential_target.team and
+                        (abs(owner_unit.x - potential_target.x) <= self.range and abs(owner_unit.y - potential_target.y) <= self.range)):
+                    # validate target
+                    target = potential_target
 
-                # Apply skill effects to the target
-                target.health -= self.damage
+                    # Apply skill effects to the target
+                    target.health -= self.damage
 
-                # Play the sound effect
-                if self.sound_effect:
-                    sound = pygame.mixer.Sound(self.sound_effect)
-                    sound.play()
+                    # Play the sound effect
+                    if self.sound_effect:
+                        sound = pygame.mixer.Sound(self.sound_effect)
+                        sound.play()
 
-                # Play the animation
-                for image in self.animation_image:
-                    game.screen.blit(image, (target.x * CELL_SIZE, target.y * CELL_SIZE))
-                    pygame.display.flip()
-                    pygame.time.delay(100)  # Delay between frames
+                    # Play the animation
+                    for image in self.animation_image:
+                        game.screen.blit(image, (target.x * CELL_SIZE, target.y * CELL_SIZE))
+                        pygame.display.flip()
+                        pygame.time.delay(100)  # Delay between frames
 
-                if target.team == "player 1" and target.health<=0 :
-                            game.player_units.remove(target)
-                elif target.team == "player 2" and target.health<=0 :
-                            game.player2_units.remove(target)
-                elif target.team == "enemy" and target.health<=0 :
-                            game.enemy_units.remove(target)
+                    if target.team == "player 1" and target.health<=0 :
+                                game.player_units.remove(target)
+                    elif target.team == "player 2" and target.health<=0 :
+                                game.player2_units.remove(target)
+                    elif target.team == "enemy" and target.health<=0 :
+                                game.enemy_units.remove(target)
 
+                    self.used = True
+                    break
+
+            if target == None :
+                print("No valid target in range, Skill canceled.")
                 self.used = True
-                break
 
-        if target == None :
-            print("No valid target in range, Skill canceled.")
-            self.used = True
+        # utilisation du skill automatique par enemy
+        elif (owner_unit.team == "enemy") :
+            target = None  # Initialize the target
+            # Check all potential targets
+            for potential_target in game.player_units:
+                if ((abs(owner_unit.x - potential_target.x) <= self.range) and (abs(owner_unit.y - potential_target.y) <= self.range)):
+                    # validate target
+                    target = potential_target
+
+                    # Apply skill effects to the target
+                    target.health -= self.damage
+
+                    # Play the sound effect
+                    if self.sound_effect:
+                        sound = pygame.mixer.Sound(self.sound_effect)
+                        sound.play()
+
+                    # Play the animation
+                    for image in self.animation_image:
+                        game.screen.blit(image, (target.x * CELL_SIZE, target.y * CELL_SIZE))
+                        pygame.display.flip()
+                        pygame.time.delay(100)  # Delay between frames
+
+                    if target.team == "player 1" and target.health<=0 :
+                                game.player_units.remove(target)
+                    elif target.team == "player 2" and target.health<=0 :
+                                game.player2_units.remove(target)
+                    elif target.team == "enemy" and target.health<=0 :
+                                game.enemy_units.remove(target)
+
+                    self.used = True
+                    break
+
+            if target == None :
+                print("No valid target in range, Skill canceled.")
+                self.used = True
 
 
 
@@ -424,6 +467,9 @@ class Sky_Clear:
                 "Throw the katana : Space",
                 "Cancel Skill : X",
             ]
+        
+        # est ce que ce skill a une utilisation IA
+        self.AI_compatible = False
 
     def use_skill(self, owner_unit, game):
         target_x, target_y = owner_unit.x, owner_unit.y  # Start with the owner's position
@@ -558,6 +604,9 @@ class Samurai_Grave:
                 "Perform The Ritual : Space",
                 "Cancel Skill : X",
             ]
+        
+        # est ce que ce skill a une utilisation IA
+        self.AI_compatible = False
 
     def use_skill(self, owner_unit, game):
         target_x, target_y = owner_unit.x, owner_unit.y  # Start with the owner's position
@@ -702,6 +751,9 @@ class PurpleChaos_Skill:
                 "Unleash Chaos : Space",
                 "Cancel Skill : X",
             ]
+        
+        # est ce que ce skill a une utilisation IA
+        self.AI_compatible = False
 
     def use_skill(self, owner_unit, game):
         target_x, target_y = owner_unit.x, owner_unit.y  # Start with the owner's position
@@ -823,6 +875,9 @@ class Poison_Master:
                 "Cancel Skill : X",
             ]
         
+        # est ce que ce skill a une utilisation IA
+        self.AI_compatible = False
+
         # Variables graphiques
         self.temp_surface = None
         self.animation_image = None
@@ -925,6 +980,7 @@ class Healer:
     def __init__(self):
         self.name = "Healing"
         self.heal_amount = 5  # Montant de soin par unité
+        self.damage = 5 # to avoid bugs when this attribute is called outside
         self.range = 3  # Portée de la compétence
         self.sound_effect = "data/skills/magic.mp3"  # Effet sonore
 
@@ -945,6 +1001,9 @@ class Healer:
                 "Heal : Space",
                 "Cancel Skill : X",
             ]
+        
+        # est ce que ce skill a une utilisation IA
+        self.AI_compatible = False
 
     def use_skill(self, owner_unit, game):
         target_x, target_y = owner_unit.x, owner_unit.y  # Position du propriétaire
@@ -1047,6 +1106,9 @@ class Shuriken:
                 "Throw Poisoned Shuriken : Space",
                 "Cancel Skill : X",
             ]
+        
+        # est ce que ce skill a une utilisation IA
+        self.AI_compatible = False
 
     def use_skill(self, owner_unit, game):
         target_x, target_y = owner_unit.x, owner_unit.y  # Start with the owner's position
@@ -1183,6 +1245,9 @@ class Assasin_Flicker :
                 "Execute The Shadow Art : Arrow keys",
                 "Cancel Skill : X",
             ]
+        
+        # est ce que ce skill a une utilisation IA
+        self.AI_compatible = False
 
     def use_skill(self, owner_unit, game):
         target = None
@@ -1354,6 +1419,9 @@ class Shadow_Berserk:
                 "Perform The Shadow Berserk Ritual : Space",
                 "Cancel Skill : X",
             ]
+
+        # est ce que ce skill a une utilisation IA
+        self.AI_compatible = False
         
     def use_skill(self, owner_unit, game):
         # Calculate the zone of effect

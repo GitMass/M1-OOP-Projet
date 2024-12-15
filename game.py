@@ -546,14 +546,6 @@ class Game:
                 self.player2_units[i].x = GRID_SIZE_WIDTH - 1
                 self.player2_units[i].y = GRID_SIZE_HEIGHT - 3 - i
 
-        elif player == "player 2":
-            self.player2_units = selected_units
-            # position initiale des personnages :
-            for i in range(len(self.player2_units)):
-                self.player2_units[i].team = "player 2"
-                self.player2_units[i].x = GRID_SIZE_WIDTH - 1
-                self.player2_units[i].y = GRID_SIZE_HEIGHT - 4 - i
-
         elif player == "enemy" :
             self.enemy_units = selected_units
             # position initiale des personnages :
@@ -987,6 +979,124 @@ class Game:
 
 
 
+    def enemy_AI_turn(self):
+                
+                # tester si tous les adversaires sont morts
+                if len(self.player_units) == 0 :
+                    self.game_end("player 1")
+
+                # tour de chaque unité de enemy
+                for enemy in self.enemy_units:
+
+                    # attente pour rendre le tour des ennemies plus realistique
+                    pygame.time.delay(200)
+
+                    # Movement decision
+                    best_move = self.AI_find_best_move(enemy)
+                    if best_move:
+                        enemy.move(best_move[0], best_move[1], self)
+
+                    # Skill usage
+                    best_skill = self.AI_evaluate_skills(enemy)
+                    if best_skill:
+                        best_skill.use_skill(enemy, self)
+
+                    # Update the game state after enemy's action
+                    self.draw_map_units("enemy")
+                    pygame.display.flip()
+
+
+
+
+    def AI_find_best_move(self, enemy):
+        # Evaluate potential moves and return the best one
+        best_move = None
+        best_score = -500
+
+        for dx in range(-enemy.endurence_max, enemy.endurence_max + 1):  # Example range, adjust for movement rules
+            for dy in range(-enemy.endurence_max, enemy.endurence_max + 1):
+                new_x = enemy.x + dx
+                new_y = enemy.y + dy
+                if not self.is_wall(new_x, new_y) and (0 <= new_x < GRID_SIZE_WIDTH and 0 <= new_y < GRID_SIZE_HEIGHT):
+                    score = self.AI_evaluate_position(new_x, new_y, enemy)
+                    if score > best_score:
+                        best_score = score
+                        best_move = (dx, dy)
+        return best_move
+    
+
+
+
+    def AI_evaluate_position(self, x, y, unit):
+            # Return a score based on strategic factors (e.g., proximity to player units, terrain)
+            score = 0
+            for player in self.player_units:
+                distance = abs(player.x - x) + abs(player.y - y)
+                score -= distance  # Prefer closer positions
+            if (x == player.x) and (x == player.x):
+                score -= 500 # to avoid moving into player block
+            if (x, y) in self.healing:
+                score += 10  # Bonus for healing zones
+            if (x, y) in self.magmas:
+                score -= 10  # Penalty for harmful terrain
+            return score
+    
+
+
+
+    def AI_find_best_target(self, enemy):
+        # Return the best target for the given enemy
+        best_target = None
+        best_score = -500
+        for player in self.player_units:
+            distance = abs(player.x - enemy.x) + abs(player.y - enemy.y)
+            if distance <= 10:
+                score = player.health * -1  # Prefer low-health targets
+                if score > best_score:
+                    best_score = score
+                    best_target = player
+        return best_target
+
+
+
+
+
+    def AI_evaluate_skills(self, enemy):
+        # Evaluate the effectiveness of each skill and return the best one
+        best_skill = None
+        best_effectiveness = -100
+        for skill in enemy.skills:
+            effectiveness = self.AI_simulate_skill_use(skill, enemy)
+            if effectiveness > best_effectiveness:
+                best_effectiveness = effectiveness
+                best_skill = skill
+        
+        # si best_effectiveness == -100 alors aucun skill n'est compatible avec l'IA
+        if best_effectiveness == -100 :
+            return None
+
+        return best_skill
+
+
+
+
+
+    def AI_simulate_skill_use(self, skill, enemy):
+        # Simulate the skill's effect and return an effectiveness score
+        effectiveness = 0
+
+        # test if skill is AI compatible
+        if skill.AI_compatible == False :
+            effectiveness = -100
+            return effectiveness
+
+        # test effectiveness for all player units
+        for player in self.player_units:
+            if skill.range >= abs(player.x - enemy.x) + abs(player.y - enemy.y):
+                effectiveness += skill.damage  # Adjust based on skill properties
+        return effectiveness
+
+
 
 
     
@@ -1115,7 +1225,8 @@ class Game:
         if MenuChoice == "PvE":
             while True:
                 self.handle_player_turn("player 1")
-                self.handle_enemy_turn()
+                self.enemy_AI_turn()
+                # self.handle_enemy_turn()
         elif MenuChoice == "PvP":
             while True:
                 self.handle_player_turn("player 1")
