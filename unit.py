@@ -27,6 +27,8 @@ ORANGE=(255,178,102)
 YELLOW = (255, 255, 0)
 PURPLE = (153, 51, 255)
 CHARACTER_PER_TEAM = 3
+INFO_PANEL_HEIGHT = 120
+WINDOW_HEIGHT = HEIGHT + INFO_PANEL_HEIGHT
 
 
 
@@ -93,7 +95,8 @@ class Unit:
         self.y_choiceButton = y_choiceButton
         self.skills = []
         self.name = name
-
+        self.is_moving = False
+        self.is_attacking = False
         # Ajouter la texture
         self.texture = None
         if texture_path:
@@ -111,6 +114,10 @@ class Unit:
 
     def move(self, dx, dy, game):
         """Déplace l'unité de dx, dy."""
+
+        self.is_moving = True
+        self.is_attacking = False
+
 
         new_x = self.x + dx
         new_y = self.y + dy
@@ -157,6 +164,9 @@ class Unit:
 
     def attack(self, target):
         """Attaque une unité cible."""
+        self.is_moving = False
+        self.is_attacking = True
+
         if abs(self.x - target.x) <= 1 and abs(self.y - target.y) <= 1:
             target.health -= self.attack_power
 
