@@ -96,8 +96,6 @@ class Unit:
         self.y_choiceButton = y_choiceButton
         self.skills = []
         self.name = name
-        self.is_moving = False
-        self.is_attacking = False
         # Ajouter la texture
         self.texture = None
         if texture_path:
@@ -115,10 +113,6 @@ class Unit:
 
     def move(self, dx, dy, game):
         """Déplace l'unité de dx, dy."""
-
-        self.is_moving = True
-        self.is_attacking = False
-
 
         new_x = self.x + dx
         new_y = self.y + dy
@@ -165,8 +159,6 @@ class Unit:
 
     def attack(self, target):
         """Attaque une unité cible."""
-        self.is_moving = False
-        self.is_attacking = True
 
         if abs(self.x - target.x) <= 1 and abs(self.y - target.y) <= 1:
             target.health -= self.attack_power
@@ -265,7 +257,7 @@ class Shinobi(Unit):
         super().__init__(x, y, health=22, attack_power=3, endurence_max=6, team=team, texture_path=texture_path, x_choiceButton=x_choiceButton, y_choiceButton=y_choiceButton, name=name)
         self.skills.append(Shuriken())
         self.skills.append(Assasin_Flicker())
-        self.skills.append(Allies())
+        self.skills.append(Shadow_Berserk())
 
 class Monster(Unit):
     def __init__(self, x, y, team, texture_path, x_choiceButton, y_choiceButton, name):
@@ -279,9 +271,15 @@ class Ichimonji_Skill:
     def __init__(self):
         self.name = "Ichimonji"
         self.damage = 10
-        self.range = 1
+        self.range = 2
         self.sound_effect = "data/skills/ichimonji.mp3"
         self.animation_frames = ["data/skills/ichimonji.png"]
+
+        # commandes 
+        self.instructions = [
+                "Attack (if enemy is in range) : Space",
+                "Cancel Skill : X",
+            ]
 
     def use_skill(self, owner_unit, game):
         target = None  # Initialize the target
@@ -331,7 +329,14 @@ class Sky_Clear:
         self.damage = 12 
         self.range = 3 
         self.sound_effect = "data/skills/ichimonji.mp3"
-        self.animation_frames = ["data/skills/ichimonji.png"]
+        self.animation_frames = ["data/skills/skyclear.jpg"]
+
+        # commandes 
+        self.instructions = [
+                "Choose Trajectory : Arrow Keys",
+                "Throw the katana : Space",
+                "Cancel Skill : X",
+            ]
 
     def use_skill(self, owner_unit, game):
         target_x, target_y = owner_unit.x, owner_unit.y  # Start with the owner's position
@@ -454,6 +459,13 @@ class Samurai_Grave:
         self.sound_effect = "data/skills/ichimonji.mp3"
         self.animation_frames = ["data/skills/samurai_grave.png"]
         self.animation_frames_2 = ["data/skills/gris.png"]
+
+        # commandes 
+        self.instructions = [
+                "Choose Target Area : Arrow Keys",
+                "Perform The Ritual : Space",
+                "Cancel Skill : X",
+            ]
 
     def use_skill(self, owner_unit, game):
         target_x, target_y = owner_unit.x, owner_unit.y  # Start with the owner's position
@@ -583,6 +595,13 @@ class PurpleChaos_Skill:
         self.sound_effect = "data/skills/magicblast.mp3"
         self.animation_frames = ["data/skills/purple.png"]
 
+        # commandes 
+        self.instructions = [
+                "Choose Target Area : Arrow Keys",
+                "Unleash Chaos : Space",
+                "Cancel Skill : X",
+            ]
+
     def use_skill(self, owner_unit, game):
         target_x, target_y = owner_unit.x, owner_unit.y  # Start with the owner's position
         new_target_x, new_target_y = owner_unit.x, owner_unit.y
@@ -682,7 +701,7 @@ class PurpleChaos_Skill:
 
 class Poison_Master:
     def __init__(self):
-        self.name = "Poison Master"
+        self.name = "Poison Apocalypse"
         self.damage = 6
         self.range = 6
         self.sound_effect = "data/skills/poison_master.mp3"
@@ -690,6 +709,13 @@ class Poison_Master:
         self.maps = ["data/maps/map_poison_1.csv", "data/maps/map_poison_2.csv", "data/maps/map_poison_3.csv"]
         self.current_map_index = 0
         self.poison_zones = self.load_poison_zones(self.maps[self.current_map_index])
+
+        # commandes 
+        self.instructions = [
+                "Choose Target Area : Arrow Keys Left and Right",
+                "Unleash Poison : Space",
+                "Cancel Skill : X",
+            ]
         
         # Variables graphiques
         self.temp_surface = None
@@ -791,11 +817,17 @@ class Poison_Master:
 
 class Healer:
     def __init__(self):
-        self.name = "Healer"
+        self.name = "Healing"
         self.heal_amount = 5  # Montant de soin par unité
         self.range = 3  # Portée de la compétence
         self.sound_effect = "data/skills/magic.mp3"  # Effet sonore
         self.animation_frames = ["data/skills/healer.png"]  # Animation de soin
+
+        # commandes 
+        self.instructions = [
+                "Heal : Space",
+                "Cancel Skill : X",
+            ]
 
     def use_skill(self, owner_unit, game):
         target_x, target_y = owner_unit.x, owner_unit.y  # Position du propriétaire
@@ -877,6 +909,13 @@ class Shuriken:
         self.sound_effect = "data/skills/shuriken_sound_1.mp3"
         self.animation_frames = ["data/skills/shuriken.png"]
         self.animation_frames_2 = ["data/skills/green_magma.png"]
+
+        # commandes 
+        self.instructions = [
+                "Choose Trajectory : Arrow Keys",
+                "Throw Poisoned Shuriken : Space",
+                "Cancel Skill : X",
+            ]
 
     def use_skill(self, owner_unit, game):
         target_x, target_y = owner_unit.x, owner_unit.y  # Start with the owner's position
@@ -997,13 +1036,22 @@ class Shuriken:
         
 
 
+
 class Assasin_Flicker :
     def __init__(self):
-        self.name = "Ichimonji"
+        self.name = "Death Shadow"
         self.damage = 10
         self.range = 5
         self.sound_effect = "data/skills/ichimonji.mp3"
         self.animation_frames = ["data/skills/ichimonji.png"]
+
+        # commandes 
+        self.instructions = [
+                "Choose Target : Mouse",
+                "Choose Dash Direction : Arrow keys",
+                "Execute The Shadow Art : Arrow keys",
+                "Cancel Skill : X",
+            ]
 
     def use_skill(self, owner_unit, game):
         target = None
@@ -1132,18 +1180,31 @@ class Assasin_Flicker :
         pygame.time.delay(100)
 
 
+
+
 class Shadow:
     def __init__(self, x, y):
         self.x = x
         self.y = y
         self.animation_frames = ["data/skills/shadow.png"]
-class Allies:
+
+
+
+
+class Shadow_Berserk:
     def __init__(self):
-        self.name = "Allies"
+        self.name = "Shadow Berserk"
         self.damage = 10
         self.range = 3 
         self.sound_effect = "data/skills/ichimonji.mp3"
         self.animation_frames = ["data/skills/ichimonji.png"]
+
+        # commandes 
+        self.instructions = [
+                "Perform The Shadow Berserk Ritual : Space",
+                "Cancel Skill : X",
+            ]
+        
     def use_skill(self, owner_unit, game):
         # Calculate the zone of effect
         zone_of_effect = []

@@ -323,8 +323,9 @@ class Game:
             print("No map selected!")
             return
 
-        # pour effacer l'ancienne image
-        self.screen.fill(BLACK)
+        # Pour effacer ce qui étai affiché precedement
+        rect_to_fill = pygame.Rect(0, 0, WIDTH, HEIGHT)
+        self.screen.fill(BLACK, rect_to_fill)
 
         # Affiche les blocs : "GRASS"
         for grass in self.grass:    
@@ -573,7 +574,7 @@ class Game:
     
 
 
-    def draw_info_panel(self, team=None, unit=None):
+    def draw_info_panel(self, team=None, unit=None, mode=None):
 
         # afficher l'image de fond 
         self.screen.blit(self.info_panel_background_image, (0, HEIGHT))
@@ -674,17 +675,30 @@ class Game:
 
         # --- Third Column: Instructions ---
         instructions = []
-        if unit and unit.is_moving:
-            instructions = ["Move: Arrow keys"]
-        elif unit and unit.is_attacking:
-            instructions = ["Attack: Space"]
+
+        if unit and (mode == "moving"):
+            instructions = [
+                "Move : Arrow keys",
+                "Skill 1, 2, 3 : Key 1, 2, 3",
+                "Skip Turn : Space",
+                "Cancel Skill : X"
+            ]
+
+        elif unit and (mode == "skill 1"):
+            instructions = unit.skills[0].instructions
+
+        elif unit and (mode == "skill 2"):
+            instructions = unit.skills[1].instructions
+
+        elif unit and (mode == "skill 3"):
+            instructions = unit.skills[2].instructions
+
         else:
             instructions = [
-                "Move: Arrow keys",
-                "Attack: Space",
-                "Skill 1: Key 1",
-                "Skill 2: Key 2",
-                "Skill 3: Key 3",
+                "Move : Arrow keys",
+                "Skill 1, 2, 3 : Key 1, 2, 3",
+                "Skip Turn : Space",
+                "Cancel Skill : X"
             ]
 
         instruction_y = HEIGHT + 10
@@ -717,7 +731,7 @@ class Game:
                 selected_unit.is_selected = True
                 selected_unit.endurence = selected_unit.endurence_max
                 self.draw_map_units(team)
-                self.draw_info_panel(team, selected_unit)
+                self.draw_info_panel(team, selected_unit, "moving")
                 pygame.display.flip() 
                 while not has_acted:
                     
@@ -753,40 +767,43 @@ class Game:
 
                             selected_unit.move(dx, dy, self)
                             self.draw_map_units(team)
-                            self.draw_info_panel(team, selected_unit)
+                            self.draw_info_panel(team, selected_unit, "moving")
                             pygame.display.flip()
-                            # Use skills : skill 1, 2 or 3
 
+                            # Use skills : skill 1, 2 or 3
                             if event.key == pygame.K_1:
                                 if len(selected_unit.skills) > 0:
+                                    self.draw_info_panel(team, selected_unit, "skill 1")
+                                    pygame.display.flip()
                                     skill = selected_unit.skills[0]
                                     skill.use_skill(selected_unit, self)
                                     has_acted = True
                                     selected_unit.is_selected = False
-                                    self.draw_map_units(team)
-                                    self.draw_info_panel(team, selected_unit)
+                                    self.draw_map_units(team)   
                                 else:
                                     print(f"{selected_unit.name} has no skill 1.")
                             elif event.key == pygame.K_2:
                                 if len(selected_unit.skills) > 1:
+                                    self.draw_info_panel(team, selected_unit, "skill 2")
+                                    pygame.display.flip()
                                     skill = selected_unit.skills[1]
                                     skill.use_skill(selected_unit, self)
                                     has_acted = True
                                     selected_unit.is_selected = False
                                     self.draw_map_units(team)
-                                    self.draw_info_panel(team, selected_unit)
                                     pygame.display.flip()
 
                                 else:
                                     print(f"{selected_unit.name} has no skill 2.")
                             elif event.key == pygame.K_3:
                                 if len(selected_unit.skills) > 2:
+                                    self.draw_info_panel(team, selected_unit, "skill 3")
+                                    pygame.display.flip()
                                     skill = selected_unit.skills[2]
                                     skill.use_skill(selected_unit, self)
                                     has_acted = True
                                     selected_unit.is_selected = False
                                     self.draw_map_units(team)
-                                    self.draw_info_panel(team, selected_unit)
                                     pygame.display.flip()
                                 else:
                                     print(f"{selected_unit.name} has no skill 3.")
@@ -817,7 +834,7 @@ class Game:
                 selected_unit.is_selected = True
                 selected_unit.endurence = selected_unit.endurence_max
                 self.draw_map_units(team)
-                self.draw_info_panel(team, selected_unit)
+                self.draw_info_panel(team, selected_unit, "moving")
                 pygame.display.flip()
 
                 while not has_acted:
@@ -854,40 +871,43 @@ class Game:
 
                             selected_unit.move(dx, dy, self)
                             self.draw_map_units(team)
-                            self.draw_info_panel(team, selected_unit)
+                            self.draw_info_panel(team, selected_unit, "moving")
                             pygame.display.flip()
 
                             # Use skills : skill 1, 2 or 3
                             if event.key == pygame.K_1:
                                 if len(selected_unit.skills) > 0:
+                                    self.draw_info_panel(team, selected_unit, "skill 1")
+                                    pygame.display.flip()
                                     skill = selected_unit.skills[0]
                                     skill.use_skill(selected_unit, self)
                                     has_acted = True
                                     selected_unit.is_selected = False
                                     self.draw_map_units(team)
-                                    self.draw_info_panel(team, selected_unit)
                                     pygame.display.flip()
                                 else:
                                     print(f"{selected_unit.name} has no skill 1.")
                             elif event.key == pygame.K_2:
                                 if len(selected_unit.skills) > 1:
+                                    self.draw_info_panel(team, selected_unit, "skill 2")
+                                    pygame.display.flip()
                                     skill = selected_unit.skills[1]
                                     skill.use_skill(selected_unit, self)
                                     has_acted = True
                                     selected_unit.is_selected = False
                                     self.draw_map_units(team)
-                                    self.draw_info_panel(team, selected_unit)
                                     pygame.display.flip()
                                 else:
                                     print(f"{selected_unit.name} has no skill 2.")
                             elif event.key == pygame.K_3:
                                 if len(selected_unit.skills) > 2:
+                                    self.draw_info_panel(team, selected_unit, "skill 3")
+                                    pygame.display.flip()
                                     skill = selected_unit.skills[2]
                                     skill.use_skill(selected_unit, self)
                                     has_acted = True
                                     selected_unit.is_selected = False
                                     self.draw_map_units(team)
-                                    self.draw_info_panel(team, selected_unit)
                                     pygame.display.flip()
                                 else:
                                     print(f"{selected_unit.name} has no skill 3.")
@@ -1055,9 +1075,6 @@ class Game:
 
         # Afficher le menu principale
         MenuChoice = self.Main_menu(GAME_TITLE)
-
-        # Afficher le panneau des informations
-        self.draw_info_panel()
 
         # choix de la carte
         selected_map = self.choose_map()
