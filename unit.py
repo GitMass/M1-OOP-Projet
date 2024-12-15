@@ -89,6 +89,7 @@ class Unit:
         self.max_health = health
         self.attack_power = attack_power
         self.endurence_max = endurence_max
+        self.endurence = self.endurence_max
         self.team = team  # 'player 1' , 'player 2' ou 'enemy'
         self.is_selected = False
         self.x_choiceButton = x_choiceButton

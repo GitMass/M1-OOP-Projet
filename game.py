@@ -631,7 +631,7 @@ class Game:
             self.screen.blit(health_text, (health_bar_x, health_bar_y + 15))
 
             # Display Endurance Bar
-            endurance_ratio = unit.endurence_max / unit.endurence_max
+            endurance_ratio = unit.endurence / unit.endurence_max
             endurence_bar_width = health_bar_width
             endurence_bar_x = health_bar_x
             endurence_bar_y = health_bar_y + 35
@@ -640,7 +640,7 @@ class Game:
             pygame.draw.rect(self.screen, GREY, endurance_bar_rect)  # Background bar
             pygame.draw.rect(self.screen, GREEN, (endurence_bar_x, endurence_bar_y, int(endurance_ratio * health_bar_width), 10))  # Endurance bar
 
-            endurance_text = font.render(f"Endurance: {unit.endurence_max}/{unit.endurence_max}", True, WHITE)
+            endurance_text = font.render(f"Endurance: {unit.endurence}/{unit.endurence_max}", True, WHITE)
             self.screen.blit(endurance_text, (endurence_bar_x, endurence_bar_y + 15))
 
         # --- Second Column: Skills ---
@@ -715,7 +715,7 @@ class Game:
                 # Tant que l'unité n'a pas terminé son tour
                 has_acted = False
                 selected_unit.is_selected = True
-                endurence = selected_unit.endurence_max
+                selected_unit.endurence = selected_unit.endurence_max
                 self.draw_map_units(team)
                 self.draw_info_panel(team, selected_unit)
                 pygame.display.flip() 
@@ -735,21 +735,21 @@ class Game:
                             # Déplacement (touches fléchées)
                             dx, dy = 0, 0
                             if event.key == pygame.K_LEFT:
-                                if endurence > 0:
+                                if selected_unit.endurence > 0:
                                     dx = -1
-                                    endurence = endurence - 1
+                                    selected_unit.endurence = selected_unit.endurence - 1
                             elif event.key == pygame.K_RIGHT:
-                                if endurence > 0:
+                                if selected_unit.endurence > 0:
                                     dx = 1
-                                    endurence = endurence - 1
+                                    selected_unit.endurence = selected_unit.endurence - 1
                             elif event.key == pygame.K_UP:
-                                if endurence > 0:
+                                if selected_unit.endurence > 0:
                                     dy = -1
-                                    endurence = endurence - 1
+                                    selected_unit.endurence = selected_unit.endurence - 1
                             elif event.key == pygame.K_DOWN:
-                                if endurence > 0:
+                                if selected_unit.endurence > 0:
                                     dy = 1
-                                    endurence = endurence - 1
+                                    selected_unit.endurence = selected_unit.endurence - 1
 
                             selected_unit.move(dx, dy, self)
                             self.draw_map_units(team)
@@ -815,7 +815,7 @@ class Game:
                 # Tant que l'unité n'a pas terminé son tour
                 has_acted = False
                 selected_unit.is_selected = True
-                endurence = selected_unit.endurence_max
+                selected_unit.endurence = selected_unit.endurence_max
                 self.draw_map_units(team)
                 self.draw_info_panel(team, selected_unit)
                 pygame.display.flip()
@@ -836,21 +836,21 @@ class Game:
                             # Déplacement (touches fléchées)
                             dx, dy = 0, 0
                             if event.key == pygame.K_LEFT:
-                                if endurence > 0:
+                                if selected_unit.endurence > 0:
                                     dx = -1
-                                    endurence = endurence - 1
+                                    selected_unit.endurence = selected_unit.endurence - 1
                             elif event.key == pygame.K_RIGHT:
-                                if endurence > 0:
+                                if selected_unit.endurence > 0:
                                     dx = 1
-                                    endurence = endurence - 1
+                                    selected_unit.endurence = selected_unit.endurence - 1
                             elif event.key == pygame.K_UP:
-                                if endurence > 0:
+                                if selected_unit.endurence > 0:
                                     dy = -1
-                                    endurence = endurence - 1
+                                    selected_unit.endurence = selected_unit.endurence - 1
                             elif event.key == pygame.K_DOWN:
-                                if endurence > 0:
+                                if selected_unit.endurence > 0:
                                     dy = 1
-                                    endurence = endurence - 1
+                                    selected_unit.endurence = selected_unit.endurence - 1
 
                             selected_unit.move(dx, dy, self)
                             self.draw_map_units(team)
