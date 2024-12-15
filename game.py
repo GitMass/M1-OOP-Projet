@@ -232,7 +232,7 @@ class Game:
     
         # Charger l'image de fond
         splash_menu_image_1 = pygame.image.load("data/splash_images/pic_avatar.png") 
-        splash_menu_image_1 = pygame.transform.scale(splash_menu_image_1, (WIDTH, HEIGHT))
+        splash_menu_image_1 = pygame.transform.scale(splash_menu_image_1, (WIDTH,WINDOW_HEIGHT))
         
         # affiche l'image de fond
         self.screen.blit(splash_menu_image_1, (0,0))
@@ -420,7 +420,7 @@ class Game:
         
         # Charger l'image de fond
         splash_menu_image = pygame.image.load("data/splash_images/menu_image.png")
-        splash_menu_image = pygame.transform.scale(splash_menu_image, (WIDTH,HEIGHT))
+        splash_menu_image = pygame.transform.scale(splash_menu_image, (WIDTH,WINDOW_HEIGHT))
 
         # Charger la musique de fond
         pygame.mixer.music.load("data/musics/Dark Souls - A moment's peace.mp3")
@@ -482,7 +482,7 @@ class Game:
 
         # Charger l'image de fond
         splash_menu_image_1 = pygame.image.load("data/splash_images/pic_avatar.png") 
-        splash_menu_image_1 = pygame.transform.scale(splash_menu_image_1, (WIDTH,HEIGHT))
+        splash_menu_image_1 = pygame.transform.scale(splash_menu_image_1, (WIDTH,WINDOW_HEIGHT))
 
         # affiche l'image de fond
         self.screen.blit(splash_menu_image_1, (0,0))
@@ -554,6 +554,8 @@ class Game:
                 self.enemy_units[i].y = GRID_SIZE_HEIGHT - 3 - i
 
         return selected_units
+
+      
         
 
     def play_game_music(self):
@@ -562,6 +564,98 @@ class Game:
         pygame.mixer.music.set_volume(0.1)
         pygame.mixer.music.play(-1) # joue en boucle
         return                  
+
+    
+
+
+    def draw_info_panel(self, team=None, unit=None):
+       
+
+        info_panel_rect = pygame.Rect(0, HEIGHT, WIDTH, INFO_PANEL_HEIGHT)
+        panel_color = (30, 30, 30)  # Fond du panneau
+       
+        border_color = (200, 200, 200)  # Couleur des bordures
+        font = pygame.font.Font(None, 24)  # Police pour le texte
+
+        # Dessiner le panneau principal:
+        pygame.draw.rect(self.screen, panel_color, info_panel_rect)
+
+        # Diviser en trois colonnes:
+        column_width = WIDTH // 3
+
+        #1: Informations sur l'unité:
+        if unit:
+           
+           # Texte : Nom, santé, endurance
+           name_text = font.render(f"Name: {unit.name}", True, WHITE)
+           health_text = font.render(f"HP: {unit.health}/{unit.max_health}", True, WHITE)
+           endurance_text = font.render(f"Endurance: {unit.endurence_max}/{unit.endurence_max}", True, WHITE)
+           ataque_power_text = font.render(f"Attack_power: {unit.attack_power}", True, WHITE)
+
+           # Afficher les textes
+           self.screen.blit(name_text, (10, HEIGHT + 10))
+           self.screen.blit(health_text, (10, HEIGHT + 40))
+           self.screen.blit(endurance_text, (10, HEIGHT + 70))
+           self.screen.blit(ataque_power_text, (10, HEIGHT + 100))
+
+
+           # Afficher une photo de l'unité si disponible
+           if unit.texture:
+             texture_unite=self.screen.blit(pygame.transform.scale(unit.texture, (60, 60)), (column_width - 70, HEIGHT + 30))
+             pygame.draw.rect(self.screen ,WHITE,texture_unite, 2)
+
+           # 2:Compétences:
+          
+           if unit and unit.skills:  # Vérifie directement si unit et skills ne sont pas None ou vides
+              skill_y = HEIGHT + 10
+             
+              for skill in unit.skills[:4]:  
+                  skill_text = font.render(skill.name, True, WHITE)
+                  self.screen.blit(skill_text, (column_width + 10, skill_y))
+                  skill_y += 30
+                
+                 # Afficher une icône si elle existe
+                  if skill.animation_frames:  # Vérifie si animation_frames existe et n'est pas vide
+                    skill_icon_path = skill.animation_frames[0]
+                   
+                    if os.path.exists(skill_icon_path):  # Vérifie que le fichier existe
+                       skill_icon = pygame.image.load(skill_icon_path).convert_alpha()
+                       skill_icon = pygame.transform.scale(skill_icon, (30, 30))  # Ajuste la taille
+                       self.screen.blit(skill_icon, (column_width + 200, skill_y - 20))  # Position près du texte
+                    else:
+                       print(f"Image non trouvée : {skill_icon_path}")
+
+           #3: Instructions:
+        instructions = []
+
+        if unit and unit.is_moving:
+          instructions = ["Move: Arrow keys"]
+
+        elif unit and unit.is_attacking:
+          instructions = ["Attack: Space"]
+        else:
+
+
+          instructions = [
+           "Move: Arrow keys",
+           "Attack: Space",
+           "Skill 1: Key 1",
+           "Skill 2: Key 2",
+           "Skill 3: Key 3",
+        ]
+
+        instruction_y = HEIGHT + 10
+        for instruction in instructions:
+            instruction_text = font.render(instruction, True, WHITE)
+            self.screen.blit(instruction_text, (2 * column_width + 10, instruction_y))
+            instruction_y += 20
+
+
+        #Bordures entre les colonnes :
+        pygame.draw.line(self.screen, border_color, (column_width, HEIGHT), (column_width, HEIGHT + INFO_PANEL_HEIGHT), 2)
+        pygame.draw.line(self.screen, border_color, (2 * column_width, HEIGHT), (2 * column_width, HEIGHT + INFO_PANEL_HEIGHT), 2)
+
+
 
 
 
@@ -580,7 +674,8 @@ class Game:
                 selected_unit.is_selected = True
                 endurence = selected_unit.endurence_max
                 self.draw_map_units(team)
-
+                self.draw_info_panel(team, selected_unit)
+                pygame.display.flip() 
                 while not has_acted:
                     
                     # Important: cette boucle permet de gérer les événements Pygame
@@ -615,8 +710,10 @@ class Game:
 
                             selected_unit.move(dx, dy, self)
                             self.draw_map_units(team)
-
+                            self.draw_info_panel(team, selected_unit)
+                            pygame.display.flip()
                             # Use skills : skill 1, 2 or 3
+
                             if event.key == pygame.K_1:
                                 if len(selected_unit.skills) > 0:
                                     skill = selected_unit.skills[0]
@@ -624,6 +721,7 @@ class Game:
                                     has_acted = True
                                     selected_unit.is_selected = False
                                     self.draw_map_units(team)
+                                    self.draw_info_panel(team, selected_unit)
                                 else:
                                     print(f"{selected_unit.name} has no skill 1.")
                             elif event.key == pygame.K_2:
@@ -633,6 +731,9 @@ class Game:
                                     has_acted = True
                                     selected_unit.is_selected = False
                                     self.draw_map_units(team)
+                                    self.draw_info_panel(team, selected_unit)
+                                    pygame.display.flip()
+
                                 else:
                                     print(f"{selected_unit.name} has no skill 2.")
                             elif event.key == pygame.K_3:
@@ -642,6 +743,8 @@ class Game:
                                     has_acted = True
                                     selected_unit.is_selected = False
                                     self.draw_map_units(team)
+                                    self.draw_info_panel(team, selected_unit)
+                                    pygame.display.flip()
                                 else:
                                     print(f"{selected_unit.name} has no skill 3.")
 
@@ -671,6 +774,8 @@ class Game:
                 selected_unit.is_selected = True
                 endurence = selected_unit.endurence_max
                 self.draw_map_units(team)
+                self.draw_info_panel(team, selected_unit)
+                pygame.display.flip()
 
                 while not has_acted:
                     
@@ -706,6 +811,8 @@ class Game:
 
                             selected_unit.move(dx, dy, self)
                             self.draw_map_units(team)
+                            self.draw_info_panel(team, selected_unit)
+                            pygame.display.flip()
 
                             # Use skills : skill 1, 2 or 3
                             if event.key == pygame.K_1:
@@ -715,6 +822,8 @@ class Game:
                                     has_acted = True
                                     selected_unit.is_selected = False
                                     self.draw_map_units(team)
+                                    self.draw_info_panel(team, selected_unit)
+                                    pygame.display.flip()
                                 else:
                                     print(f"{selected_unit.name} has no skill 1.")
                             elif event.key == pygame.K_2:
@@ -724,6 +833,8 @@ class Game:
                                     has_acted = True
                                     selected_unit.is_selected = False
                                     self.draw_map_units(team)
+                                    self.draw_info_panel(team, selected_unit)
+                                    pygame.display.flip()
                                 else:
                                     print(f"{selected_unit.name} has no skill 2.")
                             elif event.key == pygame.K_3:
@@ -733,6 +844,8 @@ class Game:
                                     has_acted = True
                                     selected_unit.is_selected = False
                                     self.draw_map_units(team)
+                                    self.draw_info_panel(team, selected_unit)
+                                    pygame.display.flip()
                                 else:
                                     print(f"{selected_unit.name} has no skill 3.")
 
@@ -765,6 +878,11 @@ class Game:
             self.game_end("player 1")
 
         for enemy in self.enemy_units:
+            selected_enemy = enemy
+
+            # Met à jour le panneau d'information avec les détails de l'ennemi
+            self.draw_info_panel("enemy", selected_enemy)
+            pygame.display.flip()
 
             # Déplacement aléatoire
             target = random.choice(self.player_units)
@@ -887,9 +1005,13 @@ class Game:
         # Afficher le menu principale
         MenuChoice = self.Main_menu(GAME_TITLE)
 
+        # Afficher le panneau des informations
+        self.draw_info_panel()
+
         # choix de la carte
         selected_map = self.choose_map()
         self.read_map_from_csv(selected_map)
+
         if selected_map is None:
            return self.lunch_game()
         
@@ -924,7 +1046,7 @@ def main():
     pygame.init()
 
     # Instanciation de la fenêtre
-    screen = pygame.display.set_mode((WIDTH, HEIGHT))
+    screen = pygame.display.set_mode((WIDTH, WINDOW_HEIGHT))
     pygame.display.set_caption(GAME_TITLE)
 
     # Instanciation du jeu
