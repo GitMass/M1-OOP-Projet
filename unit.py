@@ -133,7 +133,7 @@ class Unit:
                     return  
                 
                 #Vérifie si l'unité a suffisamment d'endurance pour se déplacer
-                if self.endurence <= 0:
+                if self.endurence <= -1:
                     print(f"{self.name} n'a plus assez d'endurance pour se déplacer.")
                     return
 
