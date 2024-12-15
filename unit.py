@@ -27,6 +27,8 @@ ORANGE=(255,178,102)
 YELLOW = (255, 255, 0)
 PURPLE = (153, 51, 255)
 CHARACTER_PER_TEAM = 3
+INFO_PANEL_HEIGHT = 120
+WINDOW_HEIGHT = HEIGHT + INFO_PANEL_HEIGHT
 
 
 
@@ -93,7 +95,8 @@ class Unit:
         self.y_choiceButton = y_choiceButton
         self.skills = []
         self.name = name
-
+        self.is_moving = False
+        self.is_attacking = False
         # Ajouter la texture
         self.texture = None
         if texture_path:
@@ -111,6 +114,10 @@ class Unit:
 
     def move(self, dx, dy, game):
         """Déplace l'unité de dx, dy."""
+
+        self.is_moving = True
+        self.is_attacking = False
+
 
         new_x = self.x + dx
         new_y = self.y + dy
@@ -157,6 +164,9 @@ class Unit:
 
     def attack(self, target):
         """Attaque une unité cible."""
+        self.is_moving = False
+        self.is_attacking = True
+
         if abs(self.x - target.x) <= 1 and abs(self.y - target.y) <= 1:
             target.health -= self.attack_power
 
@@ -253,8 +263,8 @@ class Shinobi(Unit):
     def __init__(self, x, y, team, texture_path, x_choiceButton, y_choiceButton, name):
         super().__init__(x, y, health=22, attack_power=3, endurence_max=6, team=team, texture_path=texture_path, x_choiceButton=x_choiceButton, y_choiceButton=y_choiceButton, name=name)
         self.skills.append(Shuriken())
+        self.skills.append(Sky_Clear())
         self.skills.append(Assasin_Flicker())
-        self.skills.append(Allies())
 
 class Monster(Unit):
     def __init__(self, x, y, team, texture_path, x_choiceButton, y_choiceButton, name):
@@ -321,7 +331,6 @@ class Sky_Clear:
         self.range = 3 
         self.sound_effect = "data/skills/ichimonji.mp3"
         self.animation_frames = ["data/skills/ichimonji.png"]
-        self.animation_frames_2 = ["data/Tiles/cracked_ground.png"]
 
     def use_skill(self, owner_unit, game):
         target_x, target_y = owner_unit.x, owner_unit.y  # Start with the owner's position
@@ -394,12 +403,7 @@ class Sky_Clear:
 
         # Play sound effect
         if self.sound_effect:
-            sound1 = pygame.mixer.Sound(self.sound_effect)
-            sound1.play()
-            pygame.time.delay(int(sound1.get_length() * 1000))  # Attendre la fin du premier son
-
-            # Jouer un deuxième son
-            sound2 = pygame.mixer.Sound("data/skills/explosion.mp3")
+            sound2 = pygame.mixer.Sound("data/skills/sword_throw.mp3")
             sound3 = pygame.mixer.Sound("data/skills/crack.mp3")
             sound2.play()
             sound3.play()
@@ -427,7 +431,7 @@ class Sky_Clear:
                     animation_image = pygame.image.load(frame).convert_alpha()
                     animation_image = pygame.transform.scale(animation_image, (CELL_SIZE, CELL_SIZE)) 
                     # Load and display the cracked ground frame
-                    for cracked_frame in self.animation_frames_2:
+                    for cracked_frame in self.animation_frames:
                         cracked_image = pygame.image.load(cracked_frame).convert_alpha()
                         cracked_image = pygame.transform.scale(cracked_image, (CELL_SIZE, CELL_SIZE)) 
 
@@ -533,23 +537,14 @@ class Samurai_Grave:
 
         # Play animations and apply damage simultaneously
         for frame1 in self.animation_frames:
-            for frame2 in self.animation_frames_2:
-                game.draw_map_units()
+            # Draw the "samurai_grave" animation
+            for cell_x, cell_y in affected_cells:
+                animation_image1 = pygame.image.load(frame1).convert_alpha()
+                animation_image1 = pygame.transform.scale(animation_image1, (CELL_SIZE, CELL_SIZE))
+                game.screen.blit(animation_image1, (cell_x * CELL_SIZE, cell_y * CELL_SIZE))
 
-                # Draw the "gris" animation
-                for cell_x, cell_y in affected_cells:
-                    animation_image2 = pygame.image.load(frame2).convert_alpha()
-                    animation_image2 = pygame.transform.scale(animation_image2, (CELL_SIZE, CELL_SIZE))
-                    game.screen.blit(animation_image2, (cell_x * CELL_SIZE, cell_y * CELL_SIZE))
-
-                # Draw the "samurai_grave" animation
-                for cell_x, cell_y in affected_cells:
-                    animation_image1 = pygame.image.load(frame1).convert_alpha()
-                    animation_image1 = pygame.transform.scale(animation_image1, (CELL_SIZE, CELL_SIZE))
-                    game.screen.blit(animation_image1, (cell_x * CELL_SIZE, cell_y * CELL_SIZE))
-
-                pygame.display.flip()
-                pygame.time.delay(3000)  # Delay between frames
+            pygame.display.flip()
+            pygame.time.delay(500)  # Delay between frames
         
         sound3 = pygame.mixer.Sound("data/skills/dagger-slash-sound.mp3")
         sound3.play()
@@ -772,7 +767,7 @@ class Poison_Master:
         # Afficher la surface avec toutes les animations sur l'écran
         game.screen.blit(self.temp_surface, (0, 0))
         pygame.display.flip()
-        pygame.time.delay(2000)  # Réduire le délai pour un affichage fluide
+        pygame.time.delay(500)  # Réduire le délai pour un affichage fluide
         
         
         # Appliquer les dégâts
@@ -798,7 +793,7 @@ class Healer:
         self.name = "Healer"
         self.heal_amount = 5  # Montant de soin par unité
         self.range = 3  # Portée de la compétence
-        self.sound_effect = "data/skills/healer.mp3"  # Effet sonore
+        self.sound_effect = "data/skills/magic.mp3"  # Effet sonore
         self.animation_frames = ["data/skills/healer.png"]  # Animation de soin
 
     def use_skill(self, owner_unit, game):
@@ -937,7 +932,7 @@ class Shuriken:
 
                     # Validate the target with the space key
                     if event.key == pygame.K_SPACE:
-                        print("Launching SKY CLEAR !!!")
+                        print("Launching SHURIKEN !!!")
                         selecting_target = False  # Exit the selection phase
                         break
 
@@ -955,7 +950,7 @@ class Shuriken:
         if self.sound_effect:
             sound1 = pygame.mixer.Sound(self.sound_effect)
             sound1.play()
-            pygame.time.delay(int(sound1.get_length() * 1000))  # Attendre la fin du premier son
+            pygame.time.delay(50)  # Attendre la fin du premier son
 
             # Jouer un deuxième son
             sound2 = pygame.mixer.Sound("data/skills/shuriken_sound_2.mp3")
@@ -997,7 +992,7 @@ class Shuriken:
 
                         # Update the display
                         pygame.display.flip()
-                        pygame.time.delay(70)  # Delay between frames
+                        pygame.time.delay(100)  # Delay between frames
         
 
 
@@ -1078,25 +1073,25 @@ class Assasin_Flicker :
                         highlight_rect = pygame.Rect( (target.x - 1)* CELL_SIZE, target.y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
                         pygame.draw.rect(game.screen, (255, 255, 0, 128), highlight_rect, 3)  # Yellow border
                         pygame.display.flip()
-                        pygame.time.delay(2000) 
+                        pygame.time.delay(100) 
                     elif event.key == pygame.K_RIGHT:
                         selected_position = (target.x + 1, target.y)
                         highlight_rect = pygame.Rect( (target.x + 1)* CELL_SIZE, target.y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
                         pygame.draw.rect(game.screen, (255, 255, 0, 128), highlight_rect, 3)  # Yellow border
                         pygame.display.flip()
-                        pygame.time.delay(2000)
+                        pygame.time.delay(100)
                     elif event.key == pygame.K_UP:
                         selected_position = (target.x, target.y - 1)
                         highlight_rect = pygame.Rect( (target.x)* CELL_SIZE, (target.y-1) * CELL_SIZE, CELL_SIZE, CELL_SIZE)
                         pygame.draw.rect(game.screen, (255, 255, 0, 128), highlight_rect, 3)  # Yellow border
                         pygame.display.flip()
-                        pygame.time.delay(2000)
+                        pygame.time.delay(100)
                     elif event.key == pygame.K_DOWN:
                         selected_position = (target.x, target.y + 1)
                         highlight_rect = pygame.Rect( (target.x)* CELL_SIZE, (target.y+1) * CELL_SIZE, CELL_SIZE, CELL_SIZE)
                         pygame.draw.rect(game.screen, (255, 255, 0, 128), highlight_rect, 3)  # Yellow border
                         pygame.display.flip()
-                        pygame.time.delay(2000)
+                        pygame.time.delay(100)
 
                     # Confirm selection with space key
                     if event.key == pygame.K_SPACE and selected_position in adjacent_units:
@@ -1134,144 +1129,6 @@ class Assasin_Flicker :
         game.screen.blit(animation_image, (target.x * CELL_SIZE, target.y * CELL_SIZE))
         pygame.display.flip()
         pygame.time.delay(100)
-    
-class Shadow:
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
-        self.animation_frames = ["data/skills/shadow.png"]
-
-class Allies:
-    def __init__(self):
-        self.name = "Allies"
-        self.damage = 10
-        self.range = 3 
-        self.sound_effect = "data/skills/ichimonji.mp3"
-        self.animation_frames = ["data/skills/ichimonji.png"]
-
-    def use_skill(self, owner_unit, game):
-        # Calculate the zone of effect
-        zone_of_effect = []
-        for dx in range(-self.range, self.range ):
-            for dy in range(-self.range, self.range ):
-                x, y = owner_unit.x + dx, owner_unit.y + dy
-                if 0 <= x < GRID_SIZE_WIDTH and 0 <= y < GRID_SIZE_HEIGHT:
-                    zone_of_effect.append((x, y))
-
-        # Draw the zone of effect
-        game.draw_map_units()
-        for x, y in zone_of_effect:
-            highlight_rect = pygame.Rect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
-            pygame.draw.rect(game.screen, (128, 128, 128, 128), highlight_rect, 3)
-        pygame.display.flip()
-
-        selecting_target = True
-        while selecting_target:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    exit()
-
-                # Validate the skill activation with space
-                elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_SPACE:
-                        selecting_target = False
-                        break
-
-                    # Cancel the skill
-                    elif event.key == pygame.K_x:
-                        print("Skill canceled.")
-                        return
-
-        # Find all enemies in the zone of effect
-        enemies_in_zone = [
-            unit for unit in game.player_units + game.player2_units + game.enemy_units
-            if (unit.x, unit.y) in zone_of_effect and unit !=owner_unit 
-        ]
-
-        if not enemies_in_zone:
-            print("No enemies in the zone of effect.")
-            return
-
-        # Crée des shadows et les positionne près des ennemis
-        shadows = []
-        shadows_next=[]
-
-        adjacent_positions = [
-            (owner_unit.x + dx, owner_unit.y + dy)
-            for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]
-            if 0 <= owner_unit.x + dx < GRID_SIZE_WIDTH and 0 <= owner_unit.y + dy < GRID_SIZE_HEIGHT
-        ]
-        for pos in adjacent_positions:
-            shadow_next = Shadow(*pos)
-            shadows_next.append(shadow_next)
-
-        # Affiche les shadows autour du personnage
-        for shadow_next in shadows_next:
-            animation_image = pygame.image.load(shadow_next.animation_frames[0]).convert_alpha()
-            animation_image = pygame.transform.scale(animation_image, (CELL_SIZE, CELL_SIZE))
-            game.screen.blit(animation_image, (shadow_next.x * CELL_SIZE, shadow_next.y * CELL_SIZE))
-        pygame.display.flip()
-        pygame.time.delay(1000)
-
-        for enemy in enemies_in_zone:
-            # Trouver une position adjacente disponible pour le shadow
-            shadow_position = self.get_adjacent_position(enemy, game)
-            if shadow_position:
-                shadow = Shadow(*shadow_position)
-                shadows.append((shadow, enemy))  # Associer le shadow à son ennemi
-
-        # Affiche les shadows sur la carte
-        for shadow_enemy_pair in shadows:
-            shadow, enemy = shadow_enemy_pair  # Extraire shadow et enemy explicitement
-            animation_image = pygame.image.load(shadow.animation_frames[0]).convert_alpha()
-            animation_image = pygame.transform.scale(animation_image, (CELL_SIZE, CELL_SIZE))
-            game.screen.blit(animation_image, (shadow.x * CELL_SIZE, shadow.y * CELL_SIZE))
-        pygame.display.flip()
-        pygame.time.delay(1000)
-
-        # Les shadows attaquent leurs ennemis associés
-        for shadow, enemy in shadows:
-            # Téléportation du shadow près de l'ennemi
-            shadow.x, shadow.y = self.get_adjacent_position(enemy, game)
-
-            # Animation d'attaque
-            animation_image = pygame.image.load(self.animation_frames[0]).convert_alpha()
-            animation_image = pygame.transform.scale(animation_image, (CELL_SIZE, CELL_SIZE))
-            game.screen.blit(animation_image, (enemy.x * CELL_SIZE, enemy.y * CELL_SIZE))
-            pygame.display.flip()
-            pygame.time.delay(500)
-
-            # Appliquer les dégâts à l'ennemi
-            enemy.health -= self.damage
-            if enemy.health <= 0:
-                if enemy in game.player_units:
-                    game.player_units.remove(enemy)
-                elif enemy in game.player2_units:
-                    game.player2_units.remove(enemy)
-                elif enemy in game.enemy_units:
-                    game.enemy_units.remove(enemy)
-
-        # Jouer l'effet sonore
-        if self.sound_effect:
-            sound = pygame.mixer.Sound(self.sound_effect)
-            sound.play()
-
-    def get_adjacent_position(self, target, game):
-        """
-        Trouve une position libre adjacente à une cible (target).
-        Retourne une position (x, y) ou None si aucune position n'est disponible.
-        """
-        for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
-            adj_x, adj_y = target.x + dx, target.y + dy
-            if 0 <= adj_x < GRID_SIZE_WIDTH and 0 <= adj_y < GRID_SIZE_HEIGHT:
-                # Vérifie qu'aucune autre unité n'est sur cette position
-                if not any(
-                    unit.x == adj_x and unit.y == adj_y
-                    for unit in game.player_units + game.player2_units + game.enemy_units
-                ):
-                    return adj_x, adj_y
-        return None  # Aucune position disponible
 
 
 
