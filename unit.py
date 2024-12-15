@@ -151,11 +151,11 @@ class Unit:
                 game.current_sound=game.sounds['magma']
                 game.current_sound.play()
                 if isinstance(self, Swordsman):  # Shogun
-                    self.health -= 3
+                    self.health -= 6
                 elif isinstance(self, Shinobi):  # Assassin
-                    self.health -= 4
+                    self.health -= 8
                 elif isinstance(self, Sorceress):
-                    self.health -= 5
+                    self.health -= 10
 
             elif (self.x, self.y) in game.muds:
                 game.current_sound=game.sounds['mud']
@@ -188,7 +188,7 @@ class Unit:
             elif (self.x, self.y) in game.healing:
                 game.current_sound=game.sounds['healing']
                 game.current_sound.play()
-                self.health += 5  # Effet de soin commun
+                self.health += 10  # Effet de soin commun
                 # S'assure que la santé ne dépasse pas le maximum
                 if self.health > self.max_health:
                     self.health = self.max_health
@@ -337,7 +337,7 @@ class Monster(Unit):
 class Ichimonji_Skill:
     def __init__(self):
         self.name = "Ichimonji"
-        self.damage = 16
+        self.damage = 14
         self.range = 2
         self.sound_effect = "data/skills/ichimonji.mp3"
 
@@ -405,7 +405,7 @@ class Ichimonji_Skill:
                     target = potential_target
 
                     # Apply skill effects to the target
-                    target.health -= self.damage
+                    target.health -= (self.damage + 6) # buff pour les enemies pour equilibrer
 
                     # Play the sound effect
                     if self.sound_effect:
@@ -873,6 +873,9 @@ class PurpleChaos_Skill:
                 for potential_target in game.player_units + game.player2_units + game.enemy_units:
                     if potential_target.x == cell_x and potential_target.y == cell_y:
                         potential_target.health -= self.damage
+                        # buff pour les enemies pour equilibrer
+                        if potential_target.team == "player 1" : 
+                            potential_target.health -= 8
 
                         # Supprimer les unités avec 0 PV ou moins
                         if potential_target.health <= 0:
@@ -1439,7 +1442,7 @@ class Shadow:
 class Shadow_Berserk:
     def __init__(self):
         self.name = "Shadow Berserk"
-        self.damage = 10
+        self.damage = 12
         self.range = 2
         self.sound_effect = "data/skills/ichimonji.mp3"
 
@@ -1584,7 +1587,7 @@ class Shadow_Berserk:
             game.screen.blit(self.animation_image[0], (enemy.x * CELL_SIZE, enemy.y * CELL_SIZE))
             pygame.display.flip()
             pygame.time.delay(200)
-            enemy.health -= self.damage
+            enemy.health -= (self.damage + 4) # buff pour les enemies pour equilibrer
             if enemy.health <= 0:
                 if enemy in game.player_units:
                     game.player_units.remove(enemy)
