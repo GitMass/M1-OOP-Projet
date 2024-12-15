@@ -2,7 +2,7 @@ from unit import *
 
 # VERSION
 X = 1
-Y = 0
+Y = 1
 Z = 0
 print(f" =========== {GAME_TITLE} Version {X}.{Y}.{Z} =========== \n")
 
@@ -942,47 +942,6 @@ class Game:
 
 
     # IA de enemy
-    def handle_enemy_turn(self):
-
-        # tester si tous les adversaires sont morts
-        if len(self.player_units) == 0 :
-            self.game_end("player 1")
-
-        # faire le tour de chaque unité de enemy
-        for enemy in self.enemy_units:
-            
-            # attente pour rendre le tour des ennemies plus realistique
-            pygame.time.delay(500)
-
-            # Déplacement aléatoire
-            target = random.choice(self.player_units)
-            dx = 1 if enemy.x < target.x else -1 if enemy.x > target.x else 0
-            dy = 1 if enemy.y < target.y else -1 if enemy.y > target.y else 0
-            enemy.move(dx, dy, self)
-
-            # Attaque si possible
-            if abs(enemy.x - target.x) <= 1 and abs(enemy.y - target.y) <= 1:
-                enemy.attack(target)
-                if target.health <= 0:
-                    self.player_units.remove(target)
-
-            # Met à jour le panneau d'information avec les détails de l'ennemi
-            self.draw_map_units("enemy")
-            self.draw_info_panel("enemy", enemy)
-            pygame.display.flip()
-
-            # attente pour rendre le tour des ennemies plus realistique
-            pygame.time.delay(100) 
-
-        # tester si tous les adversaires sont morts
-        if len(self.player_units) == 0 :
-            self.game_end("player 1")
-
-
-
-
-
-
     def enemy_AI_turn(self):
                 
                 # tester si tous les adversaires sont morts
@@ -1014,8 +973,9 @@ class Game:
                     if len(self.player_units) == 0 :
                         self.game_end("player 1")
 
-                    # Update the game state after enemy's action
+                    # Met à jour le panneau d'information avec les détails de l'ennemi
                     self.draw_map_units("enemy")
+                    self.draw_info_panel("enemy", enemy)
                     pygame.display.flip()
 
                     # attente pour rendre le tour des ennemies plus realistique
@@ -1034,7 +994,7 @@ class Game:
                 new_x = enemy.x + dx
                 new_y = enemy.y + dy
                 if not self.is_wall(new_x, new_y) and (0 <= new_x < GRID_SIZE_WIDTH and 0 <= new_y < GRID_SIZE_HEIGHT):
-                    score = self.AI_evaluate_position(new_x, new_y, enemy)
+                    score = self.AI_evaluate_position(new_x, new_y)
                     if score > best_score:
                         best_score = score
                         best_move = (dx, dy)
@@ -1054,7 +1014,7 @@ class Game:
 
 
 
-    def AI_evaluate_position(self, x, y, unit):
+    def AI_evaluate_position(self, x, y):
             # Return a score based on strategic factors (e.g., proximity to player units, terrain)
             score = 0
             for player in self.player_units:
@@ -1142,39 +1102,32 @@ class Game:
         if loser == "player 1":
             title = "GAME OVER"
             message = "Player 1 was Decimated..."
+            splash_game_over = "data/splash_images/game_over.png"
         elif loser == "player 2":
             title = "GAME OVER"
             message = "Player 1 Defeated player 2 !"
+            splash_game_over = "data/splash_images/game_over.png"
         elif loser == "enemy":
-            # Font settings
-            title_font = pygame.font.Font(None, 72)
-            message_font = pygame.font.Font(None, 36)
-
-            # Button settings
-            button_font = pygame.font.Font(None, 36)
-            button_text = "Go to Title Screen"
-            button_rect = pygame.Rect(WIDTH // 3, HEIGHT // 2 + 100, WIDTH // 3, 50)
-
-            # Charger l'image de fond
-            splash_menu_image_1 = pygame.image.load("data/splash_images/you_win.png") 
-            splash_menu_image_1 = pygame.transform.scale(splash_menu_image_1, (WIDTH,HEIGHT))
-
-            # affiche l'image de fond
-            self.screen.blit(splash_menu_image_1, (0,0))
+            title = "GAME WON"
+            message = "YOU DECIMATED YOUR ENEMIES !"
+            splash_game_over = "data/splash_images/game_win.jpg"
 
             # Charger la musique de fond
             pygame.mixer.music.load("data/musics/end_victory.mp3")
             pygame.mixer.music.play(loops=0) # joue en boucle
 
-            # rafraichir l'écran
-            pygame.display.flip()
-            title = "GAME WIN"
-            message = "Player 1 Survived !"
+        # Charger l'image de fond
+        splash_menu_image_1 = pygame.image.load(splash_game_over) 
+        splash_menu_image_1 = pygame.transform.scale(splash_menu_image_1, (WIDTH,HEIGHT+INFO_PANEL_HEIGHT))
 
+        # affiche l'image de fond
+        self.screen.blit(splash_menu_image_1, (0,0))
+        pygame.display.flip()
 
         # Font settings
         title_font = pygame.font.Font(None, 72)
         message_font = pygame.font.Font(None, 36)
+
         # Button settings
         button_font = pygame.font.Font(None, 36)
         button_text = "Go to Title Screen"

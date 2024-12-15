@@ -3,6 +3,7 @@ import random
 import os
 import copy
 import csv
+from abc import ABC, abstractmethod
 
 
 
@@ -326,15 +327,21 @@ class Shinobi(Unit):
         self.skills.append(Assasin_Flicker())
         self.skills.append(Shadow_Berserk())
 
-class Monster(Unit):
-    def __init__(self, x, y, team, texture_path, x_choiceButton, y_choiceButton, name):
-        super().__init__(x, y, health=28, attack_power=2, endurence_max=4, team=team, texture_path=texture_path, x_choiceButton=x_choiceButton, y_choiceButton=y_choiceButton, name=name)
 
 
 
 
 # Definition des compétances :
-class Ichimonji_Skill:
+class Skill(ABC):
+    @abstractmethod
+    def use_skill(self, owner_unit, game):
+        pass
+
+
+
+
+
+class Ichimonji_Skill(Skill):
     def __init__(self):
         self.name = "Ichimonji"
         self.damage = 14
@@ -439,7 +446,7 @@ class Ichimonji_Skill:
 
 
 
-class Sky_Clear:
+class Sky_Clear(Skill):
     def __init__(self):
         self.name = "Sky Clear"
         self.damage = 12 
@@ -576,7 +583,7 @@ class Sky_Clear:
                         pygame.time.delay(50)  # Delay between frames
 
 
-class Samurai_Grave:
+class Samurai_Grave(Skill):
     def __init__(self):
         self.name = "Samurai Grave"
         self.damage = 10
@@ -723,7 +730,7 @@ class Samurai_Grave:
                         elif potential_target.team == "enemy":
                             game.enemy_units.remove(potential_target)
 
-class PurpleChaos_Skill:
+class PurpleChaos_Skill(Skill):
     def __init__(self):
         self.name = "Purple Chaos"
         self.damage = 10 
@@ -894,7 +901,7 @@ class PurpleChaos_Skill:
 
 
 
-class Poison_Master:
+class Poison_Master(Skill):
     def __init__(self):
         self.name = "Poison Apocalypse"
         self.damage = 10
@@ -1020,7 +1027,7 @@ class Poison_Master:
                             game.enemy_units.remove(potential_target)
 
 
-class Healer:
+class Healer(Skill):
     def __init__(self):
         self.name = "Healing"
         self.heal_amount = 14  # Montant de soin par unité
@@ -1119,7 +1126,7 @@ class Healer:
             pygame.time.delay(1000)  # Delay between frames
 
         
-class Shuriken:
+class Shuriken(Skill):
     def __init__(self):
         self.name = "Shuriken"
         self.damage = 13
@@ -1270,7 +1277,7 @@ class Shuriken:
 
 
 
-class Assasin_Flicker :
+class Assasin_Flicker(Skill):
     def __init__(self):
         self.name = "Death Shadow"
         self.damage = 12
@@ -1439,7 +1446,7 @@ class Shadow:
 
 
 
-class Shadow_Berserk:
+class Shadow_Berserk(Skill):
     def __init__(self):
         self.name = "Shadow Berserk"
         self.damage = 12
