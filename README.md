@@ -1,4 +1,4 @@
-# Game Project - University Project
+# FOREST GATE - University Project
 
 This game was developed as a part of a university project in December 2024. The objective of the project was to learn and apply Object-Oriented Programming (OOP) principles.
 
