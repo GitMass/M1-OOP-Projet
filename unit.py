@@ -9,6 +9,7 @@ from abc import ABC, abstractmethod
 
 
 # Constantes
+# Ces constantes définissent les paramètres du jeu, comme les dimensions de la grille, les couleurs et les équipes.
 GAME_TITLE = "Forest Gate"
 CELL_SIZE = 40
 GRID_SIZE_WIDTH = 30 # (1400//CELL_SIZE) - 1
@@ -43,34 +44,40 @@ pygame.display.set_caption(GAME_TITLE)
 
 
 
+
 class Unit:
     """
-    Classe pour représenter une unité.
+    Classe pour représenter une unité dans le jeu.
 
-    ...
-    Attributs
+    Attributs :
+    ----------
+    - x : int
+        Position x de l'unité sur la grille.
+    - y : int
+        Position y de l'unité sur la grille.
+    - health : int
+        Points de santé de l'unité.
+    - attack_power : int
+        Puissance d'attaque de l'unité.
+    - endurence_max : int
+        Endurance maximale de l'unité.
+    - team : str
+        Équipe de l'unité ('player', 'enemy', etc.).
+    - texture : pygame.Surface
+        Texture utilisée pour représenter visuellement l'unité.
+    - name : str
+        Nom de l'unité.
+
+    Méthodes :
     ---------
-    x : int
-        La position x de l'unité sur la grille.
-    y : int
-        La position y de l'unité sur la grille.
-    health : int
-        La santé de l'unité.
-    attack_power : int
-        La puissance d'attaque de l'unité.
-    team : str
-        L'équipe de l'unité ('player' ou 'enemy').
-    is_selected : bool
-        Si l'unité est sélectionnée ou non.
-
-    Méthodes
-    --------
-    move(dx, dy)
-        Déplace l'unité de dx, dy.
-    attack(target)
-        Attaque une unité cible.
-    draw(screen)
-        Dessine l'unité sur la grille.
+    - move(dx, dy, game)
+        Déplace l'unité sur la grille en fonction des changements dx, dy.
+    - attack(target)
+        Inflige des dégâts à une cible donnée.
+    - draw(screen)
+        Dessine l'unité à l'écran.
+    - choiceButton_draw(screen)
+        Dessine le bouton de sélection d'une unité.
     """
 
 
@@ -78,27 +85,38 @@ class Unit:
 
     def __init__(self, x, y, health, attack_power, endurence_max, team, texture_path, x_choiceButton, y_choiceButton, name):
         """
-        Construit une unité avec une position, une santé, une puissance d'attaque et une équipe.
+        Initialise une unité avec ses propriétés de base.
 
-        Paramètres
-        ----------
-        x : int
-            La position x de l'unité sur la grille.
-        y : int
-            La position y de l'unité sur la grille.
-        health : int
-            La santé de l'unité.
-        attack_power : int
-            La puissance d'attaque de l'unité.
-        team : str
-            L'équipe de l'unité ('player' ou 'enemy').
+        Paramètres :
+        -----------
+        - x : int
+            Position initiale en x.
+        - y : int
+            Position initiale en y.
+        - health : int
+            Points de santé de l'unité.
+        - attack_power : int
+            Puissance d'attaque de l'unité.
+        - endurence_max : int
+            Endurance maximale.
+        - team : str
+            Équipe à laquelle l'unité appartient.
+        - texture_path : str
+            Chemin de la texture utilisée pour représenter l'unité.
+        - x_choiceButton : int
+            Position x du bouton de sélection.
+        - y_choiceButton : int
+            Position y du bouton de sélection.
+        - name : str
+            Nom de l'unité.
         """
+
         self.x = x
         self.y = y
         self.health = health
         self.max_health = health
         self.attack_power = attack_power
-        self.endurence_max_init=endurence_max 
+        self.endurence_max_init = endurence_max
         self.endurence_max = endurence_max
         self.endurence = self.endurence_max
         self.defense = 0
@@ -109,15 +127,16 @@ class Unit:
         self.skills = []
         self.name = name
 
-        # Ajouter la texture
+        # Charger la texture si elle existe
         self.texture = None
         if texture_path:
             if os.path.exists(texture_path):
                 self.raw_texture = pygame.image.load(texture_path)
                 self.texture = pygame.transform.scale(self.raw_texture, (CELL_SIZE, CELL_SIZE))  # Redimensionner l'image
-                self.choice_texture = pygame.transform.scale(self.raw_texture, (CELL_SIZE*2, CELL_SIZE*2))
+                self.choice_texture = pygame.transform.scale(self.raw_texture, (CELL_SIZE*4, CELL_SIZE*4))
             else:
                 print(f"{texture_path} not found")
+                self.raw_texture = None
                 self.texture = None
                 self.choice_texture = None
 
@@ -125,36 +144,53 @@ class Unit:
 
 
     def move(self, dx, dy, game):
-        """Déplace l'unité de dx, dy."""
+        """
+        Déplace l'unité de dx, dy sur la grille, tout en vérifiant les collisions et les contraintes.
+
+        Paramètres :
+        -----------
+        - dx : int
+            Déplacement en x.
+        - dy : int
+            Déplacement en y.
+        - game : Game
+            Instance du jeu contenant les informations sur la grille et les autres unités.
+
+        Retourne :
+        ---------
+        - None
+        """
 
         new_x = self.x + dx
         new_y = self.y + dy
+
+        # Verifie si les nouvelles coordonées ne sortent pas de la map et ne sont pas un mur
         if 0 <= new_x < GRID_SIZE_WIDTH and 0 <= new_y < GRID_SIZE_HEIGHT and not game.is_wall(new_x, new_y):
             # Verifie si il ya pas d'autre unité dans la cellule
             for unit in game.player_units + game.player2_units + game.enemy_units:
                 if unit.x == new_x and unit.y == new_y:
                     return  
                 
-                # Vérifie si l'unité a suffisamment d'endurance pour se déplacer
-                if self.endurence <= -1:
-                    print(f"{self.name} n'a plus assez d'endurance pour se déplacer.")
-                    return
+            # Vérifie si l'unité a suffisamment d'endurance pour se déplacer
+            if self.endurence <= -1:
+                print(f"{self.name} n'a plus assez d'endurance pour se déplacer.")
+                return
 
-            if hasattr(game, 'current_sound') and game.current_sound:  # Vérifie l'existence de current_sound
+            # Arrete le son en cours
+            if hasattr(game, 'current_sound') and game.current_sound:  
                 game.current_sound.stop()
                 
             # Met à jour la position     
             self.x = new_x
             self.y = new_y
 
-
-            # Détection du type de terrain
+            # Détection du type de terrain et application des effet de celui-ci sur l'unite
             if (self.x, self.y) in game.magmas:
                 game.current_sound=game.sounds['magma']
                 game.current_sound.play()
-                if isinstance(self, Samurai):  # Shogun
+                if isinstance(self, Samurai):
                     self.health -= 6
-                elif isinstance(self, Shinobi):  # Assassin
+                elif isinstance(self, Shinobi):
                     self.health -= 8
                 elif isinstance(self, Sorceress):
                     self.health -= 10
@@ -162,13 +198,13 @@ class Unit:
             elif (self.x, self.y) in game.muds:
                 game.current_sound=game.sounds['mud']
                 game.current_sound.play()
-                if isinstance(self, Samurai):  # Shogun
+                if isinstance(self, Samurai):
                     self.endurence_max -= 5
                     self.endurence -= 5
-                elif isinstance(self, Shinobi):  # Assassin
+                elif isinstance(self, Shinobi):
                     self.endurence_max -= 2
                     self.endurence -= 2
-                elif isinstance(self, Sorceress):# Sorceress 
+                elif isinstance(self, Sorceress):
                     self.endurence_max -= 3
                     self.endurence -= 3
                 game.turn_counter=0 # Réinitialisation du compteur
@@ -176,13 +212,13 @@ class Unit:
             elif (self.x, self.y) in game.water:
                 game.current_sound=game.sounds['water']
                 game.current_sound.play()
-                if isinstance(self, Samurai):  # Shogun
+                if isinstance(self, Samurai):
                     self.endurence_max -= 4
                     self.endurence -= 4
-                elif isinstance(self, Shinobi):  # Assassin
+                elif isinstance(self, Shinobi):
                     self.endurence_max -= 1
                     self.endurence -= 1
-                elif isinstance(self, Sorceress):# Sorceress
+                elif isinstance(self, Sorceress):
                     self.endurence_max -= 2
                     self.endurence -= 2
                 game.turn_counter=0  # Réinitialisation du compteur
@@ -202,15 +238,6 @@ class Unit:
             elif (self.x, self.y) in game.snow:
                 game.current_sound=game.sounds['snow']
                 game.current_sound.play()
-                if isinstance(self, Samurai):  # Shogun
-                    self.endurence_max -= 0
-                    self.endurence -= 0
-                elif isinstance(self, Shinobi):  # Assassin
-                    self.endurence_max -= 0
-                    self.endurence -= 0
-                elif isinstance(self, Sorceress):# Sorceress
-                    self.endurence_max -= 0
-                    self.endurence -= 0
 
             elif (self.x, self.y) in game.bush:
                 game.current_sound=game.sounds['bush']
@@ -228,10 +255,25 @@ class Unit:
             # Vérifie que l'endurance ne soit pas négative
             if self.endurence_max <= 0:
                 self.endurence_max = 1
+            if self.endurence <= 0:
+                self.endurence = 0
+
+
 
 
     def attack(self, target):
-        """Attaque une unité cible."""
+        """
+        Attaque une cible donnée si elle est à portée.
+
+        Paramètres :
+        -----------
+        - target : Unit
+            L'unité cible à attaquer.
+
+        Retourne :
+        ---------
+        - None
+        """
 
         if abs(self.x - target.x) <= 1 and abs(self.y - target.y) <= 1:
             target.health -= self.attack_power
@@ -240,12 +282,23 @@ class Unit:
 
 
     def draw(self, screen):
+        """
+        Dessine l'unité à l'écran avec ses détails visuels (texture, barre de santé, etc.).
+
+        Paramètres :
+        -----------
+        - screen : pygame.Surface
+            Surface sur laquelle dessiner l'unité.
+
+        Retourne :
+        ---------
+        - None
+        """
 
         # Affiche l'unité 
-        if self.texture :   # affiche la texture si elle existe
+        if self.texture :  # affiche la texture si elle existe
             screen.blit(self.texture, (self.x * CELL_SIZE, self.y * CELL_SIZE))
-        else:
-            """Affiche l'unité sur l'écran."""
+        else: # affiche un cercle de couleur
             color = BLUE if self.team == 'player' else RED
             if self.is_selected:
                 pygame.draw.rect(screen, GREEN, (self.x * CELL_SIZE,
@@ -257,9 +310,9 @@ class Unit:
         border_color = BLUE if self.team == "player 1" else GREEN if self.team == "player 2" else (255, 0, 0)
         pygame.draw.rect(screen, border_color, (self.x * CELL_SIZE, self.y * CELL_SIZE, CELL_SIZE, CELL_SIZE), 2)
 
-        # If selected, draw a small yellow dot in the bottom-right corner of the cell
+        # Affiche un petit cercle jaune sur l'unité selectione
         if self.is_selected:
-            dot_radius = 4  # Adjust radius as needed
+            dot_radius = 6
             dot_x = self.x * CELL_SIZE + CELL_SIZE - dot_radius - 2
             dot_y = self.y * CELL_SIZE + CELL_SIZE - dot_radius - 2
             pygame.draw.circle(screen, YELLOW, (dot_x, dot_y), dot_radius)
@@ -287,19 +340,29 @@ class Unit:
 
     # affichage libre
     def choiceButton_draw(self, screen):
-        if self.texture:
-            # Agrandir la texture 
-            
+        """
+        Dessine le bouton de choix de l'unité à l'écran.
 
+        Paramètres :
+        -----------
+        - screen : pygame.Surface
+            Surface sur laquelle dessiner le bouton.
+
+        Retourne :
+        ---------
+        - None
+        """
+
+        if self.texture:
             # Affiche la texture a l'interieur du rectangle :
-            self.button = pygame.Rect(self.x_choiceButton*CELL_SIZE, self.y_choiceButton*CELL_SIZE, CELL_SIZE*2, CELL_SIZE*2)
+            self.button = pygame.Rect(self.x_choiceButton*CELL_SIZE, self.y_choiceButton*CELL_SIZE, CELL_SIZE*4, CELL_SIZE*4)
             screen.blit(self.choice_texture, (self.button.x,self.button.y))
             pygame.draw.rect(screen, WHITE, self.button, 2)
 
             # Affiche le nom du personnage :
-            font = pygame.font.Font(None, 16)
-            text = font.render(f"{str(self)} : {str(self.__class__.__name__)}", True, WHITE)
-            # screen.blit(text, (self.button.x, self.button.y+int(CELL_SIZE*1.5)))
+            font = pygame.font.Font(None, 36)
+            text = font.render(f"{self.name}", True, WHITE)
+            screen.blit(text, (self.button.x + ((CELL_SIZE*4) - text.get_width()) // 2, self.button.y+int(CELL_SIZE*4.5)))
 
 
 
@@ -353,8 +416,8 @@ class Ichimonji(Skill):
         self.sound_effect = "data/skills/ichimonji.mp3"
 
         # animations
-        self.animation_image = []
         self.animation_frames = ["data/skills/ichimonji.png"]
+        self.animation_image = []
         for frame in self.animation_frames:
             image = pygame.image.load(frame).convert_alpha()
             image = pygame.transform.scale(image, (CELL_SIZE, CELL_SIZE))
@@ -374,14 +437,13 @@ class Ichimonji(Skill):
         self.AI_compatible = True
 
     def use_skill(self, owner_unit, game):
-        
         # utilisation du skill par un joueur
         if (owner_unit.team == "player 1") or (owner_unit.team == "player 2"):
             target = None  # Initialize the target
             # Check all potential targets
             for potential_target in game.player_units + game.player2_units + game.enemy_units:
-                if (owner_unit.team != potential_target.team and
-                        (abs(owner_unit.x - potential_target.x) <= self.range and abs(owner_unit.y - potential_target.y) <= self.range)):
+                if  ((owner_unit.team != potential_target.team) and
+                    (abs(owner_unit.x - potential_target.x) <= self.range and abs(owner_unit.y - potential_target.y) <= self.range)):
                     # validate target
                     target = potential_target
 
@@ -453,7 +515,7 @@ class Ichimonji(Skill):
 class Sky_Clear(Skill):
     def __init__(self):
         self.name = "Sky Clear"
-        self.damage = 12 
+        self.damage = 16 
         self.range = 3 
         self.sound_effect = "data/skills/ichimonji.mp3"
 
@@ -483,7 +545,7 @@ class Sky_Clear(Skill):
         target_x, target_y = owner_unit.x, owner_unit.y  # Start with the owner's position
 
         # Initial target zone draw
-        game.draw_map_units()
+        game.draw_map_units(team=owner_unit.team)
         highlight_rect = pygame.Rect((target_x) * CELL_SIZE, (target_y) * CELL_SIZE, CELL_SIZE, CELL_SIZE)
         pygame.draw.rect(game.screen, (128, 128, 128, 128), highlight_rect, 3)  # Gray border
         pygame.display.flip()
@@ -525,7 +587,7 @@ class Sky_Clear(Skill):
                     target_positions = [(x, y) for x, y in target_positions if (x, y) != (owner_unit.x, owner_unit.y)]
 
                     # Redraw the map with the highlight
-                    game.draw_map_units()
+                    game.draw_map_units(team=owner_unit.team)
                     for new_target_x,new_target_y in target_positions:
                         if 0 <= new_target_x < GRID_SIZE_WIDTH and 0 <= new_target_y < GRID_SIZE_HEIGHT:
                             highlight_rect = pygame.Rect((new_target_x) * CELL_SIZE, (new_target_y) * CELL_SIZE, CELL_SIZE, CELL_SIZE)
@@ -545,7 +607,7 @@ class Sky_Clear(Skill):
                         
 
         # Explosion phase
-        game.draw_map_units()
+        game.draw_map_units(team=owner_unit.team)
         pygame.display.flip()
 
         # Play sound effect
@@ -621,7 +683,7 @@ class Samurai_Grave(Skill):
         new_target_x, new_target_y = owner_unit.x, owner_unit.y
 
         # Initial target zone draw
-        game.draw_map_units()
+        game.draw_map_units(team=owner_unit.team)
         highlight_rect = pygame.Rect((target_x-1) * CELL_SIZE, (target_y-1) * CELL_SIZE, CELL_SIZE*3, CELL_SIZE*3)
         pygame.draw.rect(game.screen, (128, 128, 128, 128), highlight_rect, 3)  # Gray border
         pygame.display.flip()
@@ -655,7 +717,7 @@ class Samurai_Grave(Skill):
                         target_y = new_target_y
                         
                     # Redraw the map with the highlight
-                    game.draw_map_units()
+                    game.draw_map_units(team=owner_unit.team)
                     highlight_rect = pygame.Rect((target_x-1) * CELL_SIZE, (target_y-1) * CELL_SIZE, CELL_SIZE*3, CELL_SIZE*3)
                     pygame.draw.rect(game.screen, (128, 128, 128, 128), highlight_rect, 3)  # Gray border
                     pygame.display.flip()
@@ -673,7 +735,7 @@ class Samurai_Grave(Skill):
                         
 
         # Explosion phase
-        game.draw_map_units()
+        game.draw_map_units(team=owner_unit.team)
         pygame.display.flip()
 
         # Play sound effect
@@ -783,7 +845,7 @@ class Purple_Chaos(Skill):
         new_target_x, new_target_y = owner_unit.x, owner_unit.y
 
         # Dessiner la zone cible initiale
-        game.draw_map_units()
+        game.draw_map_units(team=owner_unit.team)
         highlight_rect = pygame.Rect((target_x-1) * CELL_SIZE, (target_y-1) * CELL_SIZE, CELL_SIZE*3, CELL_SIZE*3)
         pygame.draw.rect(game.screen, (128, 128, 128, 128), highlight_rect, 3)  # Bordure grise
         pygame.display.flip()
@@ -817,7 +879,7 @@ class Purple_Chaos(Skill):
                         target_y = new_target_y
 
                     # Redessiner la carte avec la zone cible mise à jour
-                    game.draw_map_units()
+                    game.draw_map_units(team=owner_unit.team)
                     highlight_rect = pygame.Rect((target_x-1) * CELL_SIZE, (target_y-1) * CELL_SIZE, CELL_SIZE*3, CELL_SIZE*3)
                     pygame.draw.rect(game.screen, (128, 128, 128, 128), highlight_rect, 3)
                     pygame.display.flip()
@@ -901,7 +963,7 @@ class Purple_Chaos(Skill):
                 for image in self.animation_image:
                     game.screen.blit(image, (cell_x * CELL_SIZE, cell_y * CELL_SIZE))
                     pygame.display.flip()
-                    pygame.time.delay(50)  # Délai entre les frames
+                    pygame.time.delay(100)  # Délai entre les frames
 
 
 
@@ -974,7 +1036,7 @@ class Poison_Master(Skill):
                 pygame.draw.rect(self.temp_surface, (0,0,0, 128), rect)  # Dessiner les zones de poison
             
             # Blitter la surface temporaire sur l'écran principal
-            game.draw_map_units()  # Dessiner l'état de la carte
+            game.draw_map_units(team=owner_unit.team)  # Dessiner l'état de la carte
             game.screen.blit(self.temp_surface, (0, 0))
             pygame.display.flip()
             
@@ -1003,7 +1065,7 @@ class Poison_Master(Skill):
             sound.play()
             
         # Phase d'explosion
-        game.draw_map_units()
+        game.draw_map_units(team=owner_unit.team)
         self.temp_surface.fill((0, 0, 0, 0))  # Effacer la surface temporaire
         for x, y in self.poison_zones:
             self.temp_surface.blit(self.animation_image, (x * CELL_SIZE, y * CELL_SIZE))  # Dessiner l'image d'animation
@@ -1064,7 +1126,7 @@ class Healer(Skill):
         target_x, target_y = owner_unit.x, owner_unit.y  # Position du propriétaire
 
         # Afficher la zone grise de la portée
-        game.draw_map_units()
+        game.draw_map_units(team=owner_unit.team)
         highlight_rect = pygame.Rect((target_x-2) * CELL_SIZE, (target_y-2) * CELL_SIZE, CELL_SIZE*5, CELL_SIZE*5)
         pygame.draw.rect(game.screen, (GREEN), highlight_rect, 3)  # Bord gris
         pygame.display.flip()
@@ -1090,7 +1152,7 @@ class Healer(Skill):
                         return
 
         # Phase d'activation de la compétence
-        game.draw_map_units()
+        game.draw_map_units(team=owner_unit.team)
         pygame.display.flip()
 
         # Jouer l'effet sonore
@@ -1120,7 +1182,7 @@ class Healer(Skill):
                 affected_cells.append((cell_x,cell_y))
         # Jouer l'animation de soin pour la cellule
         for image in self.animation_image:
-            game.draw_map_units()
+            game.draw_map_units(team=owner_unit.team)
 
             # Draw the "samurai_grave" animation
             for cell_x, cell_y in affected_cells:
@@ -1169,7 +1231,7 @@ class Shuriken(Skill):
         target_x, target_y = owner_unit.x, owner_unit.y  # Start with the owner's position
 
         # Initial target zone draw
-        game.draw_map_units()
+        game.draw_map_units(team=owner_unit.team)
         highlight_rect = pygame.Rect((target_x) * CELL_SIZE, (target_y) * CELL_SIZE, CELL_SIZE, CELL_SIZE)
         pygame.draw.rect(game.screen, (128, 128, 128, 128), highlight_rect, 3)  # Gray border
         pygame.display.flip()
@@ -1211,7 +1273,7 @@ class Shuriken(Skill):
                     target_positions = [(x, y) for x, y in target_positions if (x, y) != (owner_unit.x, owner_unit.y)]
 
                     # Redraw the map with the highlight
-                    game.draw_map_units()
+                    game.draw_map_units(team=owner_unit.team)
                     for new_target_x,new_target_y in target_positions:
                         if 0 <= new_target_x < GRID_SIZE_WIDTH and 0 <= new_target_y < GRID_SIZE_HEIGHT:
                             highlight_rect = pygame.Rect((new_target_x) * CELL_SIZE, (new_target_y) * CELL_SIZE, CELL_SIZE, CELL_SIZE)
@@ -1231,7 +1293,7 @@ class Shuriken(Skill):
                         
 
         # Explosion phase
-        game.draw_map_units()
+        game.draw_map_units(team=owner_unit.team)
         pygame.display.flip()
 
         # Play sound effect
@@ -1308,7 +1370,7 @@ class Assasin_Flicker(Skill):
         target = None
 
         # Draw the initial range area
-        game.draw_map_units()
+        game.draw_map_units(team=owner_unit.team)
         for dx in range(-self.range, self.range + 1):
             for dy in range(-self.range, self.range + 1):
                 x, y = owner_unit.x + dx, owner_unit.y + dy
@@ -1356,7 +1418,7 @@ class Assasin_Flicker(Skill):
         direction_selection = True
         selected_position = None
         while direction_selection:
-            game.draw_map_units()
+            game.draw_map_units(team=owner_unit.team)
             for adj_x, adj_y in adjacent_units:
                 highlight_rect = pygame.Rect(adj_x * CELL_SIZE, adj_y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
                 pygame.draw.rect(game.screen, (153, 51, 255, 128), highlight_rect, 3)  # Purple border
@@ -1496,7 +1558,7 @@ class Shadow_Berserk(Skill):
                     zone_of_effect.append((x, y))
 
         # Dessiner la zone d'effet
-        game.draw_map_units()
+        game.draw_map_units(team=owner_unit.team)
         for x, y in zone_of_effect:
             highlight_rect = pygame.Rect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
             pygame.draw.rect(game.screen, (128, 128, 128, 128), highlight_rect, 3)
@@ -1630,9 +1692,9 @@ class Shadow_Berserk(Skill):
 
 # Création des personnages :
 Personnages = {
-        "Yennefer": Sorceress(2, 0, 'player', 'data/characters/yennefer.png', 8, 8, "Yennefer"),
-        "Shogun": Samurai(3, 0, 'player', 'data/characters/samurai.png', 14, 8, "Shogun"),
-        "Sekiro": Shinobi(4, 0, 'player', 'data/characters/sekiro.png', 20, 8, "Sekiro"),
+        "Yennefer": Sorceress(2, 0, 'player', 'data/characters/yennefer.png', 7, 8, "Yennefer"),
+        "Shogun": Samurai(3, 0, 'player', 'data/characters/samurai.png', 13, 8, "Shogun"),
+        "Sekiro": Shinobi(4, 0, 'player', 'data/characters/sekiro.png', 19, 8, "Sekiro"),
     }
 
 

@@ -2,9 +2,9 @@ from unit import *
 
 # VERSION
 X = 1
-Y = 3
+Y = 4
 Z = 0
-print(f" =========== {GAME_TITLE} Version {X}.{Y}.{Z} =========== \n")
+print(f"\n =========== {GAME_TITLE} Version {X}.{Y}.{Z} =========== \n")
 
 
 class Game:
@@ -818,12 +818,17 @@ class Game:
                                 has_acted = True
                                 selected_unit.is_selected = False
 
-            if self.GameMode == "PvE" :
-                if len(self.enemy_units) == 0 :
-                    self.game_end("enemy")
-            elif self.GameMode == "PvP" :
-                if len(self.player2_units) == 0 :
-                    self.game_end("player 2")
+                # Tester si la game est finie
+                if self.GameMode == "PvE" :
+                    if len(self.enemy_units) == 0 :
+                        self.game_end("enemy")
+                    elif len(self.player_units) == 0 :
+                        self.game_end("player 1")
+                elif self.GameMode == "PvP" :
+                    if len(self.player2_units) == 0 :
+                        self.game_end("player 2")
+                    elif len(self.player_units) == 0 :
+                        self.game_end("player 1")
 
         elif team == "player 2" :
             for selected_unit in self.player2_units:
@@ -922,12 +927,17 @@ class Game:
                                 has_acted = True
                                 selected_unit.is_selected = False
 
-            if self.GameMode == "PvE" :
-                if len(self.enemy_units) == 0 :
-                    self.game_end("enemy")
-            elif self.GameMode == "PvP" :
-                if len(self.player2_units) == 0 :
-                    self.game_end("player 2")
+                # Tester si la game est finie
+                if self.GameMode == "PvE" :
+                    if len(self.enemy_units) == 0 :
+                        self.game_end("enemy")
+                    elif len(self.player_units) == 0 :
+                        self.game_end("player 1")
+                elif self.GameMode == "PvP" :
+                    if len(self.player2_units) == 0 :
+                        self.game_end("player 2")
+                    elif len(self.player_units) == 0 :
+                        self.game_end("player 1")
 
         # Incrémenter le compteur de tours **à la fin du tour**
         self.turn_counter += 1
@@ -943,43 +953,61 @@ class Game:
 
     # IA de enemy
     def enemy_AI_turn(self):
-                
-                # tester si tous les adversaires sont morts
-                if len(self.player_units) == 0 :
+        # tour de chaque unité de enemy
+        for enemy in self.enemy_units:
+            # Tester si la game est finie
+            if self.GameMode == "PvE" :
+                if len(self.enemy_units) == 0 :
+                    self.game_end("enemy")
+                elif len(self.player_units) == 0 :
+                    self.game_end("player 1")
+            elif self.GameMode == "PvP" :
+                if len(self.player2_units) == 0 :
+                    self.game_end("player 2")
+                elif len(self.player_units) == 0 :
                     self.game_end("player 1")
 
-                # tour de chaque unité de enemy
-                for enemy in self.enemy_units:
+            # attente pour rendre le tour des ennemies plus realistique
+            pygame.time.delay(500)
 
-                    # attente pour rendre le tour des ennemies plus realistique
-                    pygame.time.delay(500)
+            # Movement decision
+            best_move = self.AI_find_best_move(enemy)
+            if best_move:
+                enemy.move(best_move[0], best_move[1], self)
 
-                    # Movement decision
-                    best_move = self.AI_find_best_move(enemy)
-                    if best_move:
-                        enemy.move(best_move[0], best_move[1], self)
+            # Skill usage
+            best_skill = self.AI_evaluate_skills(enemy)
+            if best_skill:
+                best_skill.use_skill(enemy, self)
 
-                    # Skill usage
-                    best_skill = self.AI_evaluate_skills(enemy)
-                    if best_skill:
-                        best_skill.use_skill(enemy, self)
+            # Attack decision if no skill is ai compatible
+            target = self.AI_find_best_target(enemy)
+            if target:
+                enemy.attack(target)
 
-                    # Attack decision if no skill is ai compatible
-                    target = self.AI_find_best_target(enemy)
-                    if target:
-                        enemy.attack(target)
+            # tester si tous les adversaires sont morts
+            if len(self.player_units) == 0 :
+                self.game_end("player 1")
 
-                    # tester si tous les adversaires sont morts
-                    if len(self.player_units) == 0 :
-                        self.game_end("player 1")
+            # Met à jour le panneau d'information avec les détails de l'ennemi
+            self.draw_map_units("enemy")
+            self.draw_info_panel("enemy", enemy)
+            pygame.display.flip()
 
-                    # Met à jour le panneau d'information avec les détails de l'ennemi
-                    self.draw_map_units("enemy")
-                    self.draw_info_panel("enemy", enemy)
-                    pygame.display.flip()
+            # attente pour rendre le tour des ennemies plus realistique
+            pygame.time.delay(500)
 
-                    # attente pour rendre le tour des ennemies plus realistique
-                    pygame.time.delay(500)
+            # Tester si la game est finie
+            if self.GameMode == "PvE" :
+                if len(self.enemy_units) == 0 :
+                    self.game_end("enemy")
+                elif len(self.player_units) == 0 :
+                    self.game_end("player 1")
+            elif self.GameMode == "PvP" :
+                if len(self.player2_units) == 0 :
+                    self.game_end("player 2")
+                elif len(self.player_units) == 0 :
+                    self.game_end("player 1")
 
 
 
@@ -1217,8 +1245,6 @@ class Game:
 
 # main function
 def main():
-
-    
 
     # Instanciation du jeu
     game = Game(screen)
