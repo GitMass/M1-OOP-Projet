@@ -459,7 +459,7 @@ class Ichimonji(Skill):
                     for image in self.animation_image:
                         game.screen.blit(image, (target.x * CELL_SIZE, target.y * CELL_SIZE))
                         pygame.display.flip()
-                        pygame.time.delay(100)  # Delay between frames
+                        pygame.time.delay(200)  # Delay between frames
 
                     self.used = True
                     break
@@ -646,7 +646,7 @@ class Sky_Clear(Skill):
 
                         # Update the display
                         pygame.display.flip()
-                        pygame.time.delay(50)  # Delay between frames
+                        pygame.time.delay(200)  # Delay between frames
 
 
 class Samurai_Grave(Skill):

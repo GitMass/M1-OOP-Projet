@@ -2,7 +2,7 @@ from unit import *
 
 # VERSION
 X = 1
-Y = 4
+Y = 5
 Z = 0
 print(f"\n =========== {GAME_TITLE} Version {X}.{Y}.{Z} =========== \n")
 
